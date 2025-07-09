@@ -1,274 +1,157 @@
 # Workflow Orchestration System
 
-> 🚀 **Transform unreliable AI coding assistants into consistent, high-quality development partners
-through structured workflows**
+> 🚀 **A specification for transforming unreliable AI coding assistants into consistent, high-quality
+development partners through structured workflows**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/workflow-orchestration-system)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/status-specification-orange.svg)](https://github.com/yourusername/workflow-orchestration-system)
+[![Spec Version](https://img.shields.io/badge/spec-1.0.0-blue.svg)](specs/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
 
-## The Problem
+## 🎯 Vision
 
 LLMs are powerful but unpredictable. They hallucinate, lose context, attempt too much at once, and
-produce inconsistent results. Traditional prompt engineering only gets you so far.
+produce inconsistent results. The Workflow Orchestration System aims to guide LLMs through proven
+software development practices via structured, step-by-step workflows.
 
-## The Solution
+**Current Status**: This repository contains the complete specifications for the system.
+Implementation is the next phase.
 
-The Workflow Orchestration System guides LLMs through proven software development practices via
-structured, step-by-step workflows. Instead of hoping your AI assistant follows best practices, we
-ensure it.
+## 📋 What's Here
 
-## 🎯 Key Benefits
+### Specifications (Complete ✅)
 
-- **Eliminate Hallucination**: Verification steps catch fabrications before they compound
-- **Consistent Quality**: Every developer follows the same proven patterns
-- **Model-Aware Execution**: Use the right LLM for each task (planning vs. implementation)
-- **Local & Secure**: Runs entirely on your machine, no data leaves your system
-- **Agent Agnostic**: Works with Claude Desktop, VS Code, or any MCP-compatible agent
+- **[System Overview](docs/overview.md)** - Comprehensive 74-page document covering:
+   - Problem statement and vision
+   - System architecture
+   - Key concepts (prep/implement/verify pattern)
+   - User interaction model
+   - Future roadmap
 
-## 🚀 Quick Start
+- **[Workflow Schema](specs/workflow.schema.json)** - JSON Schema Draft 7 specification
+   - Defines structure for all workflows
+   - Validation rules and constraints
+   - Extensible design for future features
 
-Get up and running in under 5 minutes:
+- **[API Specification](specs/mcp-api-v1.0.md)** - Complete JSON-RPC 2.0 API
+   - Four core tools: list, get, next, validate
+   - Error handling standards
+   - Request/response examples
 
-```bash
-# Install the workflow server
-npm install -g @modelcontextprotocol/server-workflow-lookup
+- **[Example Workflows](specs/examples/)** - Reference implementations
+   - Valid workflow example (authentication)
+   - Invalid workflow for testing validation
 
-# Add to your agent configuration (example for Claude Desktop)
-# Edit: ~/Library/Application Support/Claude/claude_desktop_config.json
-```
+## 🏗️ Architecture Overview
 
-```json
-{
-  "mcpServers": {
-    "workflow-lookup": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-workflow-lookup"]
-    }
-  }
-}
-```
-
-Now restart Claude Desktop and try:
-
-```
-"Help me implement user authentication using the workflow system"
-```
-
-## 📊 Before & After
-
-### Without Workflows
-
-```
-You: "Add JWT authentication to my API"
-AI: *Attempts to modify 15 files at once, introduces bugs, 
-    forgets error handling, inconsistent patterns*
-Result: Hours of debugging and cleanup
-```
-
-### With Workflows
-
-```
-You: "Add JWT authentication to my API"
-AI: "I'll use the authentication workflow. Let me start by understanding 
-    your current setup..."
-    
-Step 1: Analyze existing auth ✓
-Step 2: Create implementation plan ✓
-Step 3: Implement with tests ✓
-Step 4: Verify everything works ✓
-
-Result: Production-ready, tested code following your patterns
-```
-
-## 🎨 How It Works
+The system will consist of:
 
 ```
 ┌─────────────┐     ┌─────────────────┐     ┌──────────────┐
-│    You      │────▶│   AI Agent      │────▶│  Workflow    │
-│             │     │ (Claude, etc)   │     │   Server     │
+│    User     │────▶│   AI Agent      │────▶│ workflowlookup│
+│             │     │ (Claude, etc)   │     │  MCP Server  │
 └─────────────┘     └─────────────────┘     └──────────────┘
                             │                        │
                             │◀───────────────────────┘
-                            │   Structured Steps     
-                            ▼                        
-                    ┌─────────────────┐
-                    │ Quality Output  │
-                    └─────────────────┘
+                            │   Structured Guidance  
 ```
 
-The workflow server provides step-by-step guidance to your AI agent, ensuring it follows best
-practices rather than going off track.
+## 🎨 Core Concepts
 
-## 📚 Available Workflows
-
-| Workflow | Description | Use Case |
-|----------|-------------|----------|
-| `ai-task-implementation` | Complete feature implementation with testing | Building new features |
-| `code-review` | Systematic PR/MR review with categorized feedback | Code reviews |
-| `debug-investigation` | Methodical debugging with hypothesis testing | Fixing bugs |
-| `refactoring` | Safe, incremental code improvements | Technical debt |
-| `documentation` | Comprehensive docs following best practices | Documentation |
-
-List all workflows:
-
-```bash
-workflow-lookup list
-```
-
-## 🛠️ Installation & Setup
-
-### For Claude Desktop
-
-1. Install the server:
-   ```bash
-   npm install -g @modelcontextprotocol/server-workflow-lookup
-   ```
-
-2. Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
-   ```json
-   {
-     "mcpServers": {
-       "workflow-lookup": {
-         "command": "npx",
-         "args": ["-y", "@modelcontextprotocol/server-workflow-lookup"]
-       }
-     }
-   }
-   ```
-
-3. Restart Claude Desktop
-
-### For VS Code
-
-Add to your workspace `.vscode/mcp.json`:
-
+### The Workflow Structure
 ```json
 {
-  "mcp": {
-    "servers": {
-      "workflow-lookup": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-workflow-lookup"]
-      }
-    }
-  }
-}
-```
-
-### For Other MCP Agents
-
-See [Integration Guide](docs/integration.md) for Firebender, custom agents, and more.
-
-## 🎯 Example: Building a Feature
-
-Here's how the AI Task Implementation workflow guides development:
-
-```
-You: "I need to add image preview to chat messages"
-
-AI: "I'll guide you through this using the AI Task Implementation workflow.
-
-Step 1: Understanding Requirements
-- Let me analyze the current chat implementation...
-- I found ChatMessage.tsx and the message rendering logic
-- A few clarifying questions:
-  • Should images be resizable?
-  • Do we need lazy loading?
-  • What's the max file size?
-
-Step 2: Creating Implementation Plan
-[Switching to reasoning-optimized model]
-- Phase 1: Extend message model for images
-- Phase 2: Add image rendering component  
-- Phase 3: Implement loading states
-- Phase 4: Add tests
-
-Step 3: Implementation
-[Switching to tool-use-optimized model]
-- PREP: Reading current ChatMessage model...
-- IMPLEMENT: Adding imageUrl field...
-- VERIFY: Changes compile and follow patterns ✓
-
-[Continues through each phase...]
-
-Step 4: Verification
-- All tests passing ✓
-- Image preview working ✓
-- Loading states smooth ✓
-- Follows existing patterns ✓
-
-Complete! The implementation is ready for review."
-```
-
-## 📝 Creating Custom Workflows
-
-Workflows are just JSON files. Create your own:
-
-```json
-{
-  "id": "my-custom-workflow",
-  "name": "My Custom Workflow",
-  "description": "Description of what this accomplishes",
+   "id": "unique-identifier",
+   "name": "Human-Friendly Name",
+   "description": "What this workflow accomplishes",
+   "preconditions": [
+      "Prerequisites before starting"
+   ],
+   "clarificationPrompts": [
+      "Questions to resolve ambiguities"
+   ],
   "steps": [
     {
       "id": "step-1",
-      "title": "First Step",
-      "prompt": "Clear instructions for this step..."
+       "title": "Step Title",
+       "prompt": "Detailed instructions...",
+       "requireConfirmation": true
     }
-  ]
+  ],
+   "metaGuidance": [
+      "Best practices that apply throughout"
+   ]
 }
 ```
 
-Save to `~/.modelcontextprotocol/workflows/custom/my-workflow.json`
+### The prep/implement/verify Pattern
 
-See the [Workflow Authoring Guide](docs/workflow-authoring.md) for best practices.
+Each implementation step follows:
 
-## 📖 Documentation
+- **PREP**: Understand the current state
+- **IMPLEMENT**: Make focused changes
+- **VERIFY**: Validate the results
 
-- [System Overview](docs/overview.md) - Detailed architecture and concepts
-- [Workflow Authoring](docs/workflow-authoring.md) - Create your own workflows
-- [API Specification](specs/mcp-api-v1.0.md) - Technical API details
-- [Examples](examples/) - Sample workflows and usage patterns
+## 🚀 Implementation Roadmap
+
+### Phase 1: MVP (Next Step)
+
+- [ ] Basic workflowlookup MCP server
+- [ ] Core workflow storage and retrieval
+- [ ] Step-by-step guidance engine
+- [ ] Initial workflow library
+
+### Phase 2: Enhanced Features
+
+- [ ] Workflow validation
+- [ ] State management
+- [ ] Model-aware routing hints
+- [ ] Extended workflow library
+
+### Phase 3: Advanced Capabilities
+
+- [ ] Non-linear workflow execution
+- [ ] Dynamic adaptation
+- [ ] Workflow marketplace
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how you can help:
+This project is in the specification phase. You can contribute by:
 
-- **Create Workflows**: Share your domain expertise through new workflows
-- **Improve Existing Workflows**: Submit PRs with enhancements
-- **Report Issues**: Help us identify problems and edge cases
-- **Documentation**: Improve guides and examples
+1. **Reviewing Specifications**: Provide feedback on the current specs
+2. **Proposing Workflows**: Design new workflows following the schema
+3. **Planning Implementation**: Discuss technical approaches
+4. **Improving Documentation**: Help clarify and expand the specs
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## 📖 Key Documents
 
-## 📊 Project Status
+Start here to understand the system:
 
-### ✅ What's Working Now
+1. **[System Overview](docs/overview.md)** - Read this first for the complete vision
+2. **[Workflow Schema](specs/workflow.schema.json)** - Understand workflow structure
+3. **[API Specification](specs/mcp-api-v1.0.md)** - See how components communicate
 
-- Core workflow engine with step-by-step guidance
-- Integration with Claude Desktop, VS Code, and other MCP agents
-- Built-in workflows for common development tasks
-- Custom workflow support
-- Local-first, secure architecture
+## 🎯 Design Principles
 
-### 🚧 Coming Soon
+1. **Local-First**: All processing happens on the user's machine
+2. **Agent-Agnostic**: Works with any MCP-compatible AI agent
+3. **Guided, Not Forced**: Provides rails, maintains agent autonomy
+4. **Progressive Enhancement**: Simple agents work, advanced agents work better
+5. **Transparent**: No hidden magic, just structured guidance
 
-- Visual workflow builder
-- Workflow marketplace for sharing
-- Advanced state management (pause/resume)
-- Workflow analytics and insights
-- Multi-model orchestration
+## 📊 Success Metrics (Planned)
 
-### ⚠️ Current Limitations
+When implemented, we aim to achieve:
 
-- Requires manual model switching for optimal results
-- Linear workflow execution only (no branching yet)
-- Limited to MCP-compatible agents
+- 70%+ workflow completion rates
+- <200ms response times
+- Reduced hallucination in guided tasks
+- Consistent output quality across users
 
-## 🙏 Credits
+## 🙏 Acknowledgments
 
-Built with [Model Context Protocol (MCP)](https://modelcontextprotocol.org) by Anthropic.
+- Inspired by software engineering best practices
+- Built on [Model Context Protocol (MCP)](https://modelcontextprotocol.org) by Anthropic
+- Designed for the real-world challenges of AI-assisted development
 
 ## 📄 License
 
@@ -277,8 +160,8 @@ MIT License - see [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  <b>Ready to make your AI coding assistant reliable?</b><br>
-  <a href="#-quick-start">Get Started</a> •
-  <a href="docs/overview.md">Learn More</a> •
+  <b>Want to help build the future of reliable AI development?</b><br>
+  <a href="docs/overview.md">Read the Specs</a> •
+  <a href="https://github.com/yourusername/workflow-orchestration-system/issues">Share Feedback</a> •
   <a href="https://github.com/yourusername/workflow-orchestration-system">Star on GitHub</a>
 </p>
