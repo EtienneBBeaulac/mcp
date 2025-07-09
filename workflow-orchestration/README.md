@@ -20,26 +20,45 @@ Implementation is the next phase.
 
 ### Specifications (Complete ✅)
 
-- **[System Overview](docs/overview.md)** - Comprehensive 74-page document covering:
+- **[System Overview](workflow-orchestration-mcp-overview.md)** - Comprehensive 74-page document covering:
    - Problem statement and vision
    - System architecture
    - Key concepts (prep/implement/verify pattern)
    - User interaction model
    - Future roadmap
 
-- **[Workflow Schema](specs/workflow.schema.json)** - JSON Schema Draft 7 specification
+- **[Workflow Schema](spec/workflow.schema.json)** - JSON Schema Draft 7 specification
    - Defines structure for all workflows
    - Validation rules and constraints
    - Extensible design for future features
 
-- **[API Specification](specs/mcp-api-v1.0.md)** - Complete JSON-RPC 2.0 API
+- **[API Specification](spec/mcp-api-v1.0.md)** - Complete JSON-RPC 2.0 API
    - Four core tools: list, get, next, validate
    - Error handling standards
    - Request/response examples
 
-- **[Example Workflows](specs/examples/)** - Reference implementations
+- **[Example Workflows](spec/examples/)** - Reference implementations
    - Valid workflow example (authentication)
    - Invalid workflow for testing validation
+
+### Documentation (Specification Phase 🚧)
+
+- **[Implementation Guides](docs/implementation/)** - Development documentation
+   - Architecture and design decisions
+   - Development phases and roadmap
+   - Testing strategy and quality assurance
+   - Security and performance considerations
+
+- **[Advanced Topics](docs/advanced/)** - Future enhancement documentation
+   - Plugin system architecture
+   - Multi-tenancy support
+   - Scaling strategies
+   - Workflow versioning
+
+- **[Reference Documentation](docs/reference/)** - Complete reference materials
+   - Configuration options
+   - Troubleshooting guides
+   - Recovery procedures
 
 ## 🏗️ Architecture Overview
 
@@ -126,9 +145,12 @@ This project is in the specification phase. You can contribute by:
 
 Start here to understand the system:
 
-1. **[System Overview](docs/overview.md)** - Read this first for the complete vision
-2. **[Workflow Schema](specs/workflow.schema.json)** - Understand workflow structure
-3. **[API Specification](specs/mcp-api-v1.0.md)** - See how components communicate
+1. **[System Overview](workflow-orchestration-mcp-overview.md)** - Read this first for the complete vision
+2. **[Documentation Index](docs/README.md)** - Complete documentation structure
+3. **[Getting Started](docs/implementation/01-getting-started.md)** - Quick start guide
+4. **[Architecture Guide](docs/implementation/02-architecture.md)** - System design and components
+5. **[Workflow Schema](spec/workflow.schema.json)** - Understand workflow structure
+6. **[API Specification](spec/mcp-api-v1.0.md)** - See how components communicate
 
 ## 🎯 Design Principles
 
@@ -161,7 +183,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 <p align="center">
   <b>Want to help build the future of reliable AI development?</b><br>
-  <a href="docs/overview.md">Read the Specs</a> •
+  <a href="workflow-orchestration-mcp-overview.md">Read the Specs</a> •
   <a href="https://github.com/yourusername/workflow-orchestration-system/issues">Share Feedback</a> •
   <a href="https://github.com/yourusername/workflow-orchestration-system">Star on GitHub</a>
 </p>
