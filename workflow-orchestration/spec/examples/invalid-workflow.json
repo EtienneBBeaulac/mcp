@@ -1,0 +1,19 @@
+{
+  "id": "INVALID_ID_WITH_CAPS",
+  "name": "",
+  "description": "This workflow has multiple validation errors",
+  "preconditions": [
+    "Valid precondition",
+    ""
+  ],
+  "clarificationPrompts": [
+    "Valid question?",
+    "Valid question?"
+  ],
+  "steps": [],
+  "metaGuidance": [
+    "This is a valid guidance",
+    "This is a valid guidance"
+  ],
+  "extraField": "This field is not allowed"
+}

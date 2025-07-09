@@ -1,0 +1,46 @@
+{
+  "id": "simple-auth-implementation",
+  "name": "Simple Authentication Implementation",
+  "description": "Implement basic JWT authentication for a REST API with user login and token validation",
+  "preconditions": [
+    "User model exists in the database",
+    "JWT library is installed in the project",
+    "Environment variables for JWT_SECRET are configured"
+  ],
+  "clarificationPrompts": [
+    "What is the token expiration time you want to use?",
+    "Should the authentication support refresh tokens?",
+    "Do you need role-based access control?"
+  ],
+  "steps": [
+    {
+      "id": "analyze-current-auth",
+      "title": "Analyze current authentication setup",
+      "prompt": "Examine the existing authentication implementation if any. Look for: user model structure, existing auth middleware, login endpoints. Document what you find.",
+      "requireConfirmation": true
+    },
+    {
+      "id": "create-auth-middleware",
+      "title": "Create authentication middleware",
+      "prompt": "Create a middleware function that extracts and validates JWT tokens from the Authorization header. Return 401 for invalid tokens.",
+      "askForFiles": true
+    },
+    {
+      "id": "implement-login",
+      "title": "Implement login endpoint",
+      "prompt": "Create a POST /auth/login endpoint that accepts email and password, validates credentials against the database, and returns a JWT token on success."
+    },
+    {
+      "id": "test-authentication",
+      "title": "Test the authentication flow",
+      "prompt": "Test the complete flow: 1) Login with valid credentials, 2) Use the token to access a protected route, 3) Verify invalid tokens are rejected",
+      "requireConfirmation": true
+    }
+  ],
+  "metaGuidance": [
+    "Always hash passwords using bcrypt or similar",
+    "Include proper error messages for debugging",
+    "Follow RESTful conventions for endpoints",
+    "Add rate limiting to prevent brute force attacks"
+  ]
+}
