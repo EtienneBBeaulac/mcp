@@ -1,6 +1,6 @@
 # Getting Started Guide
 
-> 🚀 **Quick Start: Setting Up Your Development Environment for the Workflow Orchestration System**
+> 🚀 **Understanding and Contributing to the Workflow Orchestration System**
 
 [![Status](https://img.shields.io/badge/status-specification-orange.svg)](https://github.com/yourusername/workflow-orchestration-system)
 [![Spec Version](https://img.shields.io/badge/spec-1.0.0-blue.svg)](specs/)
@@ -8,477 +8,436 @@
 
 ## 📋 Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Quick Setup](#quick-setup)
-3. [Development Environment](#development-environment)
-4. [First Workflow](#first-workflow)
-5. [Common Tasks](#common-tasks)
-6. [Troubleshooting](#troubleshooting)
+1. [Current Status & What's Available](#current-status--whats-available)
+2. [Understanding the System](#understanding-the-system)
+3. [Reviewing Specifications](#reviewing-specifications)
+4. [Contributing to Specifications](#contributing-to-specifications)
+5. [Implementation Roadmap](#implementation-roadmap)
+6. [Next Steps](#next-steps)
 
 ---
 
-## ⚠️ Important Note
+## Current Status & What's Available
 
-**This is a specification project.** The Workflow Orchestration System is currently in the design and specification phase. The setup instructions below describe the planned development environment for when implementation begins.
+### ⚠️ **IMPORTANT: Specification Phase**
 
-For now, you can:
-- Review the [System Overview](../workflow-orchestration-mcp-overview.md) to understand the vision
-- Study the [Architecture Guide](02-architecture.md) to understand the design
-- Examine the [API Specification](../spec/mcp-api-v1.0.md) to understand the interface
-- Review the [Workflow Schema](../spec/workflow.schema.json) to understand workflow structure
+This project is currently in the **specification phase**. No implementation code exists yet.
 
----
+**What's Available Now:**
+- ✅ **Complete API specifications** - JSON-RPC 2.0 API with four core tools
+- ✅ **Workflow schema and examples** - JSON Schema Draft 7 with validation rules
+- ✅ **Comprehensive documentation** - Architecture, testing, security, and performance guides
+- ✅ **System overview** - 74-page vision and design document
+- ✅ **Example workflows** - Reference implementations for testing
 
-## Prerequisites
+**What's Not Available Yet:**
+- ❌ **Running MCP server** - No implementation exists
+- ❌ **npm packages** - No packages published
+- ❌ **Development environment setup** - No implementation to set up
+- ❌ **Testing framework** - No tests to run
 
-Before starting development, ensure you have the following installed:
+### How to Contribute Now
 
-### Required Software
+During the specification phase, you can:
 
-```bash
-# Core requirements
-Node.js 18+ (for MCP server implementation)
-npm 8+ or yarn 1.22+
-Git 2.30+
-
-# Verify installations
-node --version  # Should be 18.0.0 or higher
-npm --version   # Should be 8.0.0 or higher
-git --version   # Should be 2.30.0 or higher
-```
-
-### Optional but Recommended
-
-```bash
-# Development tools
-Docker (for containerized testing)
-VS Code with TypeScript extensions
-
-# VS Code extensions
-code --install-extension ms-vscode.vscode-typescript-next
-code --install-extension esbenp.prettier-vscode
-code --install-extension ms-vscode.vscode-eslint
-code --install-extension ms-vscode.vscode-json
-```
+1. **Review and provide feedback** on existing specifications
+2. **Design new workflows** following the established schema
+3. **Improve documentation** and clarify concepts
+4. **Plan implementation approaches** and discuss technical decisions
+5. **Share domain expertise** by creating workflows for your use cases
 
 ---
 
-## Quick Setup
+## Understanding the System
 
-### Step 1: Clone and Install
+### The Vision
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/workflow-orchestration-system.git
-cd workflow-orchestration-system
+The Workflow Orchestration System aims to transform unreliable AI coding assistants into consistent, high-quality development partners through structured workflows.
 
-# Install dependencies
-npm install
+**Core Problem**: LLMs are powerful but suffer from:
+- Hallucination and incorrect information
+- Scope creep and trying to do too much at once
+- Context loss across long conversations
+- Inconsistent results from the same prompts
+- Missing prerequisites before implementation
 
-# Verify setup
-npm run verify-setup
-```
+**Our Solution**: Guide LLMs through proven software engineering best practices via structured, machine-readable workflows.
 
-### Step 2: Validate Dependencies
+### Key Concepts
 
-**⚠️ IMPORTANT**: Before proceeding, validate that MCP tools exist and work:
-
-```bash
-# Check MCP tool availability
-npm search @modelcontextprotocol/dev-tools
-npm search @modelcontextprotocol/inspector
-
-# Test MCP inspector functionality
-npx @modelcontextprotocol/inspector --help
-
-# If tools don't exist, use alternative setup:
-npm install -g @modelcontextprotocol/cli
-# or
-# Use local development without global tools
-```
-
-### Step 3: Start Development Server
-
-```bash
-# Start development server
-npm run dev:server
-
-# In another terminal, test with MCP inspector
-npx @modelcontextprotocol/inspector
-```
-
-### Step 4: Configure Agent Framework
-
-Create a local development configuration for your preferred agent framework:
-
-**For Firebender:**
-```json
-// firebender.dev.json
-{
-  "mcpServers": {
-    "workflow-lookup": {
-      "command": "npm",
-      "args": ["run", "dev:server"],
-      "cwd": "./workflow-orchestration-system"
-    }
-  }
-}
-```
-
-**For Claude Desktop:**
-```json
-// claude_desktop.dev.json
-{
-  "mcpServers": {
-    "workflow-lookup": {
-      "command": "npm",
-      "args": ["run", "dev:server"],
-      "cwd": "./workflow-orchestration-system"
-    }
-  }
-}
-```
-
----
-
-## Development Environment
-
-### Essential Development Tools
-
-```bash
-# Install global development tools
-npm install -g typescript
-npm install -g eslint
-npm install -g prettier
-npm install -g jest
-
-# Verify installations
-tsc --version
-eslint --version
-prettier --version
-jest --version
-```
-
-### VS Code Configuration
-
-Create `.vscode/settings.json` for consistent development experience:
-
+**The Workflow Structure:**
 ```json
 {
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "eslint.validate": ["typescript", "javascript"],
-  "files.associations": {
-    "*.json": "jsonc"
-  }
-}
-```
-
-### Environment Variables
-
-Create `.env.local` for local development:
-
-```bash
-# Development configuration
-NODE_ENV=development
-LOG_LEVEL=debug
-PORT=3000
-
-# MCP server configuration
-MCP_SERVER_HOST=localhost
-MCP_SERVER_PORT=3000
-
-# Workflow storage
-WORKFLOW_STORAGE_PATH=./workflows
-WORKFLOW_STORAGE_TYPE=file
-
-# Security settings
-MAX_INPUT_SIZE=1048576
-RATE_LIMIT_PER_MINUTE=100
-```
-
----
-
-## First Workflow
-
-### Create Your First Workflow
-
-1. **Create a simple workflow file:**
-
-```json
-// workflows/examples/my-first-workflow.json
-{
-  "id": "hello-world",
-  "name": "Hello World Workflow",
-  "description": "A simple workflow to test the system",
-  "preconditions": [
-    "Development environment is set up",
-    "MCP server is running"
-  ],
-  "clarificationPrompts": [
-    "What is your name?",
-    "What programming language do you prefer?"
-  ],
-  "steps": [
-    {
-      "id": "greet",
-      "title": "Greet the user",
-      "prompt": "Create a simple greeting message for the user",
-      "requireConfirmation": true
-    },
-    {
-      "id": "setup",
-      "title": "Setup development environment",
-      "prompt": "Help the user set up their development environment",
-      "askForFiles": true
-    }
-  ],
-  "metaGuidance": [
-    "Always be helpful and clear",
-    "Provide step-by-step instructions",
-    "Ask for clarification when needed"
-  ]
-}
-```
-
-2. **Test the workflow:**
-
-```bash
-# Start the development server
-npm run dev:server
-
-# In another terminal, test the workflow
-curl -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "workflow_get",
-    "params": {"id": "hello-world"}
-  }'
-```
-
-3. **Verify the response:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "id": "hello-world",
-    "name": "Hello World Workflow",
-    "description": "A simple workflow to test the system",
-    "preconditions": [...],
-    "clarificationPrompts": [...],
-    "steps": [...],
-    "metaGuidance": [...]
-  }
-}
-```
-
----
-
-## Common Tasks
-
-### Adding a New Workflow
-
-1. **Create the workflow file:**
-
-```bash
-# Create a new workflow file
-touch workflows/core/my-new-workflow.json
-```
-
-2. **Define the workflow structure:**
-
-```json
-{
-  "id": "my-new-workflow",
-  "name": "My New Workflow",
-  "description": "Description of what this workflow does",
-  "preconditions": [
-    "List of prerequisites"
-  ],
-  "clarificationPrompts": [
-    "Questions to resolve ambiguities"
-  ],
+  "id": "unique-identifier",
+  "name": "Human-Friendly Name",
+  "description": "What this workflow accomplishes",
+  "preconditions": ["Prerequisites before starting"],
+  "clarificationPrompts": ["Questions to resolve ambiguities"],
   "steps": [
     {
       "id": "step-1",
-      "title": "First Step",
-      "prompt": "Detailed instructions for this step",
+      "title": "Step Title",
+      "prompt": "Detailed instructions...",
       "requireConfirmation": true
     }
   ],
-  "metaGuidance": [
-    "Best practices that apply throughout"
-  ]
+  "metaGuidance": ["Best practices that apply throughout"]
 }
 ```
 
-3. **Validate the workflow:**
+**The prep/implement/verify Pattern:**
+Each implementation step follows:
+- **PREP**: Understand the current state
+- **IMPLEMENT**: Make focused changes
+- **VERIFY**: Validate the results
 
-```bash
-# Validate against schema
-npm run validate-workflow workflows/core/my-new-workflow.json
+### Architecture Overview
+
+The system will consist of:
 ```
-
-### Testing Workflows
-
-1. **Unit tests:**
-
-```bash
-# Run unit tests
-npm test
-
-# Run specific test file
-npm test -- --testNamePattern="WorkflowListTool"
-```
-
-2. **Integration tests:**
-
-```bash
-# Run integration tests
-npm run test:integration
-
-# Test with real agent
-npm run test:e2e
-```
-
-### Debugging
-
-1. **Enable debug logging:**
-
-```bash
-# Set debug level
-export LOG_LEVEL=debug
-
-# Start server with debug
-npm run dev:server -- --debug
-```
-
-2. **Use MCP inspector:**
-
-```bash
-# Start inspector
-npx @modelcontextprotocol/inspector
-
-# Connect to your server
-# Follow the inspector prompts
+┌─────────────┐     ┌─────────────────┐     ┌──────────────┐
+│    User     │────▶│   AI Agent      │────▶│ workflowlookup│
+│             │     │ (Claude, etc)   │     │  MCP Server  │
+└─────────────┘     └─────────────────┘     └──────────────┘
+                            │                        │
+                            │◀───────────────────────┘
+                            │   Structured Guidance
 ```
 
 ---
 
-## Troubleshooting
+## Reviewing Specifications
 
-### Common Issues
+### Step 1: System Overview Review
 
-#### 1. **MCP Server Won't Start**
+Start with the comprehensive system overview:
 
-**Symptoms**: Server fails to start or crashes immediately
+1. **Read the Vision**: [System Overview](../workflow-orchestration-mcp-overview.md)
+   - Understand the problem and solution
+   - Learn about the architecture and design decisions
+   - Review the user interaction model
+   - Explore future directions
 
-**Solutions**:
-```bash
-# Check Node.js version
-node --version  # Should be 18+
+2. **Key Questions to Consider**:
+   - Does the vision address real problems you've experienced?
+   - Is the architecture approach sound?
+   - Are there gaps in the current design?
+   - What improvements would you suggest?
 
-# Check dependencies
-npm install
+### Step 2: API Specification Analysis
 
-# Check port availability
-lsof -i :3000  # Check if port is in use
+Examine the MCP API specification:
 
-# Start with verbose logging
-npm run dev:server -- --verbose
+1. **Review the API**: [API Specification](../spec/mcp-api-v1.0.md)
+   - Four core tools: list, get, next, validate
+   - JSON-RPC 2.0 protocol
+   - Error handling standards
+   - Request/response examples
+
+2. **Test the Examples**:
+   ```bash
+   # Test the workflow_list example
+   curl -X POST http://localhost:3000/mcp \
+     -H "Content-Type: application/json" \
+     -d '{
+       "jsonrpc": "2.0",
+       "id": 1,
+       "method": "workflow_list",
+       "params": null
+     }'
+   ```
+
+3. **Key Questions**:
+   - Are the API endpoints sufficient?
+   - Is the error handling comprehensive?
+   - Are there missing features?
+   - Is the protocol design sound?
+
+### Step 3: Workflow Schema Validation
+
+Study the workflow schema and examples:
+
+1. **Review the Schema**: [Workflow Schema](../spec/workflow.schema.json)
+   - JSON Schema Draft 7 specification
+   - Validation rules and constraints
+   - Required vs. optional fields
+
+2. **Examine Examples**:
+   - [Valid workflow example](../spec/examples/valid-workflow.json)
+   - [Invalid workflow example](../spec/examples/invalid-workflow.json)
+
+3. **Test Validation**:
+   ```bash
+   # Validate a workflow against the schema
+   npm install -g ajv-cli
+   ajv validate -s spec/workflow.schema.json -d spec/examples/valid-workflow.json
+   ```
+
+4. **Key Questions**:
+   - Is the schema comprehensive?
+   - Are there missing fields or constraints?
+   - Do the examples cover edge cases?
+   - Is the validation sufficient?
+
+### Step 4: Architecture Review
+
+Study the technical architecture:
+
+1. **Review Architecture**: [Architecture Guide](02-architecture.md)
+   - System design and components
+   - Technical decisions and rationale
+   - Scalability considerations
+
+2. **Key Questions**:
+   - Is the architecture sound?
+   - Are there potential issues?
+   - What improvements would you suggest?
+   - Are there missing components?
+
+---
+
+## Contributing to Specifications
+
+### 1. Providing Feedback
+
+**Specification Review**:
+- Review the API specification for completeness
+- Test the workflow schema with edge cases
+- Validate example workflows against the schema
+- Suggest improvements to the architecture
+
+**Feedback Channels**:
+- Create issues on GitHub for specific problems
+- Submit pull requests for documentation improvements
+- Join discussions in GitHub Discussions
+- Share feedback in community forums
+
+### 2. Designing New Workflows
+
+**Workflow Creation Process**:
+
+1. **Identify a Need**: What development task would benefit from structured guidance?
+
+2. **Follow the Schema**: Use the established workflow schema:
+   ```json
+   {
+     "id": "your-workflow-id",
+     "name": "Human-Friendly Name",
+     "description": "Clear description of what this workflow accomplishes",
+     "preconditions": ["List of prerequisites"],
+     "clarificationPrompts": ["Questions to resolve ambiguities"],
+     "steps": [
+       {
+         "id": "step-1",
+         "title": "Step Title",
+         "prompt": "Detailed instructions...",
+         "requireConfirmation": true
+       }
+     ],
+     "metaGuidance": ["Best practices that apply throughout"]
+   }
+   ```
+
+3. **Apply Best Practices**:
+   - Start with clear outcomes
+   - Break down complex tasks intelligently
+   - Write crystal clear prompts
+   - Use preconditions wisely
+   - Craft effective clarification prompts
+
+4. **Test Your Workflow**:
+   - Validate against the schema
+   - Test with different scenarios
+   - Get feedback from others
+   - Iterate based on feedback
+
+**Example Workflow Creation**:
+```json
+{
+  "id": "database-migration",
+  "name": "Database Migration Workflow",
+  "description": "Safely migrate database schema with rollback planning",
+  "preconditions": [
+    "Database backup is available",
+    "Migration requirements are documented",
+    "Rollback strategy is planned"
+  ],
+  "clarificationPrompts": [
+    "What is the expected downtime for this migration?",
+    "Are there any data dependencies to consider?",
+    "What is the rollback plan if issues occur?"
+  ],
+  "steps": [
+    {
+      "id": "backup-verification",
+      "title": "Verify database backup",
+      "prompt": "Confirm the database backup is complete and accessible. Test restore process if possible.",
+      "requireConfirmation": true
+    },
+    {
+      "id": "migration-planning",
+      "title": "Create detailed migration plan",
+      "prompt": "Create a step-by-step migration plan including: SQL statements, order of operations, rollback procedures, and success criteria.",
+      "requireConfirmation": true
+    },
+    {
+      "id": "migration-execution",
+      "title": "Execute migration",
+      "prompt": "Execute the migration plan step by step, verifying each step before proceeding to the next.",
+      "askForFiles": true
+    },
+    {
+      "id": "verification",
+      "title": "Verify migration success",
+      "prompt": "Verify the migration completed successfully by checking data integrity, application functionality, and performance.",
+      "requireConfirmation": true
+    }
+  ],
+  "metaGuidance": [
+    "Always have a rollback plan",
+    "Test migrations in staging first",
+    "Document all changes for future reference",
+    "Monitor system performance after migration"
+  ]
+}
 ```
 
-#### 2. **Workflow Not Found**
+### 3. Improving Documentation
 
-**Symptoms**: `workflow_get` returns "Workflow not found" error
+**Documentation Areas**:
+- Clarify unclear concepts
+- Add missing examples
+- Improve structure and organization
+- Fix technical inaccuracies
+- Add cross-references
 
-**Solutions**:
-```bash
-# Check workflow file exists
-ls -la workflows/core/
+**Contribution Process**:
+1. Identify the documentation issue
+2. Create a detailed description of the problem
+3. Propose a specific solution
+4. Submit as an issue or pull request
 
-# Validate workflow JSON
-npm run validate-workflow workflows/core/workflow-name.json
+### 4. Planning Implementation
 
-# Check file permissions
-chmod 644 workflows/core/workflow-name.json
-```
+**Technical Discussion Areas**:
+- MCP server implementation approach
+- Workflow storage and retrieval
+- Validation engine design
+- Testing strategy
+- Performance considerations
+- Security model
 
-#### 3. **Agent Can't Connect**
+**Contribution Opportunities**:
+- Review implementation plans
+- Suggest technical approaches
+- Identify potential challenges
+- Share domain expertise
+- Help prioritize features
 
-**Symptoms**: Agent reports connection errors
+---
 
-**Solutions**:
-```bash
-# Check server is running
-curl http://localhost:3000/health
+## Implementation Roadmap
 
-# Check MCP configuration
-cat firebender.dev.json  # or your agent config
+### Current Status: Specification Phase
 
-# Test with MCP inspector
-npx @modelcontextprotocol/inspector
-```
+The project is currently focused on:
+- ✅ **Complete specifications** (API, schema, examples)
+- ✅ **Comprehensive documentation** (architecture, testing, security)
+- ✅ **Community feedback** and improvement
+- 🚧 **Implementation planning** and technical discussion
 
-#### 4. **Performance Issues**
+### Phase 1: Core MCP Server (Planned)
 
-**Symptoms**: Slow response times or timeouts
+**Duration**: 2-3 weeks  
+**Goal**: Basic working MCP server with core functionality
 
-**Solutions**:
-```bash
-# Check system resources
-top
-free -h
+**Milestones**:
+- [ ] **Week 1**: Basic server setup and tool framework
+- [ ] **Week 2**: Core tools implementation
+- [ ] **Week 3**: Testing and documentation
 
-# Enable performance monitoring
-export ENABLE_METRICS=true
-npm run dev:server
+**Success Criteria**:
+- [ ] All tests passing
+- [ ] Server starts without errors
+- [ ] MCP inspector can connect
+- [ ] Can list and retrieve workflows
 
-# Check for memory leaks
-npm run test:memory
-```
+### Phase 2: Orchestration Engine (Planned)
 
-### Getting Help
+**Duration**: 3-4 weeks  
+**Goal**: Full workflow orchestration capabilities
 
-1. **Check the logs:**
-```bash
-# View server logs
-tail -f logs/server.log
+**Milestones**:
+- [ ] **Week 4-5**: Orchestration core
+- [ ] **Week 6**: Validation framework
+- [ ] **Week 7**: Integration and testing
 
-# View error logs
-tail -f logs/error.log
-```
+### Phase 3: Advanced Features (Planned)
 
-2. **Run diagnostics:**
-```bash
-# Run system diagnostics
-npm run diagnose
+**Duration**: 4-6 weeks  
+**Goal**: Production-ready system with advanced capabilities
 
-# Check configuration
-npm run validate-config
-```
+**Milestones**:
+- [ ] **Week 8-9**: Performance and reliability
+- [ ] **Week 10-11**: Advanced orchestration
+- [ ] **Week 12-13**: Production readiness
 
-3. **Create an issue:**
-- Include error messages and logs
-- Describe your environment
-- Provide steps to reproduce
+### Preparation for Implementation
+
+**What You Can Do Now**:
+1. **Study the specifications** thoroughly
+2. **Create test workflows** to validate the design
+3. **Provide feedback** on the architecture
+4. **Plan your contribution** to the implementation phase
+5. **Join the community** discussions
 
 ---
 
 ## Next Steps
 
-Now that you have the development environment set up:
+### Immediate Actions
 
-1. **Read the Architecture Guide**: [02-architecture.md](02-architecture.md)
-2. **Understand the API**: [API Specification](../spec/mcp-api-v1.0.md)
-3. **Study Workflow Design**: [Workflow Schema](../spec/workflow.schema.json)
-4. **Join the Community**: [GitHub Discussions](https://github.com/yourusername/workflow-orchestration-system/discussions)
+1. **Review the System Overview**: [workflow-orchestration-mcp-overview.md](../workflow-orchestration-mcp-overview.md)
+   - Understand the complete vision and architecture
+   - Identify areas where you can contribute
+
+2. **Study the API Specification**: [mcp-api-v1.0.md](../spec/mcp-api-v1.0.md)
+   - Understand the four core tools
+   - Test the examples with curl commands
+
+3. **Examine the Workflow Schema**: [workflow.schema.json](../spec/workflow.schema.json)
+   - Learn the structure and validation rules
+   - Create your own test workflows
+
+4. **Review the Architecture**: [02-architecture.md](02-architecture.md)
+   - Understand the technical design
+   - Identify potential improvements
+
+### Getting Involved
+
+**Join the Community**:
+- [GitHub Discussions](https://github.com/yourusername/workflow-orchestration-system/discussions)
+- [Issues](https://github.com/yourusername/workflow-orchestration-system/issues)
+- [Pull Requests](https://github.com/yourusername/workflow-orchestration-system/pulls)
+
+**Contribute Now**:
+- Review and provide feedback on specifications
+- Design new workflows for your domain
+- Improve documentation and examples
+- Plan implementation approaches
+- Share your expertise and experience
+
+### Future Implementation
+
+When implementation begins, you'll be able to:
+- Set up the development environment
+- Run the MCP server locally
+- Test workflows with real agents
+- Contribute to the codebase
+- Deploy and use the system
+
+**For now, focus on understanding the specifications and contributing to the design phase.**
 
 ---
 
-**Note**: This guide describes the planned development environment. The actual implementation will follow this structure when development begins. 
+**Note**: This guide focuses on the current specification phase. When implementation begins, a separate implementation guide will be created for development setup and usage. 
