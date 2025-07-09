@@ -198,246 +198,360 @@ Study the technical architecture:
 
 ## Contributing to Specifications
 
-### 1. Providing Feedback
+### 1. Specification Review & Feedback
 
-**Specification Review**:
-- Review the API specification for completeness
-- Test the workflow schema with edge cases
-- Validate example workflows against the schema
-- Suggest improvements to the architecture
+**API Specification Review**:
+- **Review API completeness**: Are all necessary endpoints defined?
+- **Test error handling**: Are error cases comprehensive?
+- **Validate examples**: Do the curl examples work correctly?
+- **Check protocol compliance**: Does it follow JSON-RPC 2.0 standards?
 
-**Feedback Channels**:
-- Create issues on GitHub for specific problems
-- Submit pull requests for documentation improvements
-- Join discussions in GitHub Discussions
-- Share feedback in community forums
+**Workflow Schema Review**:
+- **Test edge cases**: Try invalid workflows to test validation
+- **Validate constraints**: Are the schema rules appropriate?
+- **Review field definitions**: Are descriptions clear and complete?
+- **Check extensibility**: Can the schema accommodate future features?
 
-### 2. Designing New Workflows
+**Architecture Review**:
+- **Evaluate design decisions**: Are architectural choices sound?
+- **Identify potential issues**: What could go wrong?
+- **Suggest improvements**: What would make it better?
+- **Assess scalability**: Will it handle expected load?
 
-**Workflow Creation Process**:
+**Feedback Submission Process**:
+1. **Create detailed issue**: Include specific problem description
+2. **Provide examples**: Show the issue with concrete examples
+3. **Suggest solutions**: Propose specific improvements
+4. **Follow up**: Engage in discussion and iteration
+
+### 2. Workflow Design & Creation
+
+**Workflow Design Process**:
 
 1. **Identify a Need**: What development task would benefit from structured guidance?
+   - Common pain points in your development process
+   - Tasks that often go wrong or take too long
+   - Areas where you wish you had better guidance
 
-2. **Follow the Schema**: Use the established workflow schema:
-   ```json
-   {
-     "id": "your-workflow-id",
-     "name": "Human-Friendly Name",
-     "description": "Clear description of what this workflow accomplishes",
-     "preconditions": ["List of prerequisites"],
-     "clarificationPrompts": ["Questions to resolve ambiguities"],
-     "steps": [
-       {
-         "id": "step-1",
-         "title": "Step Title",
-         "prompt": "Detailed instructions...",
-         "requireConfirmation": true
-       }
-     ],
-     "metaGuidance": ["Best practices that apply throughout"]
-   }
-   ```
+2. **Research Existing Workflows**: Check if something similar already exists
+   - Review existing workflow examples
+   - Identify gaps in current coverage
+   - Avoid duplicating existing work
 
-3. **Apply Best Practices**:
-   - Start with clear outcomes
-   - Break down complex tasks intelligently
-   - Write crystal clear prompts
-   - Use preconditions wisely
-   - Craft effective clarification prompts
+3. **Define Clear Outcomes**: What should the user have when finished?
+   - Specific, measurable results
+   - Clear success criteria
+   - Tangible deliverables
 
-4. **Test Your Workflow**:
-   - Validate against the schema
-   - Test with different scenarios
-   - Get feedback from others
-   - Iterate based on feedback
+4. **Follow the Schema**: Use the established workflow schema with best practices
 
-**Example Workflow Creation**:
+**Workflow Design Best Practices**:
+
+**Start with Clear Outcomes**:
 ```json
+// ❌ Bad: Vague outcome
 {
-  "id": "database-migration",
-  "name": "Database Migration Workflow",
-  "description": "Safely migrate database schema with rollback planning",
-  "preconditions": [
-    "Database backup is available",
-    "Migration requirements are documented",
-    "Rollback strategy is planned"
-  ],
-  "clarificationPrompts": [
-    "What is the expected downtime for this migration?",
-    "Are there any data dependencies to consider?",
-    "What is the rollback plan if issues occur?"
-  ],
-  "steps": [
-    {
-      "id": "backup-verification",
-      "title": "Verify database backup",
-      "prompt": "Confirm the database backup is complete and accessible. Test restore process if possible.",
-      "requireConfirmation": true
-    },
-    {
-      "id": "migration-planning",
-      "title": "Create detailed migration plan",
-      "prompt": "Create a step-by-step migration plan including: SQL statements, order of operations, rollback procedures, and success criteria.",
-      "requireConfirmation": true
-    },
-    {
-      "id": "migration-execution",
-      "title": "Execute migration",
-      "prompt": "Execute the migration plan step by step, verifying each step before proceeding to the next.",
-      "askForFiles": true
-    },
-    {
-      "id": "verification",
-      "title": "Verify migration success",
-      "prompt": "Verify the migration completed successfully by checking data integrity, application functionality, and performance.",
-      "requireConfirmation": true
-    }
-  ],
-  "metaGuidance": [
-    "Always have a rollback plan",
-    "Test migrations in staging first",
-    "Document all changes for future reference",
-    "Monitor system performance after migration"
-  ]
+  "description": "Implement feature"
+}
+
+// ✅ Good: Specific outcome
+{
+  "description": "Implement user authentication with email/password, including signup, login, and password reset flows"
 }
 ```
 
-### 3. Improving Documentation
+**Break Down Complex Tasks Intelligently**:
+```json
+// ❌ Bad: Too large
+{
+  "title": "Build the entire authentication system",
+  "prompt": "Implement user auth with all features"
+}
 
-**Documentation Areas**:
-- Clarify unclear concepts
-- Add missing examples
-- Improve structure and organization
-- Fix technical inaccuracies
-- Add cross-references
+// ✅ Good: Just right
+{
+  "title": "Create User model and database schema",
+  "prompt": "Create a User model with email, hashed_password, and created_at fields. Include database migrations."
+}
+```
+
+**Write Crystal Clear Prompts**:
+```json
+{
+  "prompt": "Examine the existing UserController class in src/controllers/user_controller.rb. Identify the current authentication method (likely in the 'authenticate' method). Create a new method called 'authenticate_with_jwt' that:\n\n1. Extracts the JWT token from the Authorization header\n2. Validates the token using the existing JWT library\n3. Returns the user object if valid, raises AuthenticationError if not\n4. Includes appropriate error handling for malformed tokens\n\nMaintain the existing code style and patterns."
+}
+```
+
+**Use Preconditions Wisely**:
+```json
+"preconditions": [
+  "User has provided the authentication requirements document",
+  "Database connection is configured and tested",
+  "JWT secret key is available in environment variables",
+  "Existing User model or specification is available"
+]
+```
+
+**Craft Effective Clarification Prompts**:
+```json
+"clarificationPrompts": [
+  "What should happen when a user tries to login with an unverified email?",
+  "Should we implement rate limiting for login attempts? If so, what limits?",
+  "Do you need to support social login (Google, GitHub, etc.) or just email/password?",
+  "What session duration do you want? Should it be configurable?"
+]
+```
+
+**Common Workflow Patterns**:
+
+**The Investigation Step**:
+```json
+{
+  "id": "investigate-current-state",
+  "title": "Analyze existing implementation",
+  "prompt": "Using grep and file reading tools, map out the current implementation. Document: entry points, existing patterns, dependencies, and any relevant utilities.",
+  "requireConfirmation": true
+}
+```
+
+**The Planning Step**:
+```json
+{
+  "id": "create-implementation-plan",
+  "title": "Create detailed implementation plan",
+  "prompt": "Based on the investigation, create a step-by-step plan. Include: affected files, new files needed, testing approach, and migration strategy.",
+  "requireConfirmation": true
+}
+```
+
+**The Verification Step**:
+```json
+{
+  "id": "verify-implementation",
+  "title": "Verify implementation works correctly",
+  "prompt": "Test the implementation by: 1) Creating test cases, 2) Running the functionality, 3) Verifying edge cases, 4) Checking error handling. Fix any issues found."
+}
+```
+
+**Anti-Patterns to Avoid**:
+
+**The Kitchen Sink Step**:
+```json
+// DON'T DO THIS
+{
+  "title": "Implement everything",
+  "prompt": "Add authentication, authorization, user management, password reset, email verification, and admin features"
+}
+```
+
+**The Vague Instruction**:
+```json
+// DON'T DO THIS  
+{
+  "prompt": "Make the authentication better"
+}
+```
+
+**The Context-Free Step**:
+```json
+// DON'T DO THIS
+{
+  "prompt": "Add JWT validation",
+  // Missing: where? how? what library? what error handling?
+}
+```
+
+### 3. Workflow Testing & Validation
+
+**Testing Your Workflow**:
+
+1. **Schema Validation**:
+   ```bash
+   # Install validation tool
+   npm install -g ajv-cli
+   
+   # Validate your workflow
+   ajv validate -s spec/workflow.schema.json -d your-workflow.json
+   ```
+
+2. **Manual Testing**:
+   - Walk through each step mentally
+   - Can each step be completed with only the information provided?
+   - Are there hidden dependencies between steps?
+   - Do the prompts make sense in sequence?
+
+3. **User Testing**:
+   - Have someone unfamiliar with the task try your workflow
+   - Where do they get confused?
+   - What questions do they ask?
+   - Where do they deviate from the intended path?
+
+4. **Edge Case Testing**:
+   - What if a precondition isn't actually met?
+   - What if a step fails partway through?
+   - Can the user recover gracefully?
+   - What if the user has different skill levels?
+
+**Workflow Quality Checklist**:
+
+- [ ] **Clear outcome**: Specific, measurable result
+- [ ] **Appropriate scope**: Not too large, not too small
+- [ ] **Clear prompts**: Unambiguous instructions
+- [ ] **Good preconditions**: Prevents starting without context
+- [ ] **Effective clarifications**: Catches ambiguities upfront
+- [ ] **Logical flow**: Steps build on each other
+- [ ] **Error handling**: Graceful failure modes
+- [ ] **Validation**: Can be tested and verified
+
+### 4. Documentation Improvement
+
+**Areas for Improvement**:
+
+**Conceptual Clarity**:
+- Unclear explanations of key concepts
+- Missing context for technical decisions
+- Incomplete examples or edge cases
+- Confusing terminology
+
+**Structural Improvements**:
+- Better organization of information
+- Clearer navigation and cross-references
+- More logical flow of concepts
+- Consistent formatting and style
+
+**Technical Accuracy**:
+- Outdated information
+- Incorrect examples
+- Missing error cases
+- Incomplete API documentation
 
 **Contribution Process**:
-1. Identify the documentation issue
-2. Create a detailed description of the problem
-3. Propose a specific solution
-4. Submit as an issue or pull request
 
-### 4. Planning Implementation
+1. **Identify the Issue**:
+   - What's unclear or incorrect?
+   - Who is the target audience?
+   - What would make it better?
+
+2. **Research the Solution**:
+   - Check related documentation
+   - Test examples and claims
+   - Verify technical accuracy
+   - Consider edge cases
+
+3. **Propose the Fix**:
+   - Create a detailed description
+   - Provide specific changes
+   - Include examples if needed
+   - Explain the rationale
+
+4. **Submit for Review**:
+   - Create issue or pull request
+   - Engage in discussion
+   - Iterate based on feedback
+   - Follow up on implementation
+
+### 5. Implementation Planning
 
 **Technical Discussion Areas**:
-- MCP server implementation approach
-- Workflow storage and retrieval
-- Validation engine design
-- Testing strategy
-- Performance considerations
-- Security model
+
+**MCP Server Implementation**:
+- Server architecture and design patterns
+- Tool implementation strategies
+- Error handling and logging
+- Performance optimization
+- Testing approaches
+
+**Workflow Engine Design**:
+- State management strategies
+- Validation engine architecture
+- Guidance generation algorithms
+- Extensibility mechanisms
+- Integration patterns
+
+**Storage & Retrieval**:
+- Workflow storage formats
+- Search and discovery mechanisms
+- Versioning and updates
+- Caching strategies
+- Backup and recovery
+
+**Security Considerations**:
+- Input validation and sanitization
+- Authentication and authorization
+- Resource limits and quotas
+- Audit logging and monitoring
+- Vulnerability assessment
 
 **Contribution Opportunities**:
-- Review implementation plans
-- Suggest technical approaches
-- Identify potential challenges
-- Share domain expertise
-- Help prioritize features
 
----
+**Architecture Review**:
+- Review proposed technical approaches
+- Identify potential issues or improvements
+- Suggest alternative designs
+- Assess scalability and maintainability
 
-## Implementation Roadmap
+**Implementation Planning**:
+- Help prioritize features and capabilities
+- Identify technical challenges and solutions
+- Suggest development approaches
+- Plan testing and validation strategies
 
-### Current Status: Specification Phase
+**Domain Expertise**:
+- Share knowledge of specific domains
+- Create workflows for specialized tasks
+- Provide real-world use cases
+- Suggest industry-specific patterns
 
-The project is currently focused on:
-- ✅ **Complete specifications** (API, schema, examples)
-- ✅ **Comprehensive documentation** (architecture, testing, security)
-- ✅ **Community feedback** and improvement
-- 🚧 **Implementation planning** and technical discussion
+**Quality Assurance**:
+- Review specifications for completeness
+- Test proposed solutions
+- Validate assumptions and claims
+- Identify potential issues
 
-### Phase 1: Core MCP Server (Planned)
+### 6. Community Engagement
 
-**Duration**: 2-3 weeks  
-**Goal**: Basic working MCP server with core functionality
+**Ways to Get Involved**:
 
-**Milestones**:
-- [ ] **Week 1**: Basic server setup and tool framework
-- [ ] **Week 2**: Core tools implementation
-- [ ] **Week 3**: Testing and documentation
+**GitHub Discussions**:
+- Ask questions about the system
+- Share your experiences and insights
+- Discuss potential improvements
+- Connect with other contributors
 
-**Success Criteria**:
-- [ ] All tests passing
-- [ ] Server starts without errors
-- [ ] MCP inspector can connect
-- [ ] Can list and retrieve workflows
+**Issue Reporting**:
+- Report bugs or problems
+- Suggest new features
+- Request clarification on unclear points
+- Share feedback on current state
 
-### Phase 2: Orchestration Engine (Planned)
+**Pull Requests**:
+- Submit documentation improvements
+- Propose specification changes
+- Add new workflow examples
+- Fix technical inaccuracies
 
-**Duration**: 3-4 weeks  
-**Goal**: Full workflow orchestration capabilities
+**Community Forums**:
+- Share your workflows with others
+- Get feedback on your contributions
+- Learn from others' experiences
+- Build relationships with contributors
 
-**Milestones**:
-- [ ] **Week 4-5**: Orchestration core
-- [ ] **Week 6**: Validation framework
-- [ ] **Week 7**: Integration and testing
+**Recognition & Impact**:
 
-### Phase 3: Advanced Features (Planned)
+**Quality Contributions**:
+- Well-designed workflows that others can use
+- Clear, helpful documentation improvements
+- Valuable technical insights and suggestions
+- Active engagement in discussions
 
-**Duration**: 4-6 weeks  
-**Goal**: Production-ready system with advanced capabilities
+**Recognition Methods**:
+- Credit in documentation and examples
+- Recognition in release notes
+- Invitation to contribute to core development
+- Opportunities to present at community events
 
-**Milestones**:
-- [ ] **Week 8-9**: Performance and reliability
-- [ ] **Week 10-11**: Advanced orchestration
-- [ ] **Week 12-13**: Production readiness
-
-### Preparation for Implementation
-
-**What You Can Do Now**:
-1. **Study the specifications** thoroughly
-2. **Create test workflows** to validate the design
-3. **Provide feedback** on the architecture
-4. **Plan your contribution** to the implementation phase
-5. **Join the community** discussions
-
----
-
-## Next Steps
-
-### Immediate Actions
-
-1. **Review the System Overview**: [workflow-orchestration-mcp-overview.md](../workflow-orchestration-mcp-overview.md)
-   - Understand the complete vision and architecture
-   - Identify areas where you can contribute
-
-2. **Study the API Specification**: [mcp-api-v1.0.md](../spec/mcp-api-v1.0.md)
-   - Understand the four core tools
-   - Test the examples with curl commands
-
-3. **Examine the Workflow Schema**: [workflow.schema.json](../spec/workflow.schema.json)
-   - Learn the structure and validation rules
-   - Create your own test workflows
-
-4. **Review the Architecture**: [02-architecture.md](02-architecture.md)
-   - Understand the technical design
-   - Identify potential improvements
-
-### Getting Involved
-
-**Join the Community**:
-- [GitHub Discussions](https://github.com/yourusername/workflow-orchestration-system/discussions)
-- [Issues](https://github.com/yourusername/workflow-orchestration-system/issues)
-- [Pull Requests](https://github.com/yourusername/workflow-orchestration-system/pulls)
-
-**Contribute Now**:
-- Review and provide feedback on specifications
-- Design new workflows for your domain
-- Improve documentation and examples
-- Plan implementation approaches
-- Share your expertise and experience
-
-### Future Implementation
-
-When implementation begins, you'll be able to:
-- Set up the development environment
-- Run the MCP server locally
-- Test workflows with real agents
-- Contribute to the codebase
-- Deploy and use the system
-
-**For now, focus on understanding the specifications and contributing to the design phase.**
-
----
-
-**Note**: This guide focuses on the current specification phase. When implementation begins, a separate implementation guide will be created for development setup and usage. 
+**Impact Measurement**:
+- Number of workflows adopted by others
+- Documentation improvements that help others
+- Technical suggestions that influence design
+- Community engagement and mentorship 
