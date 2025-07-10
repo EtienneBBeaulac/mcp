@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { createWorkflowLookupServer } from './core/server';
-import { DefaultWorkflowService } from './services/workflow-service';
+import { createWorkflowLookupServer } from './infrastructure/rpc/server';
+import { DefaultWorkflowService } from './application/services/workflow-service';
 import { createDefaultWorkflowStorage } from './infrastructure/storage';
 
 const program = new Command();

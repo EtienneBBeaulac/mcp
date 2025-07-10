@@ -1,4 +1,4 @@
-import { WorkflowService } from '../../services/workflow-service';
+import { WorkflowService } from '../services/workflow-service';
 import { WorkflowSummary } from '../../types/mcp-types';
 
 /**

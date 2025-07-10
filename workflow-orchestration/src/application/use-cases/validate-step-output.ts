@@ -1,4 +1,4 @@
-import { WorkflowService } from '../../services/workflow-service';
+import { WorkflowService } from '../services/workflow-service';
 
 export async function validateStepOutput(
   service: WorkflowService,

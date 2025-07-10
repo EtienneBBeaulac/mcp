@@ -3,7 +3,7 @@ import { JSONRPCServer } from 'json-rpc-2.0';
 
 import { listWorkflows } from '../../src/application/use-cases/list-workflows';
 import { getWorkflow } from '../../src/application/use-cases/get-workflow';
-import { DefaultWorkflowService } from '../../src/services/workflow-service';
+import { DefaultWorkflowService } from '../../src/application/services/workflow-service';
 import { createDefaultWorkflowStorage } from '../../src/infrastructure/storage';
 import { JSONRPCResponse } from '../../src/types/mcp-types';
 

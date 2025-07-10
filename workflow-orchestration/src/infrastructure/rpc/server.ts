@@ -1,13 +1,13 @@
-import { WorkflowLookupServer } from '../types/server';
-import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
+import { WorkflowLookupServer } from '../../types/server';
+import { JSONRPCResponse, JSONRPCError } from '../../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
-import { ErrorHandler } from '../core/error-handler';
-import { requestValidator } from '../validation/request-validator';
-import { WorkflowService } from '../services/workflow-service';
-import { listWorkflows } from '../application/use-cases/list-workflows';
-import { getNextStep as getNextWorkflowStep } from '../application/use-cases/get-next-step';
-import { validateStepOutput as validateWorkflowStepOutput } from '../application/use-cases/validate-step-output';
-import { getWorkflow } from '../application/use-cases/get-workflow';
+import { ErrorHandler } from '../../core/error-handler';
+import { requestValidator } from '../../validation/request-validator';
+import { WorkflowService } from '../../application/services/workflow-service';
+import { listWorkflows } from '../../application/use-cases/list-workflows';
+import { getNextStep as getNextWorkflowStep } from '../../application/use-cases/get-next-step';
+import { validateStepOutput as validateWorkflowStepOutput } from '../../application/use-cases/validate-step-output';
+import { getWorkflow } from '../../application/use-cases/get-workflow';
 
 export function createWorkflowLookupServer(
   workflowService: WorkflowService
@@ -79,7 +79,7 @@ export function createWorkflowLookupServer(
       // MCP handshake methods
       rpcServer.addMethod('initialize', async (params: any) => {
         try {
-          const { initializeHandler } = await import('../tools/mcp_initialize');
+          const { initializeHandler } = await import('../../tools/mcp_initialize');
           return (
             await initializeHandler({ id: 0, params, method: 'initialize', jsonrpc: '2.0' } as any)
           ).result;
@@ -91,7 +91,7 @@ export function createWorkflowLookupServer(
 
       rpcServer.addMethod('tools/list', async (params: any) => {
         try {
-          const { toolsListHandler } = await import('../tools/mcp_tools_list');
+          const { toolsListHandler } = await import('../../tools/mcp_tools_list');
           return (
             await toolsListHandler({ id: 0, params, method: 'tools/list', jsonrpc: '2.0' } as any)
           ).result;
@@ -103,7 +103,7 @@ export function createWorkflowLookupServer(
 
       rpcServer.addMethod('shutdown', async (params: any) => {
         try {
-          const { shutdownHandler } = await import('../tools/mcp_shutdown');
+          const { shutdownHandler } = await import('../../tools/mcp_shutdown');
           return (
             await shutdownHandler({ id: 0, params, method: 'shutdown', jsonrpc: '2.0' } as any)
           ).result;
