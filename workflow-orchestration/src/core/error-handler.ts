@@ -287,14 +287,6 @@ export class ErrorHandler {
         );
         break;
 
-      case MCPErrorCodes.WORKFLOW_NOT_FOUND:
-        suggestions.push(
-          "Check if the workflow ID is correct",
-          "Verify the workflow exists in the storage",
-          "List available workflows to confirm the ID"
-        );
-        break;
-
       case MCPErrorCodes.VALIDATION_ERROR:
         suggestions.push(
           "Check the input parameters against the schema",

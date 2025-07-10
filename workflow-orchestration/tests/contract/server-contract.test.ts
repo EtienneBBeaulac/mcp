@@ -79,4 +79,182 @@ describe('MCP Server JSON-RPC contract', () => {
     const res = await client.send('shutdown', {});
     expect(res.result).toBeNull();
   });
+
+  describe('workflow_validate endpoint', () => {
+    it('validates valid step output', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'analyze-current-auth',
+        output: 'I have analyzed the current authentication setup and found no existing authentication implementation.'
+      });
+      
+      expect(res.jsonrpc).toBe('2.0');
+      expect(res.result).toBeDefined();
+      responseValidator.validate('workflow_validate', res.result);
+      expect(typeof res.result.valid).toBe('boolean');
+      // Issues and suggestions can be undefined or empty arrays
+      if (res.result.issues !== undefined) {
+        expect(Array.isArray(res.result.issues)).toBe(true);
+      }
+      if (res.result.suggestions !== undefined) {
+        expect(Array.isArray(res.result.suggestions)).toBe(true);
+      }
+    });
+
+    it('validates step output with issues', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'create-auth-middleware',
+        output: 'I created a simple function'
+      });
+      
+      expect(res.jsonrpc).toBe('2.0');
+      expect(res.result).toBeDefined();
+      responseValidator.validate('workflow_validate', res.result);
+      expect(typeof res.result.valid).toBe('boolean');
+      if (res.result.issues) {
+        expect(Array.isArray(res.result.issues)).toBe(true);
+      }
+      if (res.result.suggestions) {
+        expect(Array.isArray(res.result.suggestions)).toBe(true);
+      }
+    });
+
+    it('validates comprehensive step output', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'implement-login',
+        output: 'I implemented a POST /auth/login endpoint that accepts email and password, validates credentials using bcrypt, queries the user from the database, and returns a JWT token signed with the secret from environment variables.'
+      });
+      
+      expect(res.jsonrpc).toBe('2.0');
+      expect(res.result).toBeDefined();
+      responseValidator.validate('workflow_validate', res.result);
+      expect(typeof res.result.valid).toBe('boolean');
+    });
+
+    it('returns INVALID_PARAMS for missing workflowId', async () => {
+      const res = await client.send('workflow_validate', {
+        stepId: 'analyze-current-auth',
+        output: 'Some output'
+      });
+      
+      expect(res.error).toBeDefined();
+      expect(res.error.code).toBe(-32602);
+      expect(res.error.message).toBe('Invalid params');
+    });
+
+    it('returns INVALID_PARAMS for missing stepId', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        output: 'Some output'
+      });
+      
+      expect(res.error).toBeDefined();
+      expect(res.error.code).toBe(-32602);
+      expect(res.error.message).toBe('Invalid params');
+    });
+
+    it('returns INVALID_PARAMS for missing output', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'analyze-current-auth'
+      });
+      
+      expect(res.error).toBeDefined();
+      expect(res.error.code).toBe(-32602);
+      expect(res.error.message).toBe('Invalid params');
+    });
+
+    it('returns INVALID_PARAMS for invalid workflowId format', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: 'invalid@workflow!id',
+        stepId: 'analyze-current-auth',
+        output: 'Some output'
+      });
+      
+      expect(res.error).toBeDefined();
+      expect(res.error.code).toBe(-32602);
+      expect(res.error.message).toBe('Invalid params');
+    });
+
+    it('returns INVALID_PARAMS for invalid stepId format', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'invalid@step!id',
+        output: 'Some output'
+      });
+      
+      expect(res.error).toBeDefined();
+      expect(res.error.code).toBe(-32602);
+      expect(res.error.message).toBe('Invalid params');
+    });
+
+    it('returns INVALID_PARAMS for output exceeding maxLength', async () => {
+      const longOutput = 'a'.repeat(10001); // Exceeds 10000 char limit
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'analyze-current-auth',
+        output: longOutput
+      });
+      
+      expect(res.error).toBeDefined();
+      expect(res.error.code).toBe(-32602);
+      expect(res.error.message).toBe('Invalid params');
+    });
+
+    it('handles non-existent workflow gracefully', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: 'non-existent-workflow',
+        stepId: 'some-step',
+        output: 'Some output'
+      });
+      
+      // Should return a proper response, not an error
+      expect(res.jsonrpc).toBe('2.0');
+      if (res.result) {
+        responseValidator.validate('workflow_validate', res.result);
+      }
+    });
+
+    it('handles non-existent step gracefully', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'non-existent-step',
+        output: 'Some output'
+      });
+      
+      // Should return a proper response, not an error
+      expect(res.jsonrpc).toBe('2.0');
+      if (res.result) {
+        responseValidator.validate('workflow_validate', res.result);
+      }
+    });
+
+    it('handles empty output string', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'analyze-current-auth',
+        output: ''
+      });
+      
+      expect(res.jsonrpc).toBe('2.0');
+      expect(res.result).toBeDefined();
+      responseValidator.validate('workflow_validate', res.result);
+      expect(typeof res.result.valid).toBe('boolean');
+    });
+
+    it('handles whitespace-only output', async () => {
+      const res = await client.send('workflow_validate', {
+        workflowId: SAMPLE_ID,
+        stepId: 'analyze-current-auth',
+        output: '   \n\t  '
+      });
+      
+      expect(res.jsonrpc).toBe('2.0');
+      expect(res.result).toBeDefined();
+      responseValidator.validate('workflow_validate', res.result);
+      expect(typeof res.result.valid).toBe('boolean');
+    });
+  });
 }); 

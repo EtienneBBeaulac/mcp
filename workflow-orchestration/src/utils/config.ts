@@ -8,15 +8,15 @@ import { ServerConfig } from '../types/mcp-types';
 // CONFIGURATION SCHEMAS
 // =============================================================================
 
-const ConfigSchema = z.object({
+const configSchema = z.object({
   // Core configuration
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
+  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(3000),
   HOST: z.string().default('0.0.0.0'),
 
   // MCP server configuration
   MCP_SERVER_HOST: z.string().default('localhost'),
-  MCP_SERVER_PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
+  MCP_SERVER_PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(3000),
 
   // Workflow storage
   WORKFLOW_STORAGE_PATH: z.string().default('./workflows'),
@@ -25,47 +25,47 @@ const ConfigSchema = z.object({
   // Security settings
   JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters').default('your-super-secret-jwt-key-change-this-in-production'),
   MCP_API_KEY: z.string().optional(),
-  MAX_INPUT_SIZE: z.string().transform(Number).pipe(z.number().positive()).default('1048576'),
-  RATE_LIMIT_WINDOW: z.string().transform(Number).pipe(z.number().positive()).default('60000'),
-  RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default('100'),
+  MAX_INPUT_SIZE: z.string().transform(Number).pipe(z.number().positive()).default(1048576),
+  RATE_LIMIT_WINDOW: z.string().transform(Number).pipe(z.number().positive()).default(60000),
+  RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default(100),
 
   // Performance settings
-  CACHE_TTL: z.string().transform(Number).pipe(z.number().positive()).default('300000'),
-  MAX_CONCURRENT_REQUESTS: z.string().transform(Number).pipe(z.number().positive()).default('1000'),
+  CACHE_TTL: z.string().transform(Number).pipe(z.number().positive()).default(300000),
+  MAX_CONCURRENT_REQUESTS: z.string().transform(Number).pipe(z.number().positive()).default(1000),
   MEMORY_LIMIT: z.string().default('100MB'),
 
   // Logging & monitoring
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  METRICS_ENABLED: z.string().transform(val => val === 'true').default('true'),
-  HEALTH_CHECK_INTERVAL: z.string().transform(Number).pipe(z.number().positive()).default('30000'),
+  METRICS_ENABLED: z.string().transform(val => val === 'true').default(true),
+  HEALTH_CHECK_INTERVAL: z.string().transform(Number).pipe(z.number().positive()).default(30000),
 
   // Database (optional)
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
 
   // Development settings
-  DEBUG: z.string().transform(val => val === 'true').default('false'),
-  HOT_RELOAD: z.string().transform(val => val === 'true').default('true'),
+  DEBUG: z.string().transform(val => val === 'true').default(false),
+  HOT_RELOAD: z.string().transform(val => val === 'true').default(true),
 
   // Testing settings
   TEST_DATABASE_URL: z.string().default('sqlite::memory:'),
   TEST_WORKFLOW_STORAGE_PATH: z.string().default('./tests/fixtures/workflows'),
 
   // Deployment settings
-  COMPRESSION_ENABLED: z.string().transform(val => val === 'true').default('true'),
+  COMPRESSION_ENABLED: z.string().transform(val => val === 'true').default(true),
   CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
-  TRUST_PROXY: z.string().transform(val => val === 'true').default('false'),
+  TRUST_PROXY: z.string().transform(val => val === 'true').default(false),
 
   // Workflow specific settings
-  MAX_WORKFLOW_SIZE: z.string().transform(Number).pipe(z.number().positive()).default('1048576'),
-  MAX_WORKFLOW_STEPS: z.string().transform(Number).pipe(z.number().positive()).default('50'),
-  WORKFLOW_VALIDATION_ENABLED: z.string().transform(val => val === 'true').default('true'),
-  WORKFLOW_VALIDATION_STRICT: z.string().transform(val => val === 'true').default('true'),
+  MAX_WORKFLOW_SIZE: z.string().transform(Number).pipe(z.number().positive()).default(1048576),
+  MAX_WORKFLOW_STEPS: z.string().transform(Number).pipe(z.number().positive()).default(50),
+  WORKFLOW_VALIDATION_ENABLED: z.string().transform(val => val === 'true').default(true),
+  WORKFLOW_VALIDATION_STRICT: z.string().transform(val => val === 'true').default(true),
 
   // MCP protocol settings
   MCP_PROTOCOL_VERSION: z.string().default('2024-11-05'),
-  MCP_DEBUG: z.string().transform(val => val === 'true').default('false'),
-  MCP_TIMEOUT: z.string().transform(Number).pipe(z.number().positive()).default('30000'),
+  MCP_DEBUG: z.string().transform(val => val === 'true').default(false),
+  MCP_TIMEOUT: z.string().transform(Number).pipe(z.number().positive()).default(30000),
 });
 
 // =============================================================================
@@ -74,7 +74,7 @@ const ConfigSchema = z.object({
 
 export class Configuration {
   private static instance: Configuration;
-  private config: z.infer<typeof ConfigSchema>;
+  private config: z.infer<typeof configSchema>;
 
   private constructor() {
     this.config = this.loadConfiguration();
@@ -90,19 +90,19 @@ export class Configuration {
   /**
    * Load and validate configuration from environment variables
    */
-  private loadConfiguration(): z.infer<typeof ConfigSchema> {
+  private loadConfiguration(): z.infer<typeof configSchema> {
     try {
       // Load environment variables
       const envVars = process.env;
       
       // Parse and validate configuration
-      const config = ConfigSchema.parse(envVars);
+      const config = configSchema.parse(envVars);
       
       return config;
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error('Configuration validation failed:');
-        error.errors.forEach(err => {
+        error.issues.forEach((err: z.ZodIssue) => {
           console.error(`  ${err.path.join('.')}: ${err.message}`);
         });
         process.exit(1);
@@ -114,7 +114,7 @@ export class Configuration {
   /**
    * Get the complete configuration object
    */
-  public getConfig(): z.infer<typeof ConfigSchema> {
+  public getConfig(): z.infer<typeof configSchema> {
     return this.config;
   }
 
@@ -151,7 +151,7 @@ export class Configuration {
   /**
    * Get a specific configuration value
    */
-  public get<K extends keyof z.infer<typeof ConfigSchema>>(key: K): z.infer<typeof ConfigSchema>[K] {
+  public get<K extends keyof z.infer<typeof configSchema>>(key: K): z.infer<typeof configSchema>[K] {
     return this.config[key];
   }
 
@@ -218,7 +218,7 @@ export class Configuration {
     const unitUpper = unit?.toUpperCase() || 'MB';
     const multiplier = units[unitUpper] ?? units['MB'];
     
-    return parseInt(value || '0') * multiplier;
+    return parseInt(value || '0') * (multiplier || 1);
   }
 
   /**
@@ -311,7 +311,7 @@ export const config = Configuration.getInstance();
 /**
  * Get configuration value with type safety
  */
-export function getConfig<K extends keyof z.infer<typeof ConfigSchema>>(key: K): z.infer<typeof ConfigSchema>[K] {
+export function getConfig<K extends keyof z.infer<typeof configSchema>>(key: K): z.infer<typeof configSchema>[K] {
   return config.get(key);
 }
 
