@@ -1,4 +1,4 @@
-import { createDefaultWorkflowStorage } from './workflow/storage';
+import { createDefaultWorkflowStorage } from './infrastructure/storage';
 import { DefaultWorkflowService, WorkflowService } from './services/workflow-service';
 import { IWorkflowStorage } from './types/storage';
 import { createWorkflowLookupServer } from './core/server';
