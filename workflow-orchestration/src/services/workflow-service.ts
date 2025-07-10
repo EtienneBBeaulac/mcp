@@ -51,19 +51,18 @@ export class DefaultWorkflowService implements WorkflowService {
   constructor(private readonly storage: IWorkflowStorage = createDefaultWorkflowStorage()) {}
 
   async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
-    // FileWorkflowStorage returns summaries synchronously; wrap in Promise for interface consistency.
-    return Promise.resolve(this.storage.listWorkflowSummaries());
+    return this.storage.listWorkflowSummaries();
   }
 
   async getWorkflowById(id: string): Promise<Workflow | null> {
-    return Promise.resolve(this.storage.getWorkflowById(id));
+    return this.storage.getWorkflowById(id);
   }
 
   async getNextStep(
     workflowId: string,
     completedSteps: string[]
   ): Promise<{ step: WorkflowStep | null; guidance: WorkflowGuidance; isComplete: boolean }> {
-    const workflow = this.storage.getWorkflowById(workflowId);
+    const workflow = await this.storage.getWorkflowById(workflowId);
     if (!workflow) {
       throw new WorkflowNotFoundError(workflowId);
     }
@@ -86,7 +85,7 @@ export class DefaultWorkflowService implements WorkflowService {
     stepId: string,
     output: string
   ): Promise<{ valid: boolean; issues: string[]; suggestions: string[] }> {
-    const workflow = this.storage.getWorkflowById(workflowId);
+    const workflow = await this.storage.getWorkflowById(workflowId);
     if (!workflow) {
       throw new WorkflowNotFoundError(workflowId);
     }

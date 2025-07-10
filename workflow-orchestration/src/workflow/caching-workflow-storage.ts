@@ -31,29 +31,37 @@ export class CachingWorkflowStorage implements IWorkflowStorage {
     return this.cache !== null && Date.now() - this.cache.timestamp < this.ttlMs;
   }
 
-  loadAllWorkflows(): Workflow[] {
+  async loadAllWorkflows(): Promise<Workflow[]> {
     if (this.isFresh()) {
       this.stats.hits += 1;
       return deepClone(this.cache!.value);
     }
     this.stats.misses += 1;
-    const workflows = this.inner.loadAllWorkflows();
+    const workflows = await this.inner.loadAllWorkflows();
     this.cache = { value: workflows, timestamp: Date.now() };
     return deepClone(workflows);
   }
 
-  getWorkflowById(id: string): Workflow | null {
-    const wf = this.loadAllWorkflows().find((wf) => wf.id === id);
+  async getWorkflowById(id: string): Promise<Workflow | null> {
+    const workflows = await this.loadAllWorkflows();
+    const wf = workflows.find((wf) => wf.id === id);
     return wf ? deepClone(wf) : null;
   }
 
-  listWorkflowSummaries(): WorkflowSummary[] {
-    return this.loadAllWorkflows().map((wf) => ({
+  async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
+    const workflows = await this.loadAllWorkflows();
+    return workflows.map((wf) => ({
       id: wf.id,
       name: wf.name,
       description: wf.description,
       category: 'default',
       version: '1.0.0'
     }));
+  }
+
+  async save?(workflow: Workflow): Promise<void> {
+    if (typeof this.inner.save === 'function') {
+      return this.inner.save(workflow);
+    }
   }
 } 

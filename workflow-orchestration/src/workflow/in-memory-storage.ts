@@ -17,15 +17,15 @@ export class InMemoryWorkflowStorage implements IWorkflowStorage {
     this.workflows = [...workflows];
   }
 
-  public loadAllWorkflows(): Workflow[] {
+  public async loadAllWorkflows(): Promise<Workflow[]> {
     return [...this.workflows];
   }
 
-  public getWorkflowById(id: string): Workflow | null {
+  public async getWorkflowById(id: string): Promise<Workflow | null> {
     return this.workflows.find((wf) => wf.id === id) || null;
   }
 
-  public listWorkflowSummaries(): WorkflowSummary[] {
+  public async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
     return this.workflows.map((wf) => ({
       id: wf.id,
       name: wf.name,
@@ -33,5 +33,14 @@ export class InMemoryWorkflowStorage implements IWorkflowStorage {
       category: 'default',
       version: '1.0.0',
     }));
+  }
+
+  public async save(workflow: Workflow): Promise<void> {
+    const index = this.workflows.findIndex((w) => w.id === workflow.id);
+    if (index >= 0) {
+      this.workflows[index] = workflow;
+    } else {
+      this.workflows.push(workflow);
+    }
   }
 } 

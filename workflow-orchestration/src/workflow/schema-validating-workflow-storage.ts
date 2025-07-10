@@ -30,8 +30,8 @@ export class SchemaValidatingWorkflowStorage implements IWorkflowStorage {
     return true;
   }
 
-  loadAllWorkflows(): Workflow[] {
-    const raw = this.inner.loadAllWorkflows();
+  async loadAllWorkflows(): Promise<Workflow[]> {
+    const raw = await this.inner.loadAllWorkflows();
     return raw.filter((wf) => {
       try {
         return this.ensureValid(wf);
@@ -41,8 +41,8 @@ export class SchemaValidatingWorkflowStorage implements IWorkflowStorage {
     });
   }
 
-  getWorkflowById(id: string): Workflow | null {
-    const wf = this.inner.getWorkflowById(id);
+  async getWorkflowById(id: string): Promise<Workflow | null> {
+    const wf = await this.inner.getWorkflowById(id);
     if (!wf) return null;
     try {
       this.ensureValid(wf);
@@ -52,13 +52,20 @@ export class SchemaValidatingWorkflowStorage implements IWorkflowStorage {
     }
   }
 
-  listWorkflowSummaries() {
-    return this.loadAllWorkflows().map((wf) => ({
+  async listWorkflowSummaries() {
+    const workflows = await this.loadAllWorkflows();
+    return workflows.map((wf) => ({
       id: wf.id,
       name: wf.name,
       description: wf.description,
       category: 'default',
       version: '1.0.0'
     }));
+  }
+
+  async save?(workflow: Workflow): Promise<void> {
+    if (typeof this.inner.save === 'function') {
+      return this.inner.save(workflow);
+    }
   }
 } 

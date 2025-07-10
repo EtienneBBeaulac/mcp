@@ -3,7 +3,7 @@ import { describe, it, expect } from '@jest/globals';
 
 
 describe('InMemoryWorkflowStorage', () => {
-  it('should return workflows provided at construction', () => {
+  it('should return workflows provided at construction', async () => {
     const storage = new InMemoryWorkflowStorage([
       {
         id: 'demo',
@@ -13,9 +13,9 @@ describe('InMemoryWorkflowStorage', () => {
       },
     ] as any);
 
-    const list = storage.loadAllWorkflows();
+    const list = await storage.loadAllWorkflows();
     expect(list).toHaveLength(1);
-    expect(storage.getWorkflowById('demo')).not.toBeNull();
-    expect(storage.getWorkflowById('missing')).toBeNull();
+    expect(await storage.getWorkflowById('demo')).not.toBeNull();
+    expect(await storage.getWorkflowById('missing')).toBeNull();
   });
 }); 

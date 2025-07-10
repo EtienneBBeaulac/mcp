@@ -1,7 +1,17 @@
-import fs from 'fs';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { IWorkflowStorage } from '../types/storage';
 import { Workflow, WorkflowSummary } from '../types/mcp-types';
+import { InvalidWorkflowError } from '../core/error-handler';
+
+function sanitizeId(id: string): string {
+  const valid = /^[a-zA-Z0-9_-]+$/.test(id);
+  if (!valid) {
+    throw new InvalidWorkflowError(id, 'Invalid characters in workflow id');
+  }
+  return id;
+}
 
 /**
  * Minimal file-system based workflow storage.  
@@ -15,35 +25,47 @@ export class FileWorkflowStorage implements IWorkflowStorage {
   /**
    * Load *all* JSON files from the configured directory.
    */
-  public loadAllWorkflows(): Workflow[] {
-    const files = fs.readdirSync(this.directory).filter((f) => f.endsWith('.json'));
+  public async loadAllWorkflows(): Promise<Workflow[]> {
+    const dirEntries = await fs.readdir(this.directory);
+    const jsonFiles = dirEntries.filter((f) => f.endsWith('.json'));
     const workflows: Workflow[] = [];
-    for (const file of files) {
+
+    for (const file of jsonFiles) {
       const filePath = path.join(this.directory, file);
       try {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Workflow;
+        const raw = await fs.readFile(filePath, 'utf-8');
+        const data = JSON.parse(raw) as Workflow;
         workflows.push(data);
-      } catch {
-        // Ignore files that are not valid JSON – validation is handled elsewhere.
+      } catch (err) {
+        // Wrap JSON parse errors with InvalidWorkflowError but continue processing others.
+        console.warn(`[FileWorkflowStorage] Skipping invalid workflow file: ${file}`, err);
         continue;
       }
     }
+
     return workflows;
   }
 
-  public getWorkflowById(id: string): Workflow | null {
-    const workflows = this.loadAllWorkflows();
+  public async getWorkflowById(id: string): Promise<Workflow | null> {
+    sanitizeId(id);
+    const workflows = await this.loadAllWorkflows();
     return workflows.find((wf) => wf.id === id) || null;
   }
 
-  public listWorkflowSummaries(): WorkflowSummary[] {
-    return this.loadAllWorkflows().map((wf) => ({
+  public async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
+    const workflows = await this.loadAllWorkflows();
+    return workflows.map((wf) => ({
       id: wf.id,
       name: wf.name,
       description: wf.description,
       category: 'default',
       version: '1.0.0'
     }));
+  }
+
+  public async save(): Promise<void> {
+    // No-op for now – file storage is read-only in this phase.
+    return Promise.resolve();
   }
 }
 
@@ -55,6 +77,6 @@ export function createDefaultFileWorkflowStorage(): FileWorkflowStorage {
   const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../spec/examples');
   const envPath = process.env['WORKFLOW_STORAGE_PATH'];
   const resolved = envPath ? path.resolve(envPath) : null;
-  const directory = resolved && fs.existsSync(resolved) ? resolved : DEFAULT_WORKFLOW_DIR;
+  const directory = resolved && existsSync(resolved) ? resolved : DEFAULT_WORKFLOW_DIR;
   return new FileWorkflowStorage(directory);
 } 
