@@ -1,0 +1,80 @@
+{
+  "id": "ai-task-prompt-workflow",
+  "name": "AI Task Prompt Workflow",
+  "description": "A structured sequence of prompts designed to guide AI coding agents through various development tasks with clarity, thoroughness, and better outcomes",
+  "preconditions": [
+    "Development environment is set up and accessible",
+    "Codebase files are available for analysis",
+    "Task requirements are clear and well-defined",
+    "AI agent has access to necessary tools and files"
+  ],
+  "clarificationPrompts": [
+    "What is the main goal or feature you want to implement?",
+    "Are there any specific constraints or requirements to consider?",
+    "Which parts of the codebase are most likely to be affected?",
+    "What is the expected timeline or priority for this task?",
+    "Are there any existing patterns or conventions to follow?"
+  ],
+  "steps": [
+    {
+      "id": "codebase-analysis",
+      "title": "Deep Codebase Analysis",
+      "prompt": "**PREP**: Understand the current codebase structure and architecture.\n\n**IMPLEMENT**: Perform a comprehensive analysis of the codebase to identify:\n- Main modules, layers, and architectural patterns\n- Core domain models and important classes\n- Conventions and design decisions used consistently\n- Testing strategy and code quality patterns\n\n**VERIFY**: Confirm understanding by summarizing the key findings and identifying potential areas for improvement.",
+      "askForFiles": true,
+      "requireConfirmation": true
+    },
+    {
+      "id": "task-briefing",
+      "title": "Task Briefing and Initial Scope",
+      "prompt": "**PREP**: Review the task description and requirements thoroughly.\n\n**IMPLEMENT**: Analyze the task and prepare to engage with the codebase by:\n- Summarizing the task in your own words\n- Identifying immediate questions or ambiguities\n- Assessing which parts of the codebase need investigation\n- Determining if deep codebase analysis is needed\n\n**VERIFY**: Confirm understanding and list any missing information that needs clarification.",
+      "requireConfirmation": true
+    },
+    {
+      "id": "pre-implementation-planning",
+      "title": "Pre-Implementation Planning",
+      "prompt": "**PREP**: Review the task requirements and codebase analysis to understand the scope.\n\n**IMPLEMENT**: Create a thorough, actionable plan of attack that includes:\n- Goal clarification and success criteria\n- Impact assessment of affected codebase parts\n- Implementation strategy with discrete, actionable steps\n- Risk identification and mitigation strategies\n- Testing and validation requirements\n\n**VERIFY**: Review the plan for completeness, feasibility, and alignment with best practices.",
+      "askForFiles": true,
+      "requireConfirmation": true
+    },
+    {
+      "id": "prepare-step-implementation",
+      "title": "Prepare for Step Implementation",
+      "prompt": "**PREP**: Review the approved implementation plan and current codebase state.\n\n**IMPLEMENT**: For the next step in the plan:\n- Confirm previous steps are completed and validated\n- Re-read the step description carefully\n- Identify required inputs, files, and definitions\n- Perform pre-implementation checks for validity\n\n**VERIFY**: Confirm readiness to proceed with the specific step implementation.",
+      "askForFiles": true,
+      "requireConfirmation": true
+    },
+    {
+      "id": "execute-planned-step",
+      "title": "Execute Planned Step",
+      "prompt": "**PREP**: Review the specific step requirements and current codebase state.\n\n**IMPLEMENT**: Execute only the specified step from the approved plan:\n- Focus on the specific task without deviation\n- Use available tools appropriately (edit_file, create_file, etc.)\n- Follow existing coding conventions and patterns\n- Record all changes made\n- Make minor adjustments within scope if needed\n\n**VERIFY**: Confirm step completion and prepare for post-implementation verification.",
+      "askForFiles": true,
+      "requireConfirmation": true
+    },
+    {
+      "id": "post-step-verification",
+      "title": "Post-Step Verification",
+      "prompt": "**PREP**: Review the completed step and implementation plan.\n\n**IMPLEMENT**: Perform comprehensive self-review of the completed step:\n- Verify file changes match the step description\n- Check plan alignment and completeness\n- Validate compilation and runtime safety\n- Assess test coverage and code quality\n- Review for side effects and safety\n- Ensure proper commit message and dependencies\n\n**VERIFY**: Confirm the step is complete, correct, and ready for the next phase.",
+      "askForFiles": true,
+      "requireConfirmation": true
+    },
+    {
+      "id": "final-review",
+      "title": "Final Review and Task Completion",
+      "prompt": "**PREP**: Review all completed steps and the original task requirements.\n\n**IMPLEMENT**: Perform holistic review of all changes:\n- Verify holistic cohesion of all implemented changes\n- Confirm all requirements and success criteria are met\n- Assess architectural integrity and consistency\n- Review code cleanliness and documentation\n- Evaluate testing coverage and potential follow-ups\n\n**VERIFY**: Provide concise summary of completed work and confirm task fulfillment.",
+      "askForFiles": true,
+      "requireConfirmation": true
+    }
+  ],
+  "metaGuidance": [
+    "Always follow the prep/implement/verify pattern for each step",
+    "Use appropriate models for different phases (reasoning vs tool-use)",
+    "Never make assumptions - ask for clarification when needed",
+    "Focus on one task at a time - avoid scope creep",
+    "Maintain code quality and follow existing conventions",
+    "Test thoroughly and validate each step before proceeding",
+    "Document decisions and changes clearly",
+    "Consider edge cases and error handling",
+    "Keep commits atomic and well-described",
+    "Review and verify before moving to the next step"
+  ]
+} 

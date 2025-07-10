@@ -21,6 +21,10 @@ Core documentation for developers building the system.
 - **[06-performance-guide.md](implementation/06-performance-guide.md)** - Performance requirements and optimization
 - **[07-deployment-guide.md](implementation/07-deployment-guide.md)** - Deployment strategies and operations
 - **[08-contributing.md](implementation/08-contributing.md)** - Development workflow and standards
+- **[09-simple-workflow-guide.md](implementation/09-simple-workflow-guide.md)** - How to create and understand workflows
+- **[10-specification-review-guide.md](implementation/10-specification-review-guide.md)** - How to review and validate specifications
+- **[11-implementation-planning-guide.md](implementation/11-implementation-planning-guide.md)** - How to plan and prepare for implementation
+- **[12-community-guide.md](implementation/12-community-guide.md)** - How to contribute and participate
 
 ### 🔧 **Advanced Topics** (`advanced/`)
 Advanced features and scalability considerations.
