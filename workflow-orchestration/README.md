@@ -21,6 +21,12 @@ The codebase now implements the full MVP described in the original specification
 ## ✨ Key Features
 
 * **Clean Architecture** – clear separation of **Domain → Application → Infrastructure** layers.
+* **MCP Protocol Support** – Full MCP SDK integration with proper tool definitions and stdio transport.
+* **Workflow Orchestration Tools** – 4 core tools for workflow management:
+  - `workflow_list` - List all available workflows
+  - `workflow_get` - Get detailed workflow information  
+  - `workflow_next` - Get the next step in a workflow
+  - `workflow_validate` - Validate step completion
 * **Dependency Injection** – pluggable components are wired by `src/container.ts` (Inversify-style, no runtime reflection).
 * **Async, Secure Storage** – interchangeable back-ends: in-memory (default for tests) and file-based storage with path-traversal safeguards.
 * **Centralised Validation** – JSON-schema validation for every RPC request + workflow schema validation.
@@ -38,24 +44,102 @@ The codebase now implements the full MVP described in the original specification
 
 ### Development mode
 ```bash
-npx ts-node src/cli.ts start
+npm run dev
 ```
-The server listens for JSON-RPC requests on **stdin/stdout**.
-
-### Workflow validation
-```bash
-npx ts-node src/cli.ts validate <workflow-file.json>
-```
+The MCP server listens for JSON-RPC requests on **stdin/stdout**.
 
 ### Production build
 ```bash
 npm run build
-node dist/cli.js start
+node dist/mcp-server.js
+```
+
+### Workflow validation (CLI utility)
+```bash
+npx ts-node src/cli.ts validate <workflow-file.json>
 ```
 
 ### Docker
 ```bash
 docker-compose up
+```
+
+---
+
+## 🔧 Configuration
+
+### Usage with Claude Desktop
+
+Add this to your `claude_desktop_config.json`:
+
+#### npx (once published to npm)
+
+```json
+{
+  "mcpServers": {
+    "workflow-orchestration": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-workflow-orchestration"
+      ]
+    }
+  }
+}
+```
+
+#### Local development
+
+```json
+{
+  "mcpServers": {
+    "workflow-orchestration": {
+      "command": "node",
+      "args": [
+        "/path/to/your/workflow-orchestration/dist/mcp-server.js"
+      ]
+    }
+  }
+}
+```
+
+### Usage with VS Code
+
+For manual installation, add this to your User Settings (JSON) or `.vscode/mcp.json`:
+
+#### npx (once published)
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "workflow-orchestration": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-workflow-orchestration"
+        ]
+      }
+    }
+  }
+}
+```
+
+#### Local development
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "workflow-orchestration": {
+        "command": "node",
+        "args": [
+          "/path/to/your/workflow-orchestration/dist/mcp-server.js"
+        ]
+      }
+    }
+  }
+}
 ```
 
 ---
@@ -70,6 +154,8 @@ workflow-orchestration/
   │   ├─ infrastructure/
   │   │   ├─ rpc/              # JSON-RPC server adapter
   │   │   └─ storage/          # File, in-memory, caching, schema-validating adapters
+  │   ├─ mcp-server.ts         # MCP server implementation (main entry point)
+  │   ├─ cli.ts                # CLI utility for workflow validation
   │   ├─ container.ts          # DI registrations
   │   └─ index.ts              # Library entrypoint (exports container)
   ├─ tests/                    # Jest test suites (unit & integration)
@@ -79,8 +165,8 @@ workflow-orchestration/
 ### Layered flow
 ```
 Client (AI Agent)
-   ▼  JSON-RPC (stdin/stdout)
-Infrastructure  ── server.ts (adapter)
+   ▼  MCP Protocol (stdin/stdout)
+MCP Server       ── mcp-server.ts (MCP SDK adapter)
    ▼  calls
 Application      ── use-cases (pure biz logic)
    ▼  operates on
@@ -89,7 +175,7 @@ Domain           ── entities & value objects
 
 ---
 
-## 🔧 Configuration
+## 🛠️ Environment Variables
 
 | Env Var | Default | Description |
 |---------|---------|-------------|

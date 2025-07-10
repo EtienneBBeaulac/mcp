@@ -26,11 +26,11 @@ class WorkflowOrchestrationServer {
       let result;
       switch (method) {
         case 'workflow_list':
-          const workflows = await workflowService.listWorkflows();
+          const workflows = await workflowService.listWorkflowSummaries();
           result = { workflows };
           break;
         case 'workflow_get':
-          result = await workflowService.getWorkflow(params.id);
+          result = await workflowService.getWorkflowById(params.id);
           break;
         case 'workflow_next':
           result = await workflowService.getNextStep(params.workflowId, params.completedSteps || []);

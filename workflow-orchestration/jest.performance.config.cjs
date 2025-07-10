@@ -1,11 +1,10 @@
 module.exports = {
-  ...require('./jest.config.js'),
+  ...require('./jest.config.cjs'),
   testMatch: ['**/tests/performance/**/*.test.ts'],
   testTimeout: 60000, // 60 seconds for performance tests
   setupFilesAfterEnv: ['<rootDir>/tests/performance/setup.ts'],
   reporters: [
-    'default',
-    ['<rootDir>/tests/performance/utils/performance-reporter.js']
+    'default'
   ],
   // Performance tests should run in band to avoid resource contention
   maxWorkers: 1,

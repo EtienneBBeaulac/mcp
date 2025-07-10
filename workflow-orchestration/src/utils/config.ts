@@ -11,12 +11,12 @@ import { ServerConfig } from '../types/mcp-types';
 const configSchema = z.object({
   // Core configuration
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(3000),
+  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
   HOST: z.string().default('0.0.0.0'),
 
   // MCP server configuration
   MCP_SERVER_HOST: z.string().default('localhost'),
-  MCP_SERVER_PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(3000),
+  MCP_SERVER_PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
 
   // Workflow storage
   WORKFLOW_STORAGE_PATH: z.string().default('./workflows'),
@@ -25,47 +25,47 @@ const configSchema = z.object({
   // Security settings
   JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters').default('your-super-secret-jwt-key-change-this-in-production'),
   MCP_API_KEY: z.string().optional(),
-  MAX_INPUT_SIZE: z.string().transform(Number).pipe(z.number().positive()).default(1048576),
-  RATE_LIMIT_WINDOW: z.string().transform(Number).pipe(z.number().positive()).default(60000),
-  RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default(100),
+  MAX_INPUT_SIZE: z.string().transform(Number).pipe(z.number().positive()).default('1048576'),
+  RATE_LIMIT_WINDOW: z.string().transform(Number).pipe(z.number().positive()).default('60000'),
+  RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default('100'),
 
   // Performance settings
-  CACHE_TTL: z.string().transform(Number).pipe(z.number().positive()).default(300000),
-  MAX_CONCURRENT_REQUESTS: z.string().transform(Number).pipe(z.number().positive()).default(1000),
+  CACHE_TTL: z.string().transform(Number).pipe(z.number().positive()).default('300000'),
+  MAX_CONCURRENT_REQUESTS: z.string().transform(Number).pipe(z.number().positive()).default('1000'),
   MEMORY_LIMIT: z.string().default('100MB'),
 
   // Logging & monitoring
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  METRICS_ENABLED: z.string().transform(val => val === 'true').default(true),
-  HEALTH_CHECK_INTERVAL: z.string().transform(Number).pipe(z.number().positive()).default(30000),
+  METRICS_ENABLED: z.string().transform(val => val === 'true').default('true'),
+  HEALTH_CHECK_INTERVAL: z.string().transform(Number).pipe(z.number().positive()).default('30000'),
 
   // Database (optional)
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
 
   // Development settings
-  DEBUG: z.string().transform(val => val === 'true').default(false),
-  HOT_RELOAD: z.string().transform(val => val === 'true').default(true),
+  DEBUG: z.string().transform(val => val === 'true').default('false'),
+  HOT_RELOAD: z.string().transform(val => val === 'true').default('true'),
 
   // Testing settings
   TEST_DATABASE_URL: z.string().default('sqlite::memory:'),
   TEST_WORKFLOW_STORAGE_PATH: z.string().default('./tests/fixtures/workflows'),
 
   // Deployment settings
-  COMPRESSION_ENABLED: z.string().transform(val => val === 'true').default(true),
+  COMPRESSION_ENABLED: z.string().transform(val => val === 'true').default('true'),
   CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
-  TRUST_PROXY: z.string().transform(val => val === 'true').default(false),
+  TRUST_PROXY: z.string().transform(val => val === 'true').default('false'),
 
   // Workflow specific settings
-  MAX_WORKFLOW_SIZE: z.string().transform(Number).pipe(z.number().positive()).default(1048576),
-  MAX_WORKFLOW_STEPS: z.string().transform(Number).pipe(z.number().positive()).default(50),
-  WORKFLOW_VALIDATION_ENABLED: z.string().transform(val => val === 'true').default(true),
-  WORKFLOW_VALIDATION_STRICT: z.string().transform(val => val === 'true').default(true),
+  MAX_WORKFLOW_SIZE: z.string().transform(Number).pipe(z.number().positive()).default('1048576'),
+  MAX_WORKFLOW_STEPS: z.string().transform(Number).pipe(z.number().positive()).default('50'),
+  WORKFLOW_VALIDATION_ENABLED: z.string().transform(val => val === 'true').default('true'),
+  WORKFLOW_VALIDATION_STRICT: z.string().transform(val => val === 'true').default('true'),
 
   // MCP protocol settings
   MCP_PROTOCOL_VERSION: z.string().default('2024-11-05'),
-  MCP_DEBUG: z.string().transform(val => val === 'true').default(false),
-  MCP_TIMEOUT: z.string().transform(Number).pipe(z.number().positive()).default(30000),
+  MCP_DEBUG: z.string().transform(val => val === 'true').default('false'),
+  MCP_TIMEOUT: z.string().transform(Number).pipe(z.number().positive()).default('30000'),
 });
 
 // =============================================================================
