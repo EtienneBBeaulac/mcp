@@ -8,7 +8,17 @@ import { IWorkflowStorage } from '../types/storage';
 // FILE-BASED WORKFLOW STORAGE – DEFAULT BACKEND
 // =============================================================================
 
-const WORKFLOW_DIR = path.resolve(__dirname, '../../spec/examples'); // TODO: Make configurable
+// Resolve workflow directory from configuration, falling back to bundled examples
+const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../spec/examples');
+
+// Allow override through environment variable to avoid heavy config dependency
+const envPath = process.env['WORKFLOW_STORAGE_PATH'];
+const resolvedEnvPath = envPath ? path.resolve(envPath) : null;
+
+const WORKFLOW_DIR = resolvedEnvPath && fs.existsSync(resolvedEnvPath)
+  ? resolvedEnvPath
+  : DEFAULT_WORKFLOW_DIR;
+
 const WORKFLOW_SCHEMA_PATH = path.resolve(__dirname, '../../spec/workflow.schema.json');
 
 // -----------------------------------------------------------------------------
