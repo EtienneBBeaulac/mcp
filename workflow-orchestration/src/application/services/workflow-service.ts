@@ -71,10 +71,21 @@ export class DefaultWorkflowService implements WorkflowService {
     const nextStep = workflow.steps.find((step) => !completed.includes(step.id)) || null;
     const isComplete = !nextStep;
 
+    let finalPrompt = 'Workflow complete.';
+    if (nextStep) {
+      let stepGuidance = '';
+      if (nextStep.guidance && nextStep.guidance.length > 0) {
+        const guidanceHeader = '## Step Guidance';
+        const guidanceList = nextStep.guidance.map((g: string) => `- ${g}`).join('\n');
+        stepGuidance = `${guidanceHeader}\n${guidanceList}\n\n`;
+      }
+      finalPrompt = `${stepGuidance}${nextStep.prompt}`;
+    }
+
     return {
       step: nextStep,
       guidance: {
-        prompt: nextStep ? nextStep.prompt : 'Workflow complete.'
+        prompt: finalPrompt
       },
       isComplete
     };

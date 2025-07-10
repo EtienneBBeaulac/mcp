@@ -71,13 +71,20 @@
           },
           "prompt": {
             "type": "string",
-            "description": "The prompt to execute for this step",
+            "description": "The detailed instructions or prompt for this step.",
             "minLength": 1,
             "maxLength": 2048
           },
+          "guidance": {
+            "type": "array",
+            "description": "Optional array of strings providing tactical advice for this step.",
+            "items": {
+              "type": "string"
+            }
+          },
           "askForFiles": {
             "type": "boolean",
-            "description": "Whether to ask for files during this step",
+            "description": "Whether the agent should ask for relevant files before executing the step.",
             "default": false
           },
           "requireConfirmation": {

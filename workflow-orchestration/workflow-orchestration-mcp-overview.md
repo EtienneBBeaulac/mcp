@@ -205,6 +205,7 @@ interface Workflow {
     id: string;
     title: string;
     prompt: string;
+    guidance?: string[]; // Optional tactical advice for this specific step
     askForFiles?: boolean;
     requireConfirmation?: boolean;
   }>;
@@ -1419,7 +1420,7 @@ val response = WorkflowDetail(
         ),
         Step(
             id = "plan",
-            title = "Create detailed implementation plan",
+            title = "Create implementation plan",
             prompt = "Based on your understanding, create a step-by-step plan...",
             requireConfirmation = true
         )
