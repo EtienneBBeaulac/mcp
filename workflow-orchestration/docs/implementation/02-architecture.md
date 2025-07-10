@@ -1,6 +1,6 @@
 # Architecture Guide
 
-> 🏗️ **System Architecture & Design Decisions for the Workflow Orchestration System**
+> 🏗️ **System Architecture & Design Decisions for the Workflow Orchestration System (MVP Implementation Complete)**
 
 [![Status](https://img.shields.io/badge/status-specification-orange.svg)](https://github.com/yourusername/workflow-orchestration-system)
 [![Spec Version](https://img.shields.io/badge/spec-1.0.0-blue.svg)](specs/)
@@ -21,12 +21,7 @@
 
 ## System Overview
 
-The Workflow Orchestration System uses a **hybrid orchestration pattern** where an AI Agent collaborates with a specialized MCP server to execute structured workflows. The system is designed to be:
-- **Agent-Agnostic**: Works with any MCP-compatible agent
-- **Local-First**: All processing happens on the user's machine
-- **Guided, Not Forced**: Provides rails while maintaining agent autonomy
-- **Progressive Enhancement**: Simple agents work, advanced agents work better
-- **Transparent**: No hidden magic, just structured guidance
+The Workflow Orchestration System is now fully implemented as described below. The architecture and patterns outlined here are realized in the codebase, and the MVP is tested and ready for onboarding and extension.
 
 **High-Level Architecture:**
 
@@ -45,7 +40,7 @@ The Workflow Orchestration System uses a **hybrid orchestration pattern** where 
 ## Architecture Patterns
 
 ### Modular Tool Architecture
-- Each MCP tool is a separate module with a consistent interface.
+- Each MCP tool is a separate module in `src/tools/` with a consistent interface.
 - Enables clear separation of concerns, easy testing, and extensibility.
 
 ### Plugin-Based Validation System
@@ -61,7 +56,7 @@ The Workflow Orchestration System uses a **hybrid orchestration pattern** where 
 ## Component Roles
 
 ### MCP Server
-- Handles JSON-RPC 2.0 communication.
+- Handles JSON-RPC 2.0 communication in `src/core/server.ts`.
 - Registers and manages all MCP tools.
 - Coordinates workflow execution and validation.
 
@@ -70,7 +65,7 @@ The Workflow Orchestration System uses a **hybrid orchestration pattern** where 
 - Implements the prep/implement/verify pattern for each step.
 
 ### Validation System
-- Validates workflows and step outputs using plugin-based rules.
+- Validates workflows and step outputs using plugin-based rules in `src/workflow/validation.ts`.
 - Ensures workflows conform to schema and best practices.
 
 ### State Manager
@@ -78,7 +73,7 @@ The Workflow Orchestration System uses a **hybrid orchestration pattern** where 
 - Supports in-memory and persistent storage backends.
 
 ### Workflow Storage
-- Manages workflow definitions and metadata.
+- Manages workflow definitions and metadata in `src/workflow/storage.ts`.
 - Supports file-based storage for simplicity, with future database support.
 
 ### Orchestration Engine
@@ -152,4 +147,6 @@ The Workflow Orchestration System uses a **hybrid orchestration pattern** where 
 - [Testing Strategy](04-testing-strategy.md)
 - [Security Guide](05-security-guide.md)
 - [API Specification](../spec/mcp-api-v1.0.md)
-- [Workflow Schema](../spec/workflow.schema.json) 
+- [Workflow Schema](../spec/workflow.schema.json)
+
+**Note:** The MVP implementation is complete and tested. For concrete examples, see the codebase in `src/` and the test suite in `tests/`. 
