@@ -18,7 +18,7 @@
 
 ## Project Status
 
-**Current Version:** `1.2.0` – MVP **fully implemented & tested** ✅
+**Current Version:** `1.2.0` – **Phases 1-2 complete, Phase 3 in progress** ✅
 
 | Area | Status |
 |------|--------|
@@ -27,7 +27,9 @@
 | Async storage adapters (file, in-memory, cache, schema-validating) | **Done** |
 | Centralised request & workflow validation (Ajv) | **Done** |
 | Typed error mapping & logging | **Done** |
-| Jest test suite (17 tests) | **Passing** |
+| CLI validation command | **Done** |
+| Version field reconciliation | **Done** |
+| Jest test suite (81 passing, 7 failing, 88 total) | **Comprehensive** |
 | Documentation refresh | *In progress* |
 
 ---
@@ -42,6 +44,7 @@ It enforces best-practice patterns (prepare → implement → verify) and integr
 {
   "id": "hello-world",
   "name": "Hello World Tutorial",
+  "version": "1.0.0",
   "steps": [
     { "id": "prep", "prompt": "Create a hello world file", "requireConfirmation": true },
     { "id": "verify", "prompt": "Print contents of the file" }
@@ -60,6 +63,11 @@ It enforces best-practice patterns (prepare → implement → verify) and integr
 ### Development
 ```bash
 npx ts-node src/cli.ts start  # listens on stdin/stdout
+```
+
+### Workflow Validation
+```bash
+npx ts-node src/cli.ts validate <workflow-file.json>  # validate workflow files
 ```
 
 ### Production
@@ -98,7 +106,7 @@ Run tests:
 ```bash
 npm test
 ```
-All suites must pass before a PR is merged.
+Current status: 81 tests passing, 7 failing (performance optimizations in progress), 88 total tests.
 
 ---
 

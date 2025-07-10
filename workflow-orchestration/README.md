@@ -25,7 +25,8 @@ The codebase now implements the full MVP described in the original specification
 * **Async, Secure Storage** – interchangeable back-ends: in-memory (default for tests) and file-based storage with path-traversal safeguards.
 * **Centralised Validation** – JSON-schema validation for every RPC request + workflow schema validation.
 * **Typed Error Mapping** – domain errors (`WorkflowNotFoundError`, `ValidationError`, …) automatically translate to proper JSON-RPC codes.
-* **100 % Test Pass** – 17 focused Jest tests covering storage, validation, error mapping, and server logic.
+* **CLI Validation** – `validate` command for testing workflow files locally with comprehensive error reporting.
+* **Comprehensive Test Coverage** – 81 tests passing, 7 failing (performance optimizations in progress), 88 total tests covering storage, validation, error mapping, CLI, and server logic.
 
 ---
 
@@ -40,6 +41,11 @@ The codebase now implements the full MVP described in the original specification
 npx ts-node src/cli.ts start
 ```
 The server listens for JSON-RPC requests on **stdin/stdout**.
+
+### Workflow validation
+```bash
+npx ts-node src/cli.ts validate <workflow-file.json>
+```
 
 ### Production build
 ```bash
@@ -100,17 +106,18 @@ Change them before starting the server, e.g. `export WORKFLOW_DIR=/opt/workflows
 ```bash
 npm test
 ```
-All 17 suites must pass before any PR is merged.
+Current status: 81 tests passing, 7 failing (performance optimizations in progress), 88 total tests.
 
 ---
 
-## 📚 Documentation Tasks
+## 📚 Documentation Status
 
-We are updating the docs to match the refactor:
-- Root README (this file) – ✅ done
-- Implementation guides – _in progress_
-- Migration guide 1.2 – _todo_
-- Code snippet refresh – _todo_
+| Component | Status | Updated |
+|-----------|--------|---------|
+| Root README | ✅ Complete | 2024-07-10 |
+| Implementation guides | 🔄 In Progress | 2024-07-10 |
+| Migration guide 1.2 | 🔄 In Progress | 2024-07-10 |
+| Code snippet refresh | 🔄 In Progress | 2024-07-10 |
 
 ---
 

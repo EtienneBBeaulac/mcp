@@ -111,7 +111,7 @@ import { getWorkflow } from "./src/application/use-cases/get-workflow";
 1. `npm test` – all suites should pass.
 2. Run a sample RPC call:
    ```bash
-   echo '{"jsonrpc":"2.0","method":"workflow_list","id":1}' | node dist/cli.js start
+   echo '{"jsonrpc":"2.0","method":"workflow_list","params":{},"id":1}' | node dist/cli.js start
    ```
 3. Fix any validation errors reported.
 
