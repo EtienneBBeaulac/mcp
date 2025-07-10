@@ -90,22 +90,33 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
       });
 
       // Listen on stdin/stdout (MCP default)
+      let stdinBuffer = '';
       stdinListener = async (chunk: Buffer) => {
-        const input = chunk.toString();
-        try {
-          const request = JSON.parse(input);
-          const response = await rpcServer!.receive(request);
-          if (response) {
-            process.stdout.write(JSON.stringify(response) + '\n');
+        stdinBuffer += chunk.toString();
+
+        // Process each complete line (newline-delimited JSON-RPC message)
+        let newlineIndex: number;
+        while ((newlineIndex = stdinBuffer.indexOf('\n')) !== -1) {
+          const raw = stdinBuffer.slice(0, newlineIndex).trim();
+          stdinBuffer = stdinBuffer.slice(newlineIndex + 1);
+
+          if (raw.length === 0) continue; // skip empty lines
+
+          try {
+            const request = JSON.parse(raw);
+            const response = await rpcServer!.receive(request);
+            if (response) {
+              process.stdout.write(JSON.stringify(response) + '\n');
+            }
+          } catch (err) {
+            handleError('stdin', err);
+            const errorResponse: JSONRPCResponse = {
+              jsonrpc: '2.0',
+              id: null,
+              error: toJsonRpcError(err)
+            };
+            process.stdout.write(JSON.stringify(errorResponse) + '\n');
           }
-        } catch (err) {
-          handleError('stdin', err);
-          const errorResponse: JSONRPCResponse = {
-            jsonrpc: '2.0',
-            id: null,
-            error: toJsonRpcError(err)
-          };
-          process.stdout.write(JSON.stringify(errorResponse) + '\n');
         }
       };
       if (process.env['NODE_ENV'] !== 'test') {
