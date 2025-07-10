@@ -4,7 +4,7 @@ import { JSONRPCServer } from 'json-rpc-2.0';
 import { ErrorHandler } from '../core/error-handler';
 import { WorkflowService } from '../services/workflow-service';
 import { workflowListHandler } from '../tools/workflow_list';
-import { workflowGetHandler } from '../tools/workflow_get';
+import { getWorkflow } from '../application/use-cases/get-workflow';
 import { workflowNextHandler } from '../tools/workflow_next';
 import { workflowValidateHandler } from '../tools/workflow_validate';
 
@@ -49,11 +49,7 @@ export function createWorkflowLookupServer(
       rpcServer.addMethod(
         'workflow_get',
         wrapRpcMethod('workflow_get', async (params: any) => {
-          const { result } = await workflowGetHandler(
-            { jsonrpc: '2.0', id: 0, method: 'workflow_get', params },
-            workflowService
-          );
-          return result;
+          return getWorkflow(workflowService, params.id);
         })
       );
 
