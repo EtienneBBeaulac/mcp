@@ -1,226 +1,130 @@
-# Workflow Orchestration System
+# Workflow Orchestration Server (MCP-Compatible)
 
-> 🚀 **A specification for transforming unreliable AI coding assistants into consistent, high-quality
-development partners through structured workflows**
+> **Reliable, test-driven workflow execution for AI coding assistants – powered by Clean Architecture**
 
-[![Status](https://img.shields.io/badge/status-specification-orange.svg)](https://github.com/yourusername/workflow-orchestration-system)
-[![Spec Version](https://img.shields.io/badge/spec-1.0.0-blue.svg)](specs/)
+[![Build](https://img.shields.io/github/actions/workflow/status/yourusername/workflow-orchestration/ci.yml?branch=main)]()
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)]()
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
 
-## 🎯 Vision
+---
 
-LLMs are powerful but unpredictable. They hallucinate, lose context, attempt too much at once, and
-produce inconsistent results. The Workflow Orchestration System aims to guide LLMs through proven
-software development practices via structured, step-by-step workflows.
+## 🚀 Overview
 
-**Current Status**: This repository contains the complete specifications for the system.
-Implementation is the next phase.
+Large language models are phenomenal at generating code, yet they often hallucinate, lose context, or perform unsafe operations.  
+This server provides **structured, step-by-step workflows** (defined as JSON documents) that guide an AI assistant through safe, repeatable tasks.  
+It follows [Model Context Protocol (MCP)](https://modelcontextprotocol.org) conventions and exposes a **JSON-RPC 2.0** interface on `stdin/stdout`.
 
-## 📋 What's Here
+The codebase now implements the full MVP described in the original specification, refactored with Clean Architecture for long-term maintainability.
 
-### Specifications (Complete ✅)
+---
 
-- **[System Overview](workflow-orchestration-mcp-overview.md)** - Comprehensive 74-page document covering:
-   - Problem statement and vision
-   - System architecture
-   - Key concepts (prep/implement/verify pattern)
-   - User interaction model
-   - Future roadmap
+## ✨ Key Features
 
-- **[Workflow Schema](spec/workflow.schema.json)** - JSON Schema Draft 7 specification
-   - Defines structure for all workflows
-   - Validation rules and constraints
-   - Extensible design for future features
+* **Clean Architecture** – clear separation of **Domain → Application → Infrastructure** layers.
+* **Dependency Injection** – pluggable components are wired by `src/container.ts` (Inversify-style, no runtime reflection).
+* **Async, Secure Storage** – interchangeable back-ends: in-memory (default for tests) and file-based storage with path-traversal safeguards.
+* **Centralised Validation** – JSON-schema validation for every RPC request + workflow schema validation.
+* **Typed Error Mapping** – domain errors (`WorkflowNotFoundError`, `ValidationError`, …) automatically translate to proper JSON-RPC codes.
+* **100 % Test Pass** – 17 focused Jest tests covering storage, validation, error mapping, and server logic.
 
-- **[API Specification](spec/mcp-api-v1.0.md)** - Complete JSON-RPC 2.0 API
-   - Four core tools: list, get, next, validate
-   - Error handling standards
-   - Request/response examples
+---
 
-- **[Example Workflows](spec/examples/)** - Reference implementations
-   - Valid workflow example (authentication)
-   - Invalid workflow for testing validation
-
-### Documentation (Specification Phase 🚧)
-
-- **[Implementation Guides](docs/implementation/)** - Development documentation
-   - Architecture and design decisions
-   - Development phases and roadmap
-   - Testing strategy and quality assurance
-   - Security and performance considerations
-
-- **[Advanced Topics](docs/advanced/)** - Future enhancement documentation
-   - Plugin system architecture
-   - Multi-tenancy support
-   - Scaling strategies
-   - Workflow versioning
-
-- **[Reference Documentation](docs/reference/)** - Complete reference materials
-   - Configuration options
-   - Troubleshooting guides
-   - Recovery procedures
-
-## 🚦 Running the Server
+## ⚡ Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- Run `npm install` to install dependencies
+* Node 18+
+* `npm install`
 
-### Start the server (development)
-```
+### Development mode
+```bash
 npx ts-node src/cli.ts start
 ```
+The server listens for JSON-RPC requests on **stdin/stdout**.
 
-### Or, after building
-```
+### Production build
+```bash
 npm run build
 node dist/cli.js start
 ```
 
 ### Docker
-```
+```bash
 docker-compose up
 ```
 
-The server will listen for JSON-RPC requests on stdin/stdout.
+---
 
-### Storage & Caching (v1.1+)
-
-The server now uses an abstract storage layer. By default it employs **file-based storage** that reads workflows from the local `spec/examples` directory.  A lightweight **in-memory TTL cache** avoids redundant disk reads—tune it via:
-
-```bash
-# default 300000 ms (5 min)
-export CACHE_TTL=120000   # 2 min
-```
-
-Developers can supply alternative back-ends by implementing the `IWorkflowStorage` interface (see `src/types/storage.ts`).
-
-> **Compatibility:** Legacy helpers (`loadAllWorkflows`, `getWorkflowById`, etc.) still work but are **deprecated**. Migrate to the interface for new code.
-
-## 🏗️ Architecture Overview
-
-The system will consist of:
+## 🗂️ Project Structure (post-refactor)
 
 ```
-┌─────────────┐     ┌─────────────────┐     ┌──────────────┐
-│    User     │────▶│   AI Agent      │────▶│ workflowlookup│
-│             │     │ (Claude, etc)   │     │  MCP Server  │
-└─────────────┘     └─────────────────┘     └──────────────┘
-                            │                        │
-                            │◀───────────────────────┘
-                            │   Structured Guidance  
+workflow-orchestration/
+  ├─ src/
+  │   ├─ domain/               # Pure entities & errors (no dependencies)
+  │   ├─ application/          # Use-cases, services, validation (depends on domain)
+  │   ├─ infrastructure/
+  │   │   ├─ rpc/              # JSON-RPC server adapter
+  │   │   └─ storage/          # File, in-memory, caching, schema-validating adapters
+  │   ├─ container.ts          # DI registrations
+  │   └─ index.ts              # Library entrypoint (exports container)
+  ├─ tests/                    # Jest test suites (unit & integration)
+  └─ docs/                     # Guides, reference, advanced topics
 ```
 
-## 🎨 Core Concepts
-
-### The Workflow Structure
-```json
-{
-   "id": "unique-identifier",
-   "name": "Human-Friendly Name",
-   "description": "What this workflow accomplishes",
-   "preconditions": [
-      "Prerequisites before starting"
-   ],
-   "clarificationPrompts": [
-      "Questions to resolve ambiguities"
-   ],
-  "steps": [
-    {
-      "id": "step-1",
-       "title": "Step Title",
-       "prompt": "Detailed instructions...",
-       "requireConfirmation": true
-    }
-  ],
-   "metaGuidance": [
-      "Best practices that apply throughout"
-   ]
-}
+### Layered flow
 ```
-
-### The prep/implement/verify Pattern
-
-Each implementation step follows:
-
-- **PREP**: Understand the current state
-- **IMPLEMENT**: Make focused changes
-- **VERIFY**: Validate the results
-
-## 🚀 Implementation Roadmap
-
-### Phase 1: MVP (Next Step)
-
-- [ ] Basic workflowlookup MCP server
-- [ ] Core workflow storage and retrieval
-- [ ] Step-by-step guidance engine
-- [ ] Initial workflow library
-
-### Phase 2: Enhanced Features
-
-- [ ] Workflow validation
-- [ ] State management
-- [ ] Model-aware routing hints
-- [ ] Extended workflow library
-
-### Phase 3: Advanced Capabilities
-
-- [ ] Non-linear workflow execution
-- [ ] Dynamic adaptation
-- [ ] Workflow marketplace
-
-## 🤝 Contributing
-
-This project is in the specification phase. You can contribute by:
-
-1. **Reviewing Specifications**: Provide feedback on the current specs
-2. **Proposing Workflows**: Design new workflows following the schema
-3. **Planning Implementation**: Discuss technical approaches
-4. **Improving Documentation**: Help clarify and expand the specs
-
-## 📖 Key Documents
-
-Start here to understand the system:
-
-1. **[System Overview](workflow-orchestration-mcp-overview.md)** - Read this first for the complete vision
-2. **[Documentation Index](docs/README.md)** - Complete documentation structure
-3. **[Getting Started](docs/implementation/01-getting-started.md)** - Quick start guide
-4. **[Architecture Guide](docs/implementation/02-architecture.md)** - System design and components
-5. **[Workflow Schema](spec/workflow.schema.json)** - Understand workflow structure
-6. **[API Specification](spec/mcp-api-v1.0.md)** - See how components communicate
-
-## 🎯 Design Principles
-
-1. **Local-First**: All processing happens on the user's machine
-2. **Agent-Agnostic**: Works with any MCP-compatible AI agent
-3. **Guided, Not Forced**: Provides rails, maintains agent autonomy
-4. **Progressive Enhancement**: Simple agents work, advanced agents work better
-5. **Transparent**: No hidden magic, just structured guidance
-
-## 📊 Success Metrics (Planned)
-
-When implemented, we aim to achieve:
-
-- 70%+ workflow completion rates
-- <200ms response times
-- Reduced hallucination in guided tasks
-- Consistent output quality across users
-
-## 🙏 Acknowledgments
-
-- Inspired by software engineering best practices
-- Built on [Model Context Protocol (MCP)](https://modelcontextprotocol.org) by Anthropic
-- Designed for the real-world challenges of AI-assisted development
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
+Client (AI Agent)
+   ▼  JSON-RPC (stdin/stdout)
+Infrastructure  ── server.ts (adapter)
+   ▼  calls
+Application      ── use-cases (pure biz logic)
+   ▼  operates on
+Domain           ── entities & value objects
+```
 
 ---
 
-<p align="center">
-  <b>Want to help build the future of reliable AI development?</b><br>
-  <a href="workflow-orchestration-mcp-overview.md">Read the Specs</a> •
-  <a href="https://github.com/yourusername/workflow-orchestration-system/issues">Share Feedback</a> •
-  <a href="https://github.com/yourusername/workflow-orchestration-system">Star on GitHub</a>
-</p>
+## 🔧 Configuration
+
+| Env Var | Default | Description |
+|---------|---------|-------------|
+| `WORKFLOW_DIR` | `spec/examples` | Path where workflow JSON files are loaded (file storage) |
+| `CACHE_TTL` | `300000` | Cache TTL in ms for `CachingWorkflowStorage` |
+| `PORT` | _n/a_ | Not used (stdin/stdout transport) |
+
+Change them before starting the server, e.g. `export WORKFLOW_DIR=/opt/workflows`.
+
+---
+
+## 🧪 Running Tests
+
+```bash
+npm test
+```
+All 17 suites must pass before any PR is merged.
+
+---
+
+## 📚 Documentation Tasks
+
+We are updating the docs to match the refactor:
+- Root README (this file) – ✅ done
+- Implementation guides – _in progress_
+- Migration guide 1.2 – _todo_
+- Code snippet refresh – _todo_
+
+---
+
+## 🤝 Contributing
+
+1. **Fork & PR** – small, focused pull requests please.
+2. **Follow the Architecture** – domain logic must remain framework-free; side effects live in infrastructure.
+3. **Add Tests** – no code is accepted without unit tests.
+4. **Run `npm run lint:fix`** before pushing.
+
+See `docs/advanced/contributing.md` for full details.
+
+---
+
+## 📄 License
+
+MIT – see [LICENSE](LICENSE).
