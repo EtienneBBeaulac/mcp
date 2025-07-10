@@ -35,7 +35,18 @@ export class ApplicationMediator {
     }
     // Perform validation once
     this.validateFn(method, params);
-    return await handler(params);
+    const result = await handler(params);
+    // Validate output if a response validator is registered
+    if (this.responseValidate) {
+      this.responseValidate(method, result);
+    }
+    return result;
+  }
+  // Optional response validator injection
+  private responseValidate?: (method: string, result: any) => void;
+
+  setResponseValidator(fn: (method: string, result: any) => void): void {
+    this.responseValidate = fn;
   }
 }
 
@@ -45,6 +56,7 @@ export class ApplicationMediator {
 
 import { WorkflowService } from './services/workflow-service';
 import { requestValidator } from '../validation/request-validator';
+import { responseValidator } from '../validation/response-validator';
 import { listWorkflows } from './use-cases/list-workflows';
 import { getWorkflow } from './use-cases/get-workflow';
 import { getNextStep as getNextWorkflowStep } from './use-cases/get-next-step';
@@ -67,6 +79,9 @@ export function buildWorkflowApplication(
   validator: MethodValidator = requestValidator
 ): ApplicationMediator {
   const app = new ApplicationMediator(validator);
+
+  // Attach response validator
+  app.setResponseValidator((method, result) => responseValidator.validate(method, result));
 
   // ------------------------------------------------------------------------
   // Workflow tool methods
