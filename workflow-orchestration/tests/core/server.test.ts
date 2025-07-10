@@ -1,4 +1,8 @@
+/**
+ * @jest-environment node
+ */
 import { createWorkflowLookupServer } from '../../src/core/server';
+import { describe, it, expect, jest } from '@jest/globals';
 
 describe('WorkflowLookupServer', () => {
   it('should create a server instance', () => {
@@ -19,8 +23,10 @@ describe('WorkflowLookupServer', () => {
       await server.start();
       await server.stop();
       
-      expect(console.log).toHaveBeenCalledWith('Server starting...');
-      expect(console.log).toHaveBeenCalledWith('Server stopping...');
+      expect(console.log).toHaveBeenCalledWith('Initializing Workflow Lookup MCP Server...');
+      expect(console.log).toHaveBeenCalledWith('Server ready to accept JSON-RPC requests');
+      expect(console.log).toHaveBeenCalledWith('Shutting down Workflow Lookup MCP Server...');
+      expect(console.log).toHaveBeenCalledWith('Server stopped');
     } finally {
       console.log = originalLog;
     }

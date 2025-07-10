@@ -1,5 +1,6 @@
 import { WorkflowLookupServer } from '../types/server';
-import { JSONRPCRequest, JSONRPCResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
+import { JSONRPCResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
+// @ts-ignore: No type declarations for 'json-rpc-2.0'
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { workflowListHandler } from '../tools/workflow_list';
 import { workflowGetHandler } from '../tools/workflow_get';
@@ -12,6 +13,7 @@ type JsonRpcServer = JSONRPCServer;
 export function createWorkflowLookupServer(): WorkflowLookupServer {
   let rpcServer: JsonRpcServer | null = null;
   let running = false;
+  let stdinListener: ((chunk: Buffer) => void) | null = null;
 
   return {
     start: async () => {
@@ -20,33 +22,33 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
       rpcServer = new JSONRPCServer();
 
       // Register handlers for each tool
-      rpcServer.addMethod('workflow_list', async (params: any, req: JSONRPCRequest) => {
+      rpcServer.addMethod('workflow_list', async (params: any) => {
         try {
-          return (await workflowListHandler({ ...req, params, method: 'workflow_list' } as any)).result;
+          return (await workflowListHandler({ id: 0, params, method: 'workflow_list' } as any)).result;
         } catch (err) {
           handleError('workflow_list', err);
           throw toJsonRpcError(err);
         }
       });
-      rpcServer.addMethod('workflow_get', async (params: any, req: JSONRPCRequest) => {
+      rpcServer.addMethod('workflow_get', async (params: any) => {
         try {
-          return (await workflowGetHandler({ ...req, params, method: 'workflow_get' } as any)).result;
+          return (await workflowGetHandler({ id: 0, params, method: 'workflow_get' } as any)).result;
         } catch (err) {
           handleError('workflow_get', err);
           throw toJsonRpcError(err);
         }
       });
-      rpcServer.addMethod('workflow_next', async (params: any, req: JSONRPCRequest) => {
+      rpcServer.addMethod('workflow_next', async (params: any) => {
         try {
-          return (await workflowNextHandler({ ...req, params, method: 'workflow_next' } as any)).result;
+          return (await workflowNextHandler({ id: 0, params, method: 'workflow_next' } as any)).result;
         } catch (err) {
           handleError('workflow_next', err);
           throw toJsonRpcError(err);
         }
       });
-      rpcServer.addMethod('workflow_validate', async (params: any, req: JSONRPCRequest) => {
+      rpcServer.addMethod('workflow_validate', async (params: any) => {
         try {
-          return (await workflowValidateHandler({ ...req, params, method: 'workflow_validate' } as any)).result;
+          return (await workflowValidateHandler({ id: 0, params, method: 'workflow_validate' } as any)).result;
         } catch (err) {
           handleError('workflow_validate', err);
           throw toJsonRpcError(err);
@@ -54,7 +56,7 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
       });
 
       // Listen on stdin/stdout (MCP default)
-      process.stdin.on('data', async (chunk) => {
+      stdinListener = async (chunk: Buffer) => {
         const input = chunk.toString();
         try {
           const request = JSON.parse(input);
@@ -71,14 +73,23 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
           };
           process.stdout.write(JSON.stringify(errorResponse) + '\n');
         }
-      });
+      };
+      if (process.env['NODE_ENV'] !== 'test') {
+        process.stdin.on('data', stdinListener);
+      }
       running = true;
       console.log('Server ready to accept JSON-RPC requests');
     },
     stop: async () => {
-      if (!running) return;
+      if (!running) {
+        console.log('Shutdown requested, but server is not running.');
+        return;
+      }
       console.log('Shutting down Workflow Lookup MCP Server...');
-      // TODO: Gracefully shut down if needed
+      if (stdinListener) {
+        process.stdin.off('data', stdinListener);
+        stdinListener = null;
+      }
       running = false;
       console.log('Server stopped');
     }

@@ -1,6 +1,5 @@
 import { WorkflowValidateRequest, WorkflowValidateResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
 import { getWorkflowById } from '../workflow/storage';
-import { validateWorkflow } from '../workflow/validation';
 
 export async function workflowValidateHandler(
   request: WorkflowValidateRequest

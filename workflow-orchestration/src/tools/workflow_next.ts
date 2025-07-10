@@ -1,4 +1,4 @@
-import { WorkflowNextRequest, WorkflowNextResponse, WorkflowStep, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
+import { WorkflowNextRequest, WorkflowNextResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
 import { getWorkflowById } from '../workflow/storage';
 
 export async function workflowNextHandler(

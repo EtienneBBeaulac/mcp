@@ -1,7 +1,6 @@
 import Ajv, { ValidateFunction } from 'ajv';
 import fs from 'fs';
 import path from 'path';
-import { Workflow } from '../types/mcp-types';
 
 const WORKFLOW_SCHEMA_PATH = path.resolve(__dirname, '../../spec/workflow.schema.json');
 

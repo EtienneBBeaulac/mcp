@@ -60,6 +60,30 @@ Implementation is the next phase.
    - Troubleshooting guides
    - Recovery procedures
 
+## 🚦 Running the Server
+
+### Prerequisites
+- Node.js 18+
+- Run `npm install` to install dependencies
+
+### Start the server (development)
+```
+npx ts-node src/cli.ts start
+```
+
+### Or, after building
+```
+npm run build
+node dist/cli.js start
+```
+
+### Docker
+```
+docker-compose up
+```
+
+The server will listen for JSON-RPC requests on stdin/stdout.
+
 ## 🏗️ Architecture Overview
 
 The system will consist of:
