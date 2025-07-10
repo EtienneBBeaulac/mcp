@@ -149,35 +149,11 @@ export class ErrorHandler {
    * Convert generic errors to MCP errors
    */
   private convertToMCPError(error: Error): MCPError {
-    // Handle common error patterns
-    if (error.message.includes('not found')) {
-      return new MCPError(
-        MCPErrorCodes.METHOD_NOT_FOUND,
-        error.message,
-        { originalError: error.name }
-      );
-    }
-
-    if (error.message.includes('validation')) {
-      return new ValidationError(
-        error.message,
-        undefined,
-        { originalError: error.name }
-      );
-    }
-
-    if (error.message.includes('permission') || error.message.includes('unauthorized')) {
-      return new SecurityError(
-        error.message,
-        'access_denied'
-      );
-    }
-
-    // Default to internal error
+    // Default: wrap unknown error as INTERNAL_ERROR.
     return new MCPError(
       MCPErrorCodes.INTERNAL_ERROR,
-      'Internal server error',
-      { originalError: error.message }
+      error.message || 'Internal server error',
+      { originalError: error.name }
     );
   }
 
