@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
 import { createWorkflowLookupServer } from './core/server';
+import { DefaultWorkflowService } from './services/workflow-service';
+import { createDefaultWorkflowStorage } from './workflow/storage';
 
 async function main() {
   try {
-    const server = createWorkflowLookupServer();
+    const workflowService = new DefaultWorkflowService(createDefaultWorkflowStorage());
+    const server = createWorkflowLookupServer(workflowService);
     await server.start();
     console.log('Workflow Lookup MCP Server started successfully');
 

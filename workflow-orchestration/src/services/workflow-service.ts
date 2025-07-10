@@ -35,9 +35,7 @@ import {
   WorkflowStep,
   WorkflowGuidance
 } from '../types/mcp-types';
-import {
-  fileWorkflowStorage
-} from '../workflow/storage';
+import { createDefaultWorkflowStorage } from '../workflow/storage';
 import { IWorkflowStorage } from '../types/storage';
 import {
   WorkflowNotFoundError,
@@ -50,7 +48,7 @@ import {
  * the existing {@link FileWorkflowStorage} backend.
  */
 export class DefaultWorkflowService implements WorkflowService {
-  constructor(private readonly storage: IWorkflowStorage = fileWorkflowStorage) {}
+  constructor(private readonly storage: IWorkflowStorage = createDefaultWorkflowStorage()) {}
 
   async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
     // FileWorkflowStorage returns summaries synchronously; wrap in Promise for interface consistency.
@@ -170,5 +168,6 @@ export class DefaultWorkflowService implements WorkflowService {
   }
 }
 
-// Export a singleton instance for convenience until DI is added in a later refactor
+// Legacy singleton – retained for backwards compatibility. New code should
+// prefer explicit instantiation and dependency injection.
 export const defaultWorkflowService: WorkflowService = new DefaultWorkflowService(); 

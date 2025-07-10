@@ -3,12 +3,10 @@ import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { ErrorHandler } from '../core/error-handler';
 import { WorkflowService } from '../services/workflow-service';
-import { defaultWorkflowService } from '../services/workflow-service';
 
 export function createWorkflowLookupServer(
-  services: { workflowService?: WorkflowService } = {}
+  workflowService: WorkflowService
 ): WorkflowLookupServer {
-  const workflowService = services.workflowService ?? defaultWorkflowService;
   let rpcServer: JSONRPCServer | null = null;
   let running = false;
   let stdinListener: ((chunk: Buffer) => void) | null = null;

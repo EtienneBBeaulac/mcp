@@ -2,18 +2,31 @@
  * @jest-environment node
  */
 import { createWorkflowLookupServer } from '../../src/core/server';
+import { WorkflowService } from '../../src/services/workflow-service';
 import { describe, it, expect, jest } from '@jest/globals';
 
 describe('WorkflowLookupServer', () => {
   it('should create a server instance', () => {
-    const server = createWorkflowLookupServer();
+    const mockService: WorkflowService = {
+      listWorkflowSummaries: async () => [],
+      getWorkflowById: async () => null,
+      getNextStep: async () => ({ step: null, guidance: { prompt: '' }, isComplete: true }),
+      validateStepOutput: async () => ({ valid: true, issues: [], suggestions: [] })
+    };
+    const server = createWorkflowLookupServer(mockService);
     expect(server).toBeDefined();
     expect(typeof server.start).toBe('function');
     expect(typeof server.stop).toBe('function');
   });
 
   it('should start and stop without errors', async () => {
-    const server = createWorkflowLookupServer();
+    const mockService: WorkflowService = {
+      listWorkflowSummaries: async () => [],
+      getWorkflowById: async () => null,
+      getNextStep: async () => ({ step: null, guidance: { prompt: '' }, isComplete: true }),
+      validateStepOutput: async () => ({ valid: true, issues: [], suggestions: [] })
+    };
+    const server = createWorkflowLookupServer(mockService);
     
     // Mock console.log to avoid output during tests
     const originalLog = console.log;

@@ -2,6 +2,8 @@
 
 import { Command } from 'commander';
 import { createWorkflowLookupServer } from './core/server';
+import { DefaultWorkflowService } from './services/workflow-service';
+import { createDefaultWorkflowStorage } from './workflow/storage';
 
 const program = new Command();
 
@@ -15,7 +17,8 @@ program
   .description('Start the workflow lookup server')
   .action(async () => {
     try {
-      const server = createWorkflowLookupServer();
+      const workflowService = new DefaultWorkflowService(createDefaultWorkflowStorage());
+      const server = createWorkflowLookupServer(workflowService);
       await server.start();
       console.log('Workflow Lookup MCP Server started successfully');
 
