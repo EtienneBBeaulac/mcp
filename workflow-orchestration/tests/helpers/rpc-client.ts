@@ -2,7 +2,6 @@
 
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import readline from 'readline';
-import path from 'path';
 
 type Pending = {
   resolve: (value: any) => void;

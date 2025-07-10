@@ -1,6 +1,7 @@
 import Ajv, { ValidateFunction } from 'ajv';
 import { methodParamSchemas } from './schemas';
-import { ValidationError } from '../core/error-handler';
+import { MCPError } from '../core/error-handler';
+import { MCPErrorCodes } from '../types/mcp-types';
 
 class RequestValidator {
   private ajv = new Ajv({ allErrors: true, strict: false });
@@ -20,7 +21,9 @@ class RequestValidator {
     }
     const valid = validator(params);
     if (!valid) {
-      throw new ValidationError('Invalid parameters', undefined, validator.errors);
+      throw new MCPError(MCPErrorCodes.INVALID_PARAMS, 'Invalid params', { 
+        details: validator.errors?.map(e => `${e.instancePath} ${e.message}`).join(', ') || 'Invalid parameters'
+      });
     }
   }
 }
