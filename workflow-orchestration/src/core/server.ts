@@ -1,13 +1,14 @@
 import { WorkflowLookupServer } from '../types/server';
 import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
-import { workflowListHandler } from '../tools/workflow_list';
-import { workflowGetHandler } from '../tools/workflow_get';
-import { workflowNextHandler } from '../tools/workflow_next';
-import { workflowValidateHandler } from '../tools/workflow_validate';
 import { ErrorHandler } from '../core/error-handler';
+import { WorkflowService } from '../services/workflow-service';
+import { defaultWorkflowService } from '../services/workflow-service';
 
-export function createWorkflowLookupServer(): WorkflowLookupServer {
+export function createWorkflowLookupServer(
+  services: { workflowService?: WorkflowService } = {}
+): WorkflowLookupServer {
+  const workflowService = services.workflowService ?? defaultWorkflowService;
   let rpcServer: JSONRPCServer | null = null;
   let running = false;
   let stdinListener: ((chunk: Buffer) => void) | null = null;
@@ -18,34 +19,49 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
       console.log('Initializing Workflow Lookup MCP Server...');
       rpcServer = new JSONRPCServer();
 
-      // Register handlers for each tool
-      rpcServer.addMethod('workflow_list', async (params: any) => {
+      // Register handlers for each tool using injected service layer
+
+      rpcServer.addMethod('workflow_list', async (_params: any) => {
         try {
-          return (await workflowListHandler({ id: 0, params, method: 'workflow_list' } as any)).result;
+          const workflows = await workflowService.listWorkflowSummaries();
+          return { workflows };
         } catch (err) {
           handleError('workflow_list', err);
           throw toJsonRpcError(err);
         }
       });
+
       rpcServer.addMethod('workflow_get', async (params: any) => {
         try {
-          return (await workflowGetHandler({ id: 0, params, method: 'workflow_get' } as any)).result;
+          const workflow = await workflowService.getWorkflowById(params.id);
+          return workflow;
         } catch (err) {
           handleError('workflow_get', err);
           throw toJsonRpcError(err);
         }
       });
+
       rpcServer.addMethod('workflow_next', async (params: any) => {
         try {
-          return (await workflowNextHandler({ id: 0, params, method: 'workflow_next' } as any)).result;
+          const { step, guidance, isComplete } = await workflowService.getNextStep(
+            params.workflowId,
+            params.completedSteps || []
+          );
+          return { step, guidance, isComplete };
         } catch (err) {
           handleError('workflow_next', err);
           throw toJsonRpcError(err);
         }
       });
+
       rpcServer.addMethod('workflow_validate', async (params: any) => {
         try {
-          return (await workflowValidateHandler({ id: 0, params, method: 'workflow_validate' } as any)).result;
+          const { valid, issues, suggestions } = await workflowService.validateStepOutput(
+            params.workflowId,
+            params.stepId,
+            params.output
+          );
+          return { valid, issues, suggestions };
         } catch (err) {
           handleError('workflow_validate', err);
           throw toJsonRpcError(err);
