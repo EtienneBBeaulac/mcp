@@ -1,5 +1,5 @@
-import { Workflow, WorkflowSummary } from '../types/mcp-types';
-import { IWorkflowStorage } from '../types/storage';
+import { Workflow, WorkflowSummary } from '../../types/mcp-types';
+import { IWorkflowStorage } from '../../types/storage';
 
 /**
  * Very lightweight, non-persistent storage implementation for unit tests

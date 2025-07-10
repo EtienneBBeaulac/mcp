@@ -35,7 +35,7 @@ import {
   WorkflowStep,
   WorkflowGuidance
 } from '../types/mcp-types';
-import { createDefaultWorkflowStorage } from '../workflow/storage';
+import { createDefaultWorkflowStorage } from '../infrastructure/storage';
 import { IWorkflowStorage } from '../types/storage';
 import {
   WorkflowNotFoundError,

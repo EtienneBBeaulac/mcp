@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { createDefaultWorkflowStorage } from '../../src/workflow/storage';
+import { createDefaultWorkflowStorage } from '../../src/infrastructure/storage';
 
 describe('Workflow Storage', () => {
   const storage = createDefaultWorkflowStorage();

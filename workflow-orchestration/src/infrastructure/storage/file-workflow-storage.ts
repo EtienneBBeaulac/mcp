@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import { IWorkflowStorage } from '../types/storage';
-import { Workflow, WorkflowSummary } from '../types/mcp-types';
-import { InvalidWorkflowError } from '../core/error-handler';
+import { IWorkflowStorage } from '../../types/storage';
+import { Workflow, WorkflowSummary } from '../../types/mcp-types';
+import { InvalidWorkflowError } from '../../core/error-handler';
 
 function sanitizeId(id: string): string {
   const valid = /^[a-zA-Z0-9_-]+$/.test(id);
@@ -74,7 +74,7 @@ export class FileWorkflowStorage implements IWorkflowStorage {
  * previous behaviour (env override → bundled examples).
  */
 export function createDefaultFileWorkflowStorage(): FileWorkflowStorage {
-  const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../spec/examples');
+  const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../../spec/examples');
   const envPath = process.env['WORKFLOW_STORAGE_PATH'];
   const resolved = envPath ? path.resolve(envPath) : null;
   const directory = resolved && existsSync(resolved) ? resolved : DEFAULT_WORKFLOW_DIR;

@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import { createWorkflowLookupServer } from './core/server';
 import { DefaultWorkflowService } from './services/workflow-service';
-import { createDefaultWorkflowStorage } from './workflow/storage';
+import { createDefaultWorkflowStorage } from './infrastructure/storage';
 
 const program = new Command();
 

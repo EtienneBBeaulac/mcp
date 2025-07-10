@@ -1,4 +1,4 @@
-import { InMemoryWorkflowStorage } from '../../src/workflow/in-memory-storage';
+import { InMemoryWorkflowStorage } from '../../src/infrastructure/storage/in-memory-storage';
 import { describe, it, expect } from '@jest/globals';
 
 

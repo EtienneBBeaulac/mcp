@@ -1,4 +1,4 @@
-import { createDefaultWorkflowStorage } from '../../src/workflow/storage';
+import { createDefaultWorkflowStorage } from '../../src/infrastructure/storage';
 import { Workflow } from '../../src/types/mcp-types';
 import { describe, it, expect } from '@jest/globals';
 

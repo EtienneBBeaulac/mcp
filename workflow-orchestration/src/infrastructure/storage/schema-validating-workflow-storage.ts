@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import Ajv, { ValidateFunction } from 'ajv';
-import { IWorkflowStorage } from '../types/storage';
-import { Workflow } from '../types/mcp-types';
-import { InvalidWorkflowError } from '../core/error-handler';
+import { IWorkflowStorage } from '../../types/storage';
+import { Workflow } from '../../types/mcp-types';
+import { InvalidWorkflowError } from '../../core/error-handler';
 
 /**
  * Decorator that filters or throws when underlying storage returns workflows
@@ -13,7 +13,7 @@ export class SchemaValidatingWorkflowStorage implements IWorkflowStorage {
   private validator: ValidateFunction;
 
   constructor(private readonly inner: IWorkflowStorage) {
-    const schemaPath = path.resolve(__dirname, '../../spec/workflow.schema.json');
+    const schemaPath = path.resolve(__dirname, '../../../spec/workflow.schema.json');
     const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
     const ajv = new Ajv({ allErrors: true, strict: false });
     this.validator = ajv.compile(schema);
