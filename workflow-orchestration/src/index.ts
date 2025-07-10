@@ -26,4 +26,4 @@ if (require.main === module) {
   main();
 }
 
-export { createWorkflowLookupServer } from './core/server'; 
+export { createWorkflowLookupServer } from './infrastructure/rpc/server'; 

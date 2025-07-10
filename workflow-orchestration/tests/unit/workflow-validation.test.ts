@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
-import { validateWorkflow } from '../../src/workflow/validation';
+import { validateWorkflow } from '../../src/application/validation';
 
 const validPath = path.resolve(__dirname, '../../spec/examples/valid-workflow.json');
 const invalidPath = path.resolve(__dirname, '../../spec/examples/invalid-workflow.json');

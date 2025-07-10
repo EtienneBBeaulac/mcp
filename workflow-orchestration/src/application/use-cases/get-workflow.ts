@@ -1,4 +1,4 @@
-import { WorkflowService } from '../../services/workflow-service';
+import { WorkflowService } from '../services/workflow-service';
 import { Workflow } from '../../types/mcp-types';
 import { WorkflowNotFoundError } from '../../core/error-handler';
 

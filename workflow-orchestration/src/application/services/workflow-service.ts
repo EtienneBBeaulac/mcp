@@ -1,9 +1,9 @@
 export interface WorkflowService {
   /** Return lightweight summaries of all workflows. */
-  listWorkflowSummaries(): Promise<import('../types/mcp-types').WorkflowSummary[]>;
+  listWorkflowSummaries(): Promise<import('../../types/mcp-types').WorkflowSummary[]>;
 
   /** Retrieve a workflow by ID, or null if not found. */
-  getWorkflowById(id: string): Promise<import('../types/mcp-types').Workflow | null>;
+  getWorkflowById(id: string): Promise<import('../../types/mcp-types').Workflow | null>;
 
   /**
    * Determine the next step in a workflow given completed step IDs.
@@ -12,8 +12,8 @@ export interface WorkflowService {
     workflowId: string,
     completedSteps: string[]
   ): Promise<{
-    step: import('../types/mcp-types').WorkflowStep | null;
-    guidance: import('../types/mcp-types').WorkflowGuidance;
+    step: import('../../types/mcp-types').WorkflowStep | null;
+    guidance: import('../../types/mcp-types').WorkflowGuidance;
     isComplete: boolean;
   }>;
 
@@ -34,14 +34,14 @@ import {
   WorkflowSummary,
   WorkflowStep,
   WorkflowGuidance
-} from '../types/mcp-types';
-import { createDefaultWorkflowStorage } from '../workflow/storage';
-import { IWorkflowStorage } from '../types/storage';
+} from '../../types/mcp-types';
+import { createDefaultWorkflowStorage } from '../../infrastructure/storage';
+import { IWorkflowStorage } from '../../types/storage';
 import {
   WorkflowNotFoundError,
   StepNotFoundError,
   ValidationError
-} from '../core/error-handler';
+} from '../../core/error-handler';
 
 /**
  * Default implementation of {@link WorkflowService} that relies on

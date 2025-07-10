@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-import { createWorkflowLookupServer } from '../../src/core/server';
-import { WorkflowService } from '../../src/services/workflow-service';
+import { createWorkflowLookupServer } from '../../src/infrastructure/rpc/server';
+import { WorkflowService } from '../../src/application/services/workflow-service';
 import { describe, it, expect, jest } from '@jest/globals';
 
 describe('WorkflowLookupServer', () => {

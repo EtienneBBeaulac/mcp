@@ -1,5 +1,5 @@
-import { IWorkflowStorage } from '../types/storage';
-import { Workflow, WorkflowSummary } from '../types/mcp-types';
+import { IWorkflowStorage } from '../../types/storage';
+import { Workflow, WorkflowSummary } from '../../types/mcp-types';
 
 const deepClone = <T>(obj: T): T => {
   // Use structuredClone if available (Node 17+), otherwise fallback to JSON
