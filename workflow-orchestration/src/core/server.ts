@@ -2,6 +2,7 @@ import { WorkflowLookupServer } from '../types/server';
 import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { ErrorHandler } from '../core/error-handler';
+import { requestValidator } from '../validation/request-validator';
 import { WorkflowService } from '../services/workflow-service';
 import { listWorkflows } from '../application/use-cases/list-workflows';
 import { getNextStep as getNextWorkflowStep } from '../application/use-cases/get-next-step';
@@ -18,6 +19,8 @@ export function createWorkflowLookupServer(
   const wrapRpcMethod = <T extends any, R>(methodName: string, fn: (params: T) => Promise<R> | R) => {
     return async (params: T): Promise<R> => {
       try {
+        // Validate params against schema before executing business logic
+        requestValidator.validate(methodName, params);
         return await fn(params);
       } catch (err) {
         handleError(methodName, err);
