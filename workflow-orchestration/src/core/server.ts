@@ -1,17 +1,13 @@
 import { WorkflowLookupServer } from '../types/server';
 import { JSONRPCResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
-// @ts-ignore: No type declarations for 'json-rpc-2.0'
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { workflowListHandler } from '../tools/workflow_list';
 import { workflowGetHandler } from '../tools/workflow_get';
 import { workflowNextHandler } from '../tools/workflow_next';
 import { workflowValidateHandler } from '../tools/workflow_validate';
 
-// Placeholder for future JSON-RPC server instance
-type JsonRpcServer = JSONRPCServer;
-
 export function createWorkflowLookupServer(): WorkflowLookupServer {
-  let rpcServer: JsonRpcServer | null = null;
+  let rpcServer: JSONRPCServer | null = null;
   let running = false;
   let stdinListener: ((chunk: Buffer) => void) | null = null;
 
