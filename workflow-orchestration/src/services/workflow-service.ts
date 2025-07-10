@@ -36,9 +36,9 @@ import {
   WorkflowGuidance
 } from '../types/mcp-types';
 import {
-  FileWorkflowStorage,
   fileWorkflowStorage
 } from '../workflow/storage';
+import { IWorkflowStorage } from '../types/storage';
 import {
   WorkflowNotFoundError,
   StepNotFoundError,
@@ -50,7 +50,7 @@ import {
  * the existing {@link FileWorkflowStorage} backend.
  */
 export class DefaultWorkflowService implements WorkflowService {
-  constructor(private readonly storage: FileWorkflowStorage = fileWorkflowStorage) {}
+  constructor(private readonly storage: IWorkflowStorage = fileWorkflowStorage) {}
 
   async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
     // FileWorkflowStorage returns summaries synchronously; wrap in Promise for interface consistency.

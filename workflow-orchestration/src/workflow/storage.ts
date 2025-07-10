@@ -1,126 +1,33 @@
-import fs from 'fs';
-import path from 'path';
-import Ajv, { ValidateFunction } from 'ajv';
+// Re-export new modular storage pieces and compose them to keep backward compatibility
+
+import { FileWorkflowStorage, createDefaultFileWorkflowStorage } from './file-workflow-storage';
+import { SchemaValidatingWorkflowStorage } from './schema-validating-workflow-storage';
+import { CachingWorkflowStorage } from './caching-workflow-storage';
 import { Workflow, WorkflowSummary } from '../types/mcp-types';
-import { IWorkflowStorage } from '../types/storage';
-
-// =============================================================================
-// FILE-BASED WORKFLOW STORAGE – DEFAULT BACKEND
-// =============================================================================
-
-// Resolve workflow directory from configuration, falling back to bundled examples
-const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../spec/examples');
-
-// Allow override through environment variable to avoid heavy config dependency
-const envPath = process.env['WORKFLOW_STORAGE_PATH'];
-const resolvedEnvPath = envPath ? path.resolve(envPath) : null;
-
-const WORKFLOW_DIR = resolvedEnvPath && fs.existsSync(resolvedEnvPath)
-  ? resolvedEnvPath
-  : DEFAULT_WORKFLOW_DIR;
-
-const WORKFLOW_SCHEMA_PATH = path.resolve(__dirname, '../../spec/workflow.schema.json');
 
 // -----------------------------------------------------------------------------
-// SIMPLE IN-MEMORY CACHE (TTL-BASED)
+// Default composition mimicking previous behaviour
 // -----------------------------------------------------------------------------
 
-const DEFAULT_CACHE_TTL_MS = Number(process.env['CACHE_TTL'] ?? 300_000); // 5 minutes
+const BASE_STORAGE = createDefaultFileWorkflowStorage();
+const VALIDATING_STORAGE = new SchemaValidatingWorkflowStorage(BASE_STORAGE);
+const CACHE_TTL = Number(process.env['CACHE_TTL'] ?? 300_000); // 5 minutes
+const CACHED_STORAGE = new CachingWorkflowStorage(VALIDATING_STORAGE, CACHE_TTL);
 
-interface Cached<T> {
-  value: T;
-  timestamp: number; // epoch millis when cached
-}
-
-interface CacheStats {
-  hits: number;
-  misses: number;
-}
-
-/**
- * Lazy-init JSON-Schema validator for workflow files.
- */
-let validator: ValidateFunction | null = null;
-function getValidator(): ValidateFunction {
-  if (!validator) {
-    const schema = JSON.parse(fs.readFileSync(WORKFLOW_SCHEMA_PATH, 'utf-8'));
-    const ajv = new Ajv({ allErrors: true, strict: false });
-    validator = ajv.compile(schema);
-  }
-  return validator!;
-}
-
-/**
- * File-system implementation of {@link IWorkflowStorage}.
- * Reads workflow JSON files from the local examples/spec directory.
- */
-export class FileWorkflowStorage implements IWorkflowStorage {
-  private cache: Cached<Workflow[]> | null = null;
-  private stats: CacheStats = { hits: 0, misses: 0 };
-
-  /** Expose simple cache statistics */
-  public getCacheStats(): CacheStats {
-    return { ...this.stats };
-  }
-
-  /** Load and return all valid workflows found in WORKFLOW_DIR. */
-  public loadAllWorkflows(): Workflow[] {
-    // Cache hit path
-    if (this.cache && Date.now() - this.cache.timestamp < DEFAULT_CACHE_TTL_MS) {
-      this.stats.hits += 1;
-      return this.cache.value;
-    }
-
-    // Cache miss → reload from FS
-    this.stats.misses += 1;
-    const files = fs.readdirSync(WORKFLOW_DIR).filter((f) => f.endsWith('.json'));
-    const validate = getValidator();
-    const workflows: Workflow[] = [];
-
-    for (const file of files) {
-      const filePath = path.join(WORKFLOW_DIR, file);
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      if (validate(data)) {
-        workflows.push(data as Workflow);
-      }
-    }
-
-    // Save to cache
-    this.cache = { value: workflows, timestamp: Date.now() };
-    return workflows;
-  }
-
-  /** Retrieve a single workflow by its ID. */
-  public getWorkflowById(id: string): Workflow | null {
-    const workflows = this.loadAllWorkflows();
-    return workflows.find((wf) => wf.id === id) || null;
-  }
-
-  /** Return lightweight summaries of all workflows. */
-  public listWorkflowSummaries(): WorkflowSummary[] {
-    return this.loadAllWorkflows().map((wf) => ({
-      id: wf.id,
-      name: wf.name,
-      description: wf.description,
-      category: 'default', // TODO: Derive from workflow metadata when available
-      version: '1.0.0', // TODO: Derive from workflow metadata when available
-    }));
-  }
-}
+// Export the composed instance with the same name as before to avoid refactor ripple
+export const fileWorkflowStorage: CachingWorkflowStorage = CACHED_STORAGE;
 
 // -----------------------------------------------------------------------------
-// DEFAULT STORAGE INSTANCE & BACKWARD-COMPATIBILITY HELPERS
+// Legacy helper functions – now delegate to composed storage
 // -----------------------------------------------------------------------------
 
-/**
- * Singleton instance used by the current codebase.
- * Other storage implementations can be swapped in future via DI or factory.
- */
-export const fileWorkflowStorage = new FileWorkflowStorage();
-
-// Legacy function exports (kept to minimise refactor scope). Internally they
-// delegate to {@link fileWorkflowStorage}. These can be deprecated in a later
-// cleanup once all consumers migrate to the interface directly.
 export const loadAllWorkflows = (): Workflow[] => fileWorkflowStorage.loadAllWorkflows();
 export const getWorkflowById = (id: string): Workflow | null => fileWorkflowStorage.getWorkflowById(id);
-export const listWorkflowSummaries = (): WorkflowSummary[] => fileWorkflowStorage.listWorkflowSummaries(); 
+export const listWorkflowSummaries = (): WorkflowSummary[] => fileWorkflowStorage.listWorkflowSummaries();
+
+// Re-export classes for external usage if needed
+export {
+  FileWorkflowStorage,
+  SchemaValidatingWorkflowStorage,
+  CachingWorkflowStorage
+}; 
