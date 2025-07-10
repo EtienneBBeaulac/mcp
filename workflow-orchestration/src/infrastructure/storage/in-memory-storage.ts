@@ -26,12 +26,12 @@ export class InMemoryWorkflowStorage implements IWorkflowStorage {
   }
 
   public async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
-    return this.workflows.map((wf) => ({
-      id: wf.id,
-      name: wf.name,
-      description: wf.description,
+    return this.workflows.map((workflow) => ({
+      id: workflow.id,
+      name: workflow.name,
+      description: workflow.description,
       category: 'default',
-      version: '1.0.0',
+      version: workflow.version
     }));
   }
 

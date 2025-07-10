@@ -55,7 +55,7 @@ export class CachingWorkflowStorage implements IWorkflowStorage {
       name: wf.name,
       description: wf.description,
       category: 'default',
-      version: '1.0.0'
+      version: wf.version
     }));
   }
 

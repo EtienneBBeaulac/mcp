@@ -148,12 +148,12 @@ export class FileWorkflowStorage implements IWorkflowStorage {
 
   public async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
     const workflows = await this.loadAllWorkflows();
-    return workflows.map((wf) => ({
-      id: wf.id,
-      name: wf.name,
-      description: wf.description,
+    return workflows.map((workflow) => ({
+      id: workflow.id,
+      name: workflow.name,
+      description: workflow.description,
       category: 'default',
-      version: '1.0.0'
+      version: workflow.version
     }));
   }
 

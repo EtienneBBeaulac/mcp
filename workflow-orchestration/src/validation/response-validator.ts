@@ -26,6 +26,7 @@ const workflowSchema = z.object({
   id: z.string().regex(idRegex),
   name: z.string(),
   description: z.string(),
+  version: z.string(),
   preconditions: z.array(z.string()).optional(),
   clarificationPrompts: z.array(z.string()).optional(),
   steps: z.array(workflowStepSchema),

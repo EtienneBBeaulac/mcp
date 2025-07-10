@@ -9,6 +9,7 @@ export interface Workflow {
   id: string;
   name: string;
   description: string;
+  version: string;
   preconditions?: string[];
   clarificationPrompts?: string[];
   steps: WorkflowStep[];

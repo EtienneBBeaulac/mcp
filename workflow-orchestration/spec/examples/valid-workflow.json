@@ -2,6 +2,7 @@
   "id": "simple-auth-implementation",
   "name": "Simple Authentication Implementation",
   "description": "Implement basic JWT authentication for a REST API with user login and token validation",
+  "version": "1.0.0",
   "preconditions": [
     "User model exists in the database",
     "JWT library is installed in the project",
