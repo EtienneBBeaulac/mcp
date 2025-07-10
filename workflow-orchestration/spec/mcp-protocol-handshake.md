@@ -6,6 +6,20 @@
 [![MCP Version](https://img.shields.io/badge/MCP-2024--11--05-blue.svg)](https://modelcontextprotocol.org)
 [![Protocol](https://img.shields.io/badge/protocol-JSON--RPC%202.0-green.svg)](https://www.jsonrpc.org/specification)
 
+---
+
+## Purpose & Scope
+
+This specification defines the MCP (Model Context Protocol) handshake and initialization protocol for the Workflow Orchestration System's `workflowlookup` server. It covers server initialization, tool discovery, error handling, communication framing, and lifecycle requirements for MCP-compliant servers and clients.
+
+This document is normative for all implementations of the workflowlookup MCP server and any client wishing to interoperate with it.
+
+## Normative Language
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119).
+
+---
+
 ## Overview
 
 This document specifies the MCP (Model Context Protocol) implementation for the workflowlookup server. The server follows the MCP standard for server initialization, tool discovery, and communication.
@@ -535,6 +549,44 @@ The server responds with all available tools, their schemas, and metadata:
   - Validate tool input/output schemas
   - Test parameter validation
   - Test error responses
+
+## Versioning & Compatibility
+
+- **Protocol Version**: `2024-11-05`
+- **Specification Version**: 1.0.0
+- The server MUST reject initialization requests with unsupported protocol versions.
+- Backward-incompatible changes will increment the protocol version.
+- Workflows and clients SHOULD specify the minimum compatible server version if applicable.
+
+---
+
+## Conformance
+
+An implementation is conformant if it:
+- Implements all required request/response structures as specified
+- Handles all error cases as described
+- Follows the communication, encoding, and framing requirements
+- Passes all protocol and schema tests outlined in this document
+
+Non-conformant implementations MUST NOT claim MCP compatibility.
+
+---
+
+## Glossary
+
+- **MCP**: Model Context Protocol
+- **Stdio**: Standard input/output (process communication channel)
+- **Tool**: An API method exposed by the MCP server
+- **Handshake**: The initialization exchange between client and server
+- **Capabilities**: Features supported by the client or server, exchanged during initialization
+
+---
+
+## Changelog
+
+- **2024-11-05**: Initial version, complete handshake, tool discovery, error handling, and lifecycle specification.
+
+---
 
 ## References
 

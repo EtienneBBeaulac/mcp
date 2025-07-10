@@ -5,6 +5,18 @@ This document formally specifies the JSON-RPC 2.0 API for the Workflow Orchestra
 
 > **Note**: This document focuses on the workflow-specific tools. For complete MCP protocol compliance including server initialization, tool discovery, and handshake procedures, see [MCP Protocol Handshake Specification](mcp-protocol-handshake.md).
 
+## MCP Protocol Compliance
+
+This server implements the full MCP (Model Context Protocol) specification:
+
+- ✅ **Server Initialization**: Handles `initialize` requests with protocol version validation
+- ✅ **Tool Discovery**: Implements `tools/list` with complete input/output schemas  
+- ✅ **Error Handling**: Uses MCP standard error codes (-32000 to -32099 range)
+- ✅ **Communication**: Stdio transport with newline-delimited JSON-RPC messages
+- ✅ **Server Lifecycle**: Proper startup, shutdown, and error recovery
+
+For complete protocol details, see [MCP Protocol Handshake Specification](mcp-protocol-handshake.md).
+
 ## JSON-RPC 2.0 Base Protocol
 
 All communication follows the [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification).
@@ -73,6 +85,7 @@ Every request to the MCP server must conform to this structure:
 | -32601 | Method not found | The method does not exist |
 | -32602 | Invalid params | Invalid method parameter(s) |
 | -32603 | Internal error | Internal JSON-RPC error |
+| -32000 | Server error | Server-specific error (MCP reserved) |
 | -32001 | Workflow not found | The specified workflow ID does not exist |
 | -32002 | Invalid workflow | The workflow file is malformed or invalid |
 | -32003 | Step not found | The specified step ID does not exist in the workflow |
