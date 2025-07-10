@@ -1,13 +1,23 @@
 import { WorkflowLookupServer } from '../types/server';
 
+// Placeholder for future JSON-RPC server instance
+type JsonRpcServer = unknown; // Replace with actual type when library is chosen
+
 export function createWorkflowLookupServer(): WorkflowLookupServer {
-  // TODO: Implement actual server logic
+  let rpcServer: JsonRpcServer | null = null;
+
   return {
     start: async () => {
-      console.log('Server starting...');
+      console.log('Initializing Workflow Lookup MCP Server...');
+      // TODO: Initialize JSON-RPC server here
+      // rpcServer = ...
+      console.log('Server ready to accept JSON-RPC requests (implementation pending)');
     },
     stop: async () => {
-      console.log('Server stopping...');
+      console.log('Shutting down Workflow Lookup MCP Server...');
+      // TODO: Gracefully shut down JSON-RPC server here
+      // if (rpcServer) { ... }
+      console.log('Server stopped (implementation pending)');
     }
   };
 } 
