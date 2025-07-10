@@ -1,8 +1,8 @@
-import { createDefaultWorkflowStorage } from './infrastructure/storage';
-import { DefaultWorkflowService, WorkflowService } from './application/services/workflow-service';
-import { IWorkflowStorage } from './types/storage';
-import { createWorkflowLookupServer } from './infrastructure/rpc/server';
-import { WorkflowLookupServer } from './types/server';
+import { createDefaultWorkflowStorage } from './infrastructure/storage/storage.js';
+import { DefaultWorkflowService, WorkflowService } from './application/services/workflow-service.js';
+import { IWorkflowStorage } from './types/storage.js';
+import { createWorkflowLookupServer } from './infrastructure/rpc/server.js';
+import { WorkflowLookupServer } from './types/server.js';
 
 /**
  * Centralized composition root / dependency-injection helper.
