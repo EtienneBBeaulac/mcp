@@ -57,10 +57,10 @@ export class ApplicationMediator {
 import { WorkflowService } from './services/workflow-service';
 import { requestValidator } from '../validation/request-validator';
 import { responseValidator } from '../validation/response-validator';
-import { listWorkflows } from './use-cases/list-workflows';
-import { getWorkflow } from './use-cases/get-workflow';
-import { getNextStep as getNextWorkflowStep } from './use-cases/get-next-step';
-import { validateStepOutput as validateWorkflowStepOutput } from './use-cases/validate-step-output';
+import { createListWorkflows } from './use-cases/list-workflows';
+import { createGetWorkflow } from './use-cases/get-workflow';
+import { createGetNextStep } from './use-cases/get-next-step';
+import { createValidateStepOutput } from './use-cases/validate-step-output';
 
 export const METHOD_NAMES = {
   WORKFLOW_LIST: 'workflow_list',
@@ -84,28 +84,34 @@ export function buildWorkflowApplication(
   app.setResponseValidator((method, result) => responseValidator.validate(method, result));
 
   // ------------------------------------------------------------------------
+  // Create use-case instances with injected dependencies
+  // ------------------------------------------------------------------------
+  const listWorkflowsUseCase = createListWorkflows(workflowService);
+  const getWorkflowUseCase = createGetWorkflow(workflowService);
+  const getNextStepUseCase = createGetNextStep(workflowService);
+  const validateStepOutputUseCase = createValidateStepOutput(workflowService);
+
+  // ------------------------------------------------------------------------
   // Workflow tool methods
   // ------------------------------------------------------------------------
   app.register(METHOD_NAMES.WORKFLOW_LIST, async (_params: any) => {
-    const workflows = await listWorkflows(workflowService);
+    const workflows = await listWorkflowsUseCase();
     return { workflows };
   });
 
   app.register(METHOD_NAMES.WORKFLOW_GET, async (params: any) => {
-    return getWorkflow(workflowService, params.id);
+    return getWorkflowUseCase(params.id);
   });
 
   app.register(METHOD_NAMES.WORKFLOW_NEXT, async (params: any) => {
-    return getNextWorkflowStep(
-      workflowService,
+    return getNextStepUseCase(
       params.workflowId,
       params.completedSteps || []
     );
   });
 
   app.register(METHOD_NAMES.WORKFLOW_VALIDATE, async (params: any) => {
-    return validateWorkflowStepOutput(
-      workflowService,
+    return validateStepOutputUseCase(
       params.workflowId,
       params.stepId,
       params.output
