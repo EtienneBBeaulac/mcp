@@ -1,10 +1,10 @@
 import { WorkflowGetRequest, WorkflowGetResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
-import { getWorkflowById } from '../workflow/storage';
+import { fileWorkflowStorage } from '../workflow/storage';
 
 export async function workflowGetHandler(
   request: WorkflowGetRequest
 ): Promise<WorkflowGetResponse> {
-  const workflow = getWorkflowById(request.params.id);
+  const workflow = fileWorkflowStorage.getWorkflowById(request.params.id);
   if (workflow) {
     return {
       jsonrpc: '2.0',

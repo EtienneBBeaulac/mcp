@@ -1,10 +1,10 @@
 import { WorkflowNextRequest, WorkflowNextResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
-import { getWorkflowById } from '../workflow/storage';
+import { fileWorkflowStorage } from '../workflow/storage';
 
 export async function workflowNextHandler(
   request: WorkflowNextRequest
 ): Promise<WorkflowNextResponse> {
-  const workflow = getWorkflowById(request.params.workflowId);
+  const workflow = fileWorkflowStorage.getWorkflowById(request.params.workflowId);
   if (!workflow) {
     throw {
       code: MCPErrorCodes.WORKFLOW_NOT_FOUND,
