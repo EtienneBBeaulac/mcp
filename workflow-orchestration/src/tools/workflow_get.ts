@@ -1,5 +1,6 @@
-import { WorkflowGetRequest, WorkflowGetResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
+import { WorkflowGetRequest, WorkflowGetResponse } from '../types/mcp-types';
 import { fileWorkflowStorage } from '../workflow/storage';
+import { WorkflowNotFoundError } from '../core/error-handler';
 
 export async function workflowGetHandler(
   request: WorkflowGetRequest
@@ -11,11 +12,7 @@ export async function workflowGetHandler(
       id: request.id,
       result: workflow
     };
-  } else {
-    // Return JSON-RPC error response for not found
-    throw {
-      code: MCPErrorCodes.WORKFLOW_NOT_FOUND,
-      message: `Workflow with id '${request.params.id}' not found.`
-    } as JSONRPCError;
   }
+  // If not found, throw standardized error
+  throw new WorkflowNotFoundError(request.params.id);
 } 

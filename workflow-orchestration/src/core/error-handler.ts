@@ -23,7 +23,7 @@ export class WorkflowNotFoundError extends MCPError {
   constructor(workflowId: string) {
     super(
       MCPErrorCodes.WORKFLOW_NOT_FOUND,
-      `Workflow not found: ${workflowId}`,
+      `Workflow with id '${workflowId}' not found`,
       { workflowId }
     );
     this.name = 'WorkflowNotFoundError';
@@ -42,11 +42,11 @@ export class InvalidWorkflowError extends MCPError {
 }
 
 export class StepNotFoundError extends MCPError {
-  constructor(workflowId: string, stepId: string) {
+  constructor(stepId: string, workflowId?: string) {
     super(
       MCPErrorCodes.STEP_NOT_FOUND,
-      `Step not found: ${stepId} in workflow ${workflowId}`,
-      { workflowId, stepId }
+      `Step with id '${stepId}' not found in workflow`,
+      { stepId, workflowId }
     );
     this.name = 'StepNotFoundError';
   }
@@ -309,6 +309,14 @@ export class ErrorHandler {
           "Verify the step ID exists in the workflow",
           "Check the workflow definition for the correct step ID",
           "Ensure the workflow is properly loaded"
+        );
+        break;
+
+      case MCPErrorCodes.WORKFLOW_NOT_FOUND:
+        suggestions.push(
+          "Check if the workflow ID is correct",
+          "Verify the workflow exists in the storage",
+          "List available workflows to confirm the ID"
         );
         break;
 

@@ -1,22 +1,17 @@
-import { WorkflowValidateRequest, WorkflowValidateResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
+import { WorkflowValidateRequest, WorkflowValidateResponse } from '../types/mcp-types';
 import { fileWorkflowStorage } from '../workflow/storage';
+import { WorkflowNotFoundError, StepNotFoundError } from '../core/error-handler';
 
 export async function workflowValidateHandler(
   request: WorkflowValidateRequest
 ): Promise<WorkflowValidateResponse> {
   const workflow = fileWorkflowStorage.getWorkflowById(request.params.workflowId);
   if (!workflow) {
-    throw {
-      code: MCPErrorCodes.WORKFLOW_NOT_FOUND,
-      message: `Workflow with id '${request.params.workflowId}' not found.`
-    } as JSONRPCError;
+    throw new WorkflowNotFoundError(request.params.workflowId);
   }
   const step = workflow.steps.find(s => s.id === request.params.stepId);
   if (!step) {
-    throw {
-      code: MCPErrorCodes.STEP_NOT_FOUND,
-      message: `Step with id '${request.params.stepId}' not found in workflow.`
-    } as JSONRPCError;
+    throw new StepNotFoundError(request.params.stepId, request.params.workflowId);
   }
   // TODO: Implement real output validation logic
   // For now, just check that output is a non-empty string
