@@ -1,6 +1,14 @@
 import { IWorkflowStorage } from '../types/storage';
 import { Workflow, WorkflowSummary } from '../types/mcp-types';
 
+const deepClone = <T>(obj: T): T => {
+  // Use structuredClone if available (Node 17+), otherwise fallback to JSON
+  if (typeof (global as any).structuredClone === 'function') {
+    return (global as any).structuredClone(obj);
+  }
+  return JSON.parse(JSON.stringify(obj));
+};
+
 interface Cached<T> {
   value: T;
   timestamp: number;
@@ -26,16 +34,17 @@ export class CachingWorkflowStorage implements IWorkflowStorage {
   loadAllWorkflows(): Workflow[] {
     if (this.isFresh()) {
       this.stats.hits += 1;
-      return this.cache!.value;
+      return deepClone(this.cache!.value);
     }
     this.stats.misses += 1;
     const workflows = this.inner.loadAllWorkflows();
     this.cache = { value: workflows, timestamp: Date.now() };
-    return workflows;
+    return deepClone(workflows);
   }
 
   getWorkflowById(id: string): Workflow | null {
-    return this.loadAllWorkflows().find((wf) => wf.id === id) || null;
+    const wf = this.loadAllWorkflows().find((wf) => wf.id === id);
+    return wf ? deepClone(wf) : null;
   }
 
   listWorkflowSummaries(): WorkflowSummary[] {
