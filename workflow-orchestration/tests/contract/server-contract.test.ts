@@ -53,9 +53,26 @@ describe('MCP Server JSON-RPC contract', () => {
   });
 
   it('handles initialize handshake', async () => {
-    const res = await client.send('initialize', { protocolVersion: '1.0', capabilities: {} });
+    const res = await client.send('initialize', { protocolVersion: '2024-11-05', capabilities: {} });
     expect(res.result.serverInfo).toBeDefined();
     expect(res.result.serverInfo.name).toBeDefined();
+    expect(res.result.protocolVersion).toBe('2024-11-05');
+    expect(res.result.capabilities.tools.listChanged).toBe(false);
+  });
+
+  it('rejects unsupported protocol version', async () => {
+    const res = await client.send('initialize', { protocolVersion: '1.0', capabilities: {} });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32000);
+    expect(res.error.message).toBe('Unsupported protocol version');
+    expect(res.error.data.supportedVersions).toEqual(['2024-11-05']);
+  });
+
+  it('rejects initialize with missing protocolVersion', async () => {
+    const res = await client.send('initialize', { capabilities: {} });
+    expect(res.error).toBeDefined();
+    expect(res.error.code).toBe(-32602);
+    expect(res.error.message).toBe('Invalid params: protocolVersion is required');
   });
 
   it('shutdown returns null', async () => {
