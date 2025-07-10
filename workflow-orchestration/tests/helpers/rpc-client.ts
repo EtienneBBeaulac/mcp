@@ -10,6 +10,11 @@ type Pending = {
   timer: NodeJS.Timeout;
 };
 
+export interface RpcClientOptions {
+  /** Disable global resource tracking for long-running tests */
+  disableGlobalTracking?: boolean;
+}
+
 export class RpcClient {
   private proc: ChildProcessWithoutNullStreams;
   private rl: readline.Interface;
@@ -17,8 +22,11 @@ export class RpcClient {
   private pending = new Map<string | number, Pending>();
   private closed = false;
   private cleanupFn: () => Promise<void>;
+  private globalTrackingEnabled: boolean;
 
-  constructor(scriptPath: string) {
+  constructor(scriptPath: string, options: RpcClientOptions = {}) {
+    this.globalTrackingEnabled = !options.disableGlobalTracking;
+    
     const runner = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
     this.proc = spawn(runner, ['ts-node', '--transpile-only', scriptPath], {
@@ -42,13 +50,17 @@ export class RpcClient {
       this.cleanup();
     });
 
-    // Create cleanup function and track it
+    // Create cleanup function and optionally track it
     this.cleanupFn = async () => {
       if (!this.closed) {
         await this.close();
       }
     };
-    trackResource(this.cleanupFn);
+    
+    // Only track with global system if enabled
+    if (this.globalTrackingEnabled) {
+      trackResource(this.cleanupFn);
+    }
   }
 
   private handleLine(line: string) {
@@ -156,8 +168,10 @@ export class RpcClient {
       // Send termination signal
       this.proc.kill('SIGTERM');
     }).finally(() => {
-      // Untrack this resource
-      untrackResource(this.cleanupFn);
+      // Only untrack if we were tracking
+      if (this.globalTrackingEnabled) {
+        untrackResource(this.cleanupFn);
+      }
     });
   }
 } 
