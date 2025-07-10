@@ -3,10 +3,10 @@ import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { ErrorHandler } from '../core/error-handler';
 import { WorkflowService } from '../services/workflow-service';
-import { workflowListHandler } from '../tools/workflow_list';
+import { listWorkflows } from '../application/use-cases/list-workflows';
+import { getNextStep as getNextWorkflowStep } from '../application/use-cases/get-next-step';
+import { validateStepOutput as validateWorkflowStepOutput } from '../application/use-cases/validate-step-output';
 import { getWorkflow } from '../application/use-cases/get-workflow';
-import { workflowNextHandler } from '../tools/workflow_next';
-import { workflowValidateHandler } from '../tools/workflow_validate';
 
 export function createWorkflowLookupServer(
   workflowService: WorkflowService
@@ -37,12 +37,9 @@ export function createWorkflowLookupServer(
 
       rpcServer.addMethod(
         'workflow_list',
-        wrapRpcMethod('workflow_list', async (params: any) => {
-          const { result } = await workflowListHandler(
-            { jsonrpc: '2.0', id: 0, method: 'workflow_list', params },
-            workflowService
-          );
-          return result;
+        wrapRpcMethod('workflow_list', async (_params: any) => {
+          const workflows = await listWorkflows(workflowService);
+          return { workflows };
         })
       );
 
@@ -56,22 +53,23 @@ export function createWorkflowLookupServer(
       rpcServer.addMethod(
         'workflow_next',
         wrapRpcMethod('workflow_next', async (params: any) => {
-          const { result } = await workflowNextHandler(
-            { jsonrpc: '2.0', id: 0, method: 'workflow_next', params },
-            workflowService
+          return getNextWorkflowStep(
+            workflowService,
+            params.workflowId,
+            params.completedSteps || []
           );
-          return result;
         })
       );
 
       rpcServer.addMethod(
         'workflow_validate',
         wrapRpcMethod('workflow_validate', async (params: any) => {
-          const { result } = await workflowValidateHandler(
-            { jsonrpc: '2.0', id: 0, method: 'workflow_validate', params },
-            workflowService
+          return validateWorkflowStepOutput(
+            workflowService,
+            params.workflowId,
+            params.stepId,
+            params.output
           );
-          return result;
         })
       );
 
