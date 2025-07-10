@@ -84,6 +84,19 @@ docker-compose up
 
 The server will listen for JSON-RPC requests on stdin/stdout.
 
+### Storage & Caching (v1.1+)
+
+The server now uses an abstract storage layer. By default it employs **file-based storage** that reads workflows from the local `spec/examples` directory.  A lightweight **in-memory TTL cache** avoids redundant disk reads—tune it via:
+
+```bash
+# default 300000 ms (5 min)
+export CACHE_TTL=120000   # 2 min
+```
+
+Developers can supply alternative back-ends by implementing the `IWorkflowStorage` interface (see `src/types/storage.ts`).
+
+> **Compatibility:** Legacy helpers (`loadAllWorkflows`, `getWorkflowById`, etc.) still work but are **deprecated**. Migrate to the interface for new code.
+
 ## 🏗️ Architecture Overview
 
 The system will consist of:
