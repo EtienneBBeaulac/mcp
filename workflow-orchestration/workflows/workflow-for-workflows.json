@@ -1,0 +1,45 @@
+{
+  "id": "workflow-for-workflows",
+  "name": "Workflow for Creating New Workflows",
+  "version": "1.0.0",
+  "description": "A meta-workflow to guide the creation, validation, and deployment of new, reusable workflow templates.",
+  "preconditions": [
+    "User has a clear idea of the recurring task or problem the new workflow should solve.",
+    "The 'workflow-lookup' MCP server is running and accessible.",
+    "The agent has access to 'create_file', 'edit_file', and 'run_terminal_cmd' tools."
+  ],
+  "metaGuidance": [
+    "The goal is to create a *reusable template*, not a single-use script. Use placeholders like [User provides X] where appropriate.",
+    "Prompts should define goals and roles for the agent, not a rigid script. This allows the agent to use its intelligence to best achieve the task.",
+    "At each step, the agent should confirm with the user before proceeding with a file modification or command.",
+    "Maintain a clear distinction between the workflow being created and this meta-workflow.",
+    "Save progress frequently by confirming file edits."
+  ],
+  "steps": [
+    {
+      "id": "phase-1-discovery",
+      "title": "Phase 1: Discovery & Ideation",
+      "prompt": "We will begin by defining the problem and finding a suitable template for the new workflow.\n\n**1. Define the Goal (User's Role):**\n   - Please describe the specific, recurring task this new workflow will solve.\n   - Who is the primary user (e.g., Junior Dev, SRE)?\n   - What is the most critical failure mode we want to prevent?\n\n**2. Find a Template (Agent's Goal):**\n   - Your goal is to find the most suitable existing workflow to use as a template. Announce your plan (e.g., using `workflow_list`), execute it, and then use `workflow_get` on the approved template to retrieve its structure for our foundation."
+    },
+    {
+      "id": "phase-2-authoring",
+      "title": "Phase 2: Structured Authoring & Drafting",
+      "prompt": "Now we will create the first draft of the new workflow file.\n\n**1. Create the File (Agent's Goal):**\n   - Ask the user for a filename for the new workflow (e.g., `my-new-workflow.json`).\n   - Use the `create_file` tool to create this file, using the template JSON from Phase 1 as the initial content.\n\n**2. Iterative Drafting (Collaborative Task):**\n   - Guide the user through the JSON structure in a specific order: `id`, `name`, `version`, `description`, `preconditions`, `metaGuidance`, and finally the `steps`.\n   - For each section, the user will provide the high-level content, and your goal as the agent is to translate it into correctly formatted JSON and use the `edit_file` tool to update the file."
+    },
+    {
+      "id": "phase-3-validation",
+      "title": "Phase 3: Syntactic & Structural Validation",
+      "prompt": "The first draft is complete. Now, we must ensure it is technically valid.\n\n**1. Run Validation (Agent's Goal):**\n   - Your goal is to validate the new workflow file. Announce your plan to use the `run_terminal_cmd` tool to execute `workflow-lookup validate [filename]`.\n\n**2. Analyze & Fix (Agent's Goal):**\n   - If validation fails, your goal is to fix it. Parse the error, explain the issue, propose a fix, and use `edit_file` to correct it. Repeat until validation passes."
+    },
+    {
+      "id": "phase-4-refinement",
+      "title": "Phase 4: Logical Refinement & Red-Teaming",
+      "prompt": "The workflow is now technically valid. Next, we will test its logic and clarity through simulation.\n\n**1. Select a Step & Persona (User's Role):**\n   - Please choose a critical step from the new workflow to test.\n   - Please provide a persona to simulate (e.g., 'Novice Developer', 'Rushed Expert').\n\n**2. Simulate & Refine (Agent's Goal):**\n   - Your goal is to analyze the selected prompt from the perspective of the chosen persona. Provide feedback, highlighting potential confusion or ambiguity. If a flaw is identified, suggest a revision and use `edit_file` to implement it with the user's approval."
+    },
+    {
+      "id": "phase-5-deployment",
+      "title": "Phase 5: Finalization & Deployment",
+      "prompt": "The workflow has been drafted, validated, and refined. It is ready for deployment.\n\n**1. Final Review (Collaborative Task):**\n   - Let's perform a final review of the workflow's `name` and `description` to ensure they are clear and easily discoverable.\n\n**2. Deploy (Agent's Goal):**\n   - Once final approval is given, your goal is to move the workflow file into the primary `workflows/` directory. Announce your plan to use the `run_terminal_cmd` tool with the `mv` command to accomplish this."
+    }
+  ]
+} 
