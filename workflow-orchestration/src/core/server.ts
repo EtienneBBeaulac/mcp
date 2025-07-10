@@ -1,10 +1,11 @@
 import { WorkflowLookupServer } from '../types/server';
-import { JSONRPCResponse, JSONRPCError, MCPErrorCodes } from '../types/mcp-types';
+import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { workflowListHandler } from '../tools/workflow_list';
 import { workflowGetHandler } from '../tools/workflow_get';
 import { workflowNextHandler } from '../tools/workflow_next';
 import { workflowValidateHandler } from '../tools/workflow_validate';
+import { ErrorHandler } from '../core/error-handler';
 
 export function createWorkflowLookupServer(): WorkflowLookupServer {
   let rpcServer: JSONRPCServer | null = null;
@@ -130,16 +131,14 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
 }
 
 function handleError(context: string, err: any) {
-  console.error(`[${context}] Error:`, err);
-}
-
-function toJsonRpcError(err: any): JSONRPCError {
-  if (err && typeof err.code === 'number' && typeof err.message === 'string') {
-    return err;
+  // Delegate to centralized error handler for logging
+  ErrorHandler.getInstance().handleError(err, null);
+  if (process.env['NODE_ENV'] !== 'test') {
+    console.error(`[${context}] Error:`, err);
   }
-  return {
-    code: MCPErrorCodes.INTERNAL_ERROR,
-    message: err && err.message ? err.message : 'Internal server error',
-    data: err
-  };
+}
+function toJsonRpcError(err: any): JSONRPCError {
+  // Convert any error to MCP-compliant JSONRPCError via ErrorHandler
+  const errorResponse = ErrorHandler.getInstance().handleError(err, null);
+  return errorResponse.error as JSONRPCError;
 } 
