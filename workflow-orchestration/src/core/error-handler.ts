@@ -1,7 +1,7 @@
 // MCP Server Error Handling System
 // Comprehensive error handling with proper MCP error codes and recovery
 
-import { MCPErrorCodes, JSONRPCError, JSONRPCResponse } from '../types/mcp-types';
+import { MCPErrorCodes, JSONRPCResponse } from '../types/mcp-types';
 
 // =============================================================================
 // ERROR CLASSES
@@ -102,10 +102,9 @@ export class SecurityError extends MCPError {
 
 export class ErrorHandler {
   private static instance: ErrorHandler;
-  private logger: any; // Will be replaced with actual logger
 
   private constructor() {
-    // Initialize error handler
+    // Initialize error handler (placeholder for future logger integration)
   }
 
   public static getInstance(): ErrorHandler {
