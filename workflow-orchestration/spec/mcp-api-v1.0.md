@@ -3,6 +3,8 @@
 This document formally specifies the JSON-RPC 2.0 API for the Workflow Orchestration System's
 `workflowlookup` MCP server.
 
+> **Note**: This document focuses on the workflow-specific tools. For complete MCP protocol compliance including server initialization, tool discovery, and handshake procedures, see [MCP Protocol Handshake Specification](mcp-protocol-handshake.md).
+
 ## JSON-RPC 2.0 Base Protocol
 
 All communication follows the [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification).
