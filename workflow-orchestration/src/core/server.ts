@@ -51,6 +51,43 @@ export function createWorkflowLookupServer(): WorkflowLookupServer {
         }
       });
 
+      // MCP handshake methods
+      rpcServer.addMethod('initialize', async (params: any) => {
+        try {
+          const { initializeHandler } = await import('../tools/mcp_initialize');
+          return (
+            await initializeHandler({ id: 0, params, method: 'initialize', jsonrpc: '2.0' } as any)
+          ).result;
+        } catch (err) {
+          handleError('initialize', err);
+          throw toJsonRpcError(err);
+        }
+      });
+
+      rpcServer.addMethod('tools/list', async (params: any) => {
+        try {
+          const { toolsListHandler } = await import('../tools/mcp_tools_list');
+          return (
+            await toolsListHandler({ id: 0, params, method: 'tools/list', jsonrpc: '2.0' } as any)
+          ).result;
+        } catch (err) {
+          handleError('tools/list', err);
+          throw toJsonRpcError(err);
+        }
+      });
+
+      rpcServer.addMethod('shutdown', async (params: any) => {
+        try {
+          const { shutdownHandler } = await import('../tools/mcp_shutdown');
+          return (
+            await shutdownHandler({ id: 0, params, method: 'shutdown', jsonrpc: '2.0' } as any)
+          ).result;
+        } catch (err) {
+          handleError('shutdown', err);
+          throw toJsonRpcError(err);
+        }
+      });
+
       // Listen on stdin/stdout (MCP default)
       stdinListener = async (chunk: Buffer) => {
         const input = chunk.toString();
