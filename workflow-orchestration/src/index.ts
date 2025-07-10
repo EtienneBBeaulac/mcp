@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 
-import { createWorkflowLookupServer } from './core/server';
-import { DefaultWorkflowService } from './services/workflow-service';
-import { createDefaultWorkflowStorage } from './workflow/storage';
+import { createAppContainer } from './container';
 
 async function main() {
   try {
-    const workflowService = new DefaultWorkflowService(createDefaultWorkflowStorage());
-    const server = createWorkflowLookupServer(workflowService);
+    const { server } = createAppContainer();
     await server.start();
     console.log('Workflow Lookup MCP Server started successfully');
 
@@ -29,4 +26,4 @@ if (require.main === module) {
   main();
 }
 
-export { createWorkflowLookupServer }; 
+export { createWorkflowLookupServer } from './core/server'; 
