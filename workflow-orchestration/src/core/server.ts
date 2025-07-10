@@ -13,6 +13,17 @@ export function createWorkflowLookupServer(
   let running = false;
   let stdinListener: ((chunk: Buffer) => void) | null = null;
 
+  const wrapRpcMethod = <T extends any, R>(methodName: string, fn: (params: T) => Promise<R> | R) => {
+    return async (params: T): Promise<R> => {
+      try {
+        return await fn(params);
+      } catch (err) {
+        handleError(methodName, err);
+        throw toJsonRpcError(err);
+      }
+    };
+  };
+
   return {
     start: async () => {
       if (running) return;
@@ -21,52 +32,42 @@ export function createWorkflowLookupServer(
 
       // Register handlers for each tool using injected service layer
 
-      rpcServer.addMethod('workflow_list', async (_params: any) => {
-        try {
+      rpcServer.addMethod(
+        'workflow_list',
+        wrapRpcMethod('workflow_list', async (_params: any) => {
           const workflows = await workflowService.listWorkflowSummaries();
           return { workflows };
-        } catch (err) {
-          handleError('workflow_list', err);
-          throw toJsonRpcError(err);
-        }
-      });
+        })
+      );
 
-      rpcServer.addMethod('workflow_get', async (params: any) => {
-        try {
-          const workflow = await workflowService.getWorkflowById(params.id);
-          return workflow;
-        } catch (err) {
-          handleError('workflow_get', err);
-          throw toJsonRpcError(err);
-        }
-      });
+      rpcServer.addMethod(
+        'workflow_get',
+        wrapRpcMethod('workflow_get', async (params: any) => {
+          return await workflowService.getWorkflowById(params.id);
+        })
+      );
 
-      rpcServer.addMethod('workflow_next', async (params: any) => {
-        try {
+      rpcServer.addMethod(
+        'workflow_next',
+        wrapRpcMethod('workflow_next', async (params: any) => {
           const { step, guidance, isComplete } = await workflowService.getNextStep(
             params.workflowId,
             params.completedSteps || []
           );
           return { step, guidance, isComplete };
-        } catch (err) {
-          handleError('workflow_next', err);
-          throw toJsonRpcError(err);
-        }
-      });
+        })
+      );
 
-      rpcServer.addMethod('workflow_validate', async (params: any) => {
-        try {
-          const { valid, issues, suggestions } = await workflowService.validateStepOutput(
+      rpcServer.addMethod(
+        'workflow_validate',
+        wrapRpcMethod('workflow_validate', async (params: any) => {
+          return await workflowService.validateStepOutput(
             params.workflowId,
             params.stepId,
             params.output
           );
-          return { valid, issues, suggestions };
-        } catch (err) {
-          handleError('workflow_validate', err);
-          throw toJsonRpcError(err);
-        }
-      });
+        })
+      );
 
       // MCP handshake methods
       rpcServer.addMethod('initialize', async (params: any) => {
