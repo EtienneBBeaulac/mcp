@@ -1,10 +1,11 @@
 import { WorkflowValidateRequest, WorkflowValidateResponse } from '../types/mcp-types';
-import { defaultWorkflowService } from '../services/workflow-service';
+import { WorkflowService } from '../services/workflow-service';
 
 export async function workflowValidateHandler(
-  request: WorkflowValidateRequest
+  request: WorkflowValidateRequest,
+  workflowService: WorkflowService
 ): Promise<WorkflowValidateResponse> {
-  const { valid, issues, suggestions } = await defaultWorkflowService.validateStepOutput(
+  const { valid, issues, suggestions } = await workflowService.validateStepOutput(
     request.params.workflowId,
     request.params.stepId,
     request.params.output

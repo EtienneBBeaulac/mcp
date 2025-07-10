@@ -1,10 +1,11 @@
 import { WorkflowNextRequest, WorkflowNextResponse } from '../types/mcp-types';
-import { defaultWorkflowService } from '../services/workflow-service';
+import { WorkflowService } from '../services/workflow-service';
 
 export async function workflowNextHandler(
-  request: WorkflowNextRequest
+  request: WorkflowNextRequest,
+  workflowService: WorkflowService
 ): Promise<WorkflowNextResponse> {
-  const { step, guidance, isComplete } = await defaultWorkflowService.getNextStep(
+  const { step, guidance, isComplete } = await workflowService.getNextStep(
     request.params.workflowId,
     request.params.completedSteps || []
   );

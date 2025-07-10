@@ -1,9 +1,11 @@
 import { describe, it, expect } from '@jest/globals';
-import { loadAllWorkflows, getWorkflowById, listWorkflowSummaries } from '../../src/workflow/storage';
+import { createDefaultWorkflowStorage } from '../../src/workflow/storage';
 
 describe('Workflow Storage', () => {
+  const storage = createDefaultWorkflowStorage();
+
   it('should load all valid workflows from the examples directory', () => {
-    const workflows = loadAllWorkflows();
+    const workflows = storage.loadAllWorkflows();
     expect(Array.isArray(workflows)).toBe(true);
     expect(workflows.length).toBeGreaterThan(0);
     for (const wf of workflows) {
@@ -14,24 +16,24 @@ describe('Workflow Storage', () => {
   });
 
   it('should get a workflow by ID if it exists', () => {
-    const workflows = loadAllWorkflows();
+    const workflows = storage.loadAllWorkflows();
     const first = workflows[0];
     if (!first) {
       // Skip test if no workflows are loaded
       return;
     }
-    const found = getWorkflowById(first.id);
+    const found = storage.getWorkflowById(first.id);
     expect(found).toBeDefined();
     expect(found?.id).toBe(first.id);
   });
 
   it('should return null for a missing workflow ID', () => {
-    const found = getWorkflowById('nonexistent-id-123');
+    const found = storage.getWorkflowById('nonexistent-id-123');
     expect(found).toBeNull();
   });
 
   it('should list workflow summaries', () => {
-    const summaries = listWorkflowSummaries();
+    const summaries = storage.listWorkflowSummaries();
     expect(Array.isArray(summaries)).toBe(true);
     expect(summaries.length).toBeGreaterThan(0);
     for (const summary of summaries) {

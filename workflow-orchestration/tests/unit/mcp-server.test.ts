@@ -3,20 +3,29 @@ import { JSONRPCServer } from 'json-rpc-2.0';
 
 import { workflowListHandler } from '../../src/tools/workflow_list';
 import { workflowGetHandler } from '../../src/tools/workflow_get';
+import { DefaultWorkflowService } from '../../src/services/workflow-service';
+import { createDefaultWorkflowStorage } from '../../src/workflow/storage';
 import { JSONRPCResponse } from '../../src/types/mcp-types';
 
 // Helper to wrap tool handlers in the same shape used by createWorkflowLookupServer
 function registerHandlers(server: JSONRPCServer) {
+  const workflowService = new DefaultWorkflowService(createDefaultWorkflowStorage());
   server.addMethod('workflow_list', async (params: any) => {
     return (
-      await workflowListHandler({ jsonrpc: '2.0', id: 0, method: 'workflow_list', params } as any)
+      await workflowListHandler(
+        { jsonrpc: '2.0', id: 0, method: 'workflow_list', params } as any,
+        workflowService
+      )
     ).result;
   });
 
   server.addMethod('workflow_get', async (params: any) => {
     try {
       return (
-        await workflowGetHandler({ jsonrpc: '2.0', id: 0, method: 'workflow_get', params } as any)
+        await workflowGetHandler(
+          { jsonrpc: '2.0', id: 0, method: 'workflow_get', params } as any,
+          workflowService
+        )
       ).result;
     } catch (err: any) {
       // Preserve MCP error shape so JSONRPCServer can include it in the response

@@ -3,6 +3,10 @@ import { JSONRPCResponse, JSONRPCError } from '../types/mcp-types';
 import { JSONRPCServer } from 'json-rpc-2.0';
 import { ErrorHandler } from '../core/error-handler';
 import { WorkflowService } from '../services/workflow-service';
+import { workflowListHandler } from '../tools/workflow_list';
+import { workflowGetHandler } from '../tools/workflow_get';
+import { workflowNextHandler } from '../tools/workflow_next';
+import { workflowValidateHandler } from '../tools/workflow_validate';
 
 export function createWorkflowLookupServer(
   workflowService: WorkflowService
@@ -28,42 +32,50 @@ export function createWorkflowLookupServer(
       console.log('Initializing Workflow Lookup MCP Server...');
       rpcServer = new JSONRPCServer();
 
-      // Register handlers for each tool using injected service layer
+      // Register handlers for each tool using injected service layer and
+      // delegating to stateless tool handler functions.
 
       rpcServer.addMethod(
         'workflow_list',
-        wrapRpcMethod('workflow_list', async (_params: any) => {
-          const workflows = await workflowService.listWorkflowSummaries();
-          return { workflows };
+        wrapRpcMethod('workflow_list', async (params: any) => {
+          const { result } = await workflowListHandler(
+            { jsonrpc: '2.0', id: 0, method: 'workflow_list', params },
+            workflowService
+          );
+          return result;
         })
       );
 
       rpcServer.addMethod(
         'workflow_get',
         wrapRpcMethod('workflow_get', async (params: any) => {
-          return await workflowService.getWorkflowById(params.id);
+          const { result } = await workflowGetHandler(
+            { jsonrpc: '2.0', id: 0, method: 'workflow_get', params },
+            workflowService
+          );
+          return result;
         })
       );
 
       rpcServer.addMethod(
         'workflow_next',
         wrapRpcMethod('workflow_next', async (params: any) => {
-          const { step, guidance, isComplete } = await workflowService.getNextStep(
-            params.workflowId,
-            params.completedSteps || []
+          const { result } = await workflowNextHandler(
+            { jsonrpc: '2.0', id: 0, method: 'workflow_next', params },
+            workflowService
           );
-          return { step, guidance, isComplete };
+          return result;
         })
       );
 
       rpcServer.addMethod(
         'workflow_validate',
         wrapRpcMethod('workflow_validate', async (params: any) => {
-          return await workflowService.validateStepOutput(
-            params.workflowId,
-            params.stepId,
-            params.output
+          const { result } = await workflowValidateHandler(
+            { jsonrpc: '2.0', id: 0, method: 'workflow_validate', params },
+            workflowService
           );
+          return result;
         })
       );
 

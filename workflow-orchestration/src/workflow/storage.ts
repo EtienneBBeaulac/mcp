@@ -3,7 +3,7 @@
 import { FileWorkflowStorage, createDefaultFileWorkflowStorage } from './file-workflow-storage';
 import { SchemaValidatingWorkflowStorage } from './schema-validating-workflow-storage';
 import { CachingWorkflowStorage } from './caching-workflow-storage';
-import { Workflow, WorkflowSummary } from '../types/mcp-types';
+// (intentionally left blank – no direct dependency on Workflow types here)
 
 // -----------------------------------------------------------------------------
 // Default composition helper – now exposed as a factory for DI friendliness
@@ -25,22 +25,6 @@ export function createDefaultWorkflowStorage(): CachingWorkflowStorage {
   const cacheTtlMs = Number(process.env['CACHE_TTL'] ?? 300_000); // 5 minutes default
   return new CachingWorkflowStorage(validatingStorage, cacheTtlMs);
 }
-
-// -----------------------------------------------------------------------------
-// Legacy singleton – retained temporarily for backward compatibility. New
-// code should prefer `createDefaultWorkflowStorage()` and inject the resulting
-// instance where needed.
-// -----------------------------------------------------------------------------
-
-export const fileWorkflowStorage: CachingWorkflowStorage = createDefaultWorkflowStorage();
-
-// -----------------------------------------------------------------------------
-// Legacy helper functions – now delegate to composed storage
-// -----------------------------------------------------------------------------
-
-export const loadAllWorkflows = (): Workflow[] => fileWorkflowStorage.loadAllWorkflows();
-export const getWorkflowById = (id: string): Workflow | null => fileWorkflowStorage.getWorkflowById(id);
-export const listWorkflowSummaries = (): WorkflowSummary[] => fileWorkflowStorage.listWorkflowSummaries();
 
 // Re-export classes for external usage if needed
 export {

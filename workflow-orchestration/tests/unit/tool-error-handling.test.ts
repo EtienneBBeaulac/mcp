@@ -1,6 +1,8 @@
 import { WorkflowGetRequest } from '../../src/types/mcp-types';
 import { workflowGetHandler } from '../../src/tools/workflow_get';
 import { WorkflowNotFoundError } from '../../src/core/error-handler';
+import { DefaultWorkflowService } from '../../src/services/workflow-service';
+import { createDefaultWorkflowStorage } from '../../src/workflow/storage';
 import { describe, it, expect } from '@jest/globals';
 
 
@@ -13,6 +15,7 @@ describe('Tool error handling', () => {
       params: { id: 'non-existent' },
     };
 
-    await expect(workflowGetHandler(fakeRequest)).rejects.toBeInstanceOf(WorkflowNotFoundError);
+    const service = new DefaultWorkflowService(createDefaultWorkflowStorage());
+    await expect(workflowGetHandler(fakeRequest, service)).rejects.toBeInstanceOf(WorkflowNotFoundError);
   });
 }); 
