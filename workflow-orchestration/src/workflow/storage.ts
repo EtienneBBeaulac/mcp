@@ -11,6 +11,22 @@ import { IWorkflowStorage } from '../types/storage';
 const WORKFLOW_DIR = path.resolve(__dirname, '../../spec/examples'); // TODO: Make configurable
 const WORKFLOW_SCHEMA_PATH = path.resolve(__dirname, '../../spec/workflow.schema.json');
 
+// -----------------------------------------------------------------------------
+// SIMPLE IN-MEMORY CACHE (TTL-BASED)
+// -----------------------------------------------------------------------------
+
+const DEFAULT_CACHE_TTL_MS = Number(process.env['CACHE_TTL'] ?? 300_000); // 5 minutes
+
+interface Cached<T> {
+  value: T;
+  timestamp: number; // epoch millis when cached
+}
+
+interface CacheStats {
+  hits: number;
+  misses: number;
+}
+
 /**
  * Lazy-init JSON-Schema validator for workflow files.
  */
@@ -29,8 +45,24 @@ function getValidator(): ValidateFunction {
  * Reads workflow JSON files from the local examples/spec directory.
  */
 export class FileWorkflowStorage implements IWorkflowStorage {
+  private cache: Cached<Workflow[]> | null = null;
+  private stats: CacheStats = { hits: 0, misses: 0 };
+
+  /** Expose simple cache statistics */
+  public getCacheStats(): CacheStats {
+    return { ...this.stats };
+  }
+
   /** Load and return all valid workflows found in WORKFLOW_DIR. */
   public loadAllWorkflows(): Workflow[] {
+    // Cache hit path
+    if (this.cache && Date.now() - this.cache.timestamp < DEFAULT_CACHE_TTL_MS) {
+      this.stats.hits += 1;
+      return this.cache.value;
+    }
+
+    // Cache miss → reload from FS
+    this.stats.misses += 1;
     const files = fs.readdirSync(WORKFLOW_DIR).filter((f) => f.endsWith('.json'));
     const validate = getValidator();
     const workflows: Workflow[] = [];
@@ -40,11 +72,11 @@ export class FileWorkflowStorage implements IWorkflowStorage {
       const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       if (validate(data)) {
         workflows.push(data as Workflow);
-      } else {
-        // TODO: Replace with proper logger
-        // console.warn(`Invalid workflow skipped: ${file}`);
       }
     }
+
+    // Save to cache
+    this.cache = { value: workflows, timestamp: Date.now() };
     return workflows;
   }
 
