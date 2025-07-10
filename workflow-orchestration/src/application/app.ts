@@ -1,0 +1,125 @@
+import { MCPError } from '../core/error-handler';
+import { MCPErrorCodes } from '../types/mcp-types';
+
+/**
+ * Lightweight mediator that maps JSON-RPC method names to handler functions.
+ * It delegates parameter validation to an injected validator and remains
+ * agnostic of transport concerns.
+ */
+export type MethodHandler = (params: any) => Promise<any> | any;
+
+export interface MethodValidator {
+  validate(method: string, params: any): void;
+}
+
+export class ApplicationMediator {
+  private readonly handlers = new Map<string, MethodHandler>();
+  private readonly validateFn: (method: string, params: any) => void;
+
+  constructor(validator: MethodValidator) {
+    this.validateFn = validator.validate.bind(validator);
+  }
+
+  register(method: string, handler: MethodHandler): void {
+    if (this.handlers.has(method)) {
+      throw new Error(`Method already registered: ${method}`);
+    }
+    this.handlers.set(method, handler);
+  }
+
+  /** Execute a method after validation. */
+  async execute(method: string, params: any): Promise<any> {
+    const handler = this.handlers.get(method);
+    if (!handler) {
+      throw new MCPError(MCPErrorCodes.METHOD_NOT_FOUND, 'Method not found', { method });
+    }
+    // Perform validation once
+    this.validateFn(method, params);
+    return await handler(params);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Builder – wires core workflow tool methods into an ApplicationMediator.
+// ----------------------------------------------------------------------------
+
+import { WorkflowService } from './services/workflow-service';
+import { requestValidator } from '../validation/request-validator';
+import { listWorkflows } from './use-cases/list-workflows';
+import { getWorkflow } from './use-cases/get-workflow';
+import { getNextStep as getNextWorkflowStep } from './use-cases/get-next-step';
+import { validateStepOutput as validateWorkflowStepOutput } from './use-cases/validate-step-output';
+
+export const METHOD_NAMES = {
+  WORKFLOW_LIST: 'workflow_list',
+  WORKFLOW_GET: 'workflow_get',
+  WORKFLOW_NEXT: 'workflow_next',
+  WORKFLOW_VALIDATE: 'workflow_validate',
+  INITIALIZE: 'initialize',
+  TOOLS_LIST: 'tools/list',
+  SHUTDOWN: 'shutdown'
+} as const;
+
+export type MethodName = typeof METHOD_NAMES[keyof typeof METHOD_NAMES];
+
+export function buildWorkflowApplication(
+  workflowService: WorkflowService,
+  validator: MethodValidator = requestValidator
+): ApplicationMediator {
+  const app = new ApplicationMediator(validator);
+
+  // ------------------------------------------------------------------------
+  // Workflow tool methods
+  // ------------------------------------------------------------------------
+  app.register(METHOD_NAMES.WORKFLOW_LIST, async (_params: any) => {
+    const workflows = await listWorkflows(workflowService);
+    return { workflows };
+  });
+
+  app.register(METHOD_NAMES.WORKFLOW_GET, async (params: any) => {
+    return getWorkflow(workflowService, params.id);
+  });
+
+  app.register(METHOD_NAMES.WORKFLOW_NEXT, async (params: any) => {
+    return getNextWorkflowStep(
+      workflowService,
+      params.workflowId,
+      params.completedSteps || []
+    );
+  });
+
+  app.register(METHOD_NAMES.WORKFLOW_VALIDATE, async (params: any) => {
+    return validateWorkflowStepOutput(
+      workflowService,
+      params.workflowId,
+      params.stepId,
+      params.output
+    );
+  });
+
+  // ------------------------------------------------------------------------
+  // System/handshake methods – dynamic imports to avoid circular deps
+  // ------------------------------------------------------------------------
+  app.register(METHOD_NAMES.INITIALIZE, async (params: any) => {
+    const { initializeHandler } = await import('../tools/mcp_initialize');
+    return (
+      await initializeHandler({ id: 0, params, method: 'initialize', jsonrpc: '2.0' } as any)
+    ).result;
+  });
+
+  app.register(METHOD_NAMES.TOOLS_LIST, async (params: any) => {
+    const { toolsListHandler } = await import('../tools/mcp_tools_list');
+    return (
+      await toolsListHandler({ id: 0, params, method: 'tools/list', jsonrpc: '2.0' } as any)
+    ).result;
+  });
+
+  app.register(METHOD_NAMES.SHUTDOWN, async (params: any) => {
+    const { shutdownHandler } = await import('../tools/mcp_shutdown');
+    return (
+      await shutdownHandler({ id: 0, params, method: 'shutdown', jsonrpc: '2.0' } as any)
+    ).result;
+  });
+
+  return app;
+} 
