@@ -33,7 +33,7 @@ class WorkflowOrchestrationServer {
           result = await workflowService.getWorkflowById(params.id);
           break;
         case 'workflow_next':
-          result = await workflowService.getNextStep(params.workflowId, params.completedSteps || []);
+          result = await workflowService.getNextStep(params.workflowId, params.completedSteps || [], params.context);
           break;
         case 'workflow_validate':
           result = await workflowService.validateStepOutput(params.workflowId, params.stepId, params.output);
@@ -73,8 +73,8 @@ class WorkflowOrchestrationServer {
     return this.callWorkflowMethod('workflow_get', { id: workflowId });
   }
 
-  public async getNextStep(workflowId: string, completedSteps: string[] = []): Promise<CallToolResult> {
-    return this.callWorkflowMethod('workflow_next', { workflowId, completedSteps });
+  public async getNextStep(workflowId: string, completedSteps: string[] = [], context?: any): Promise<CallToolResult> {
+    return this.callWorkflowMethod('workflow_next', { workflowId, completedSteps, context });
   }
 
   public async validateStep(workflowId: string, stepId: string, output: string): Promise<CallToolResult> {
@@ -118,7 +118,7 @@ const WORKFLOW_GET_TOOL: Tool = {
 
 const WORKFLOW_NEXT_TOOL: Tool = {
   name: "workflow_next",
-  description: `Executes a workflow by getting the next step. Use this tool in a loop to progress through a workflow. You must provide the \`workflowId\` and a list of \`completedSteps\`.`,
+  description: `Executes a workflow by getting the next step. Use this tool in a loop to progress through a workflow. You must provide the \`workflowId\` and a list of \`completedSteps\`. For conditional workflows, provide \`context\` with variables that will be used to evaluate step conditions.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -135,6 +135,11 @@ const WORKFLOW_NEXT_TOOL: Tool = {
         },
         description: "Array of step IDs that have been completed",
         default: []
+      },
+      context: {
+        type: "object",
+        description: "Optional context variables for conditional step execution",
+        additionalProperties: true
       }
     },
     required: ["workflowId"],
@@ -217,7 +222,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
           isError: true
         };
       }
-      return await workflowServer.getNextStep(args['workflowId'] as string, args['completedSteps'] as string[] || []);
+      return await workflowServer.getNextStep(args['workflowId'] as string, args['completedSteps'] as string[] || [], args['context']);
       
     case "workflow_validate":
       if (!args?.['workflowId'] || !args?.['stepId'] || !args?.['output']) {
