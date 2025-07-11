@@ -1,7 +1,7 @@
 # MCP Tool API Specification v1.0
 
 This document formally specifies the JSON-RPC 2.0 API for the Workflow Orchestration System's
-`workflowlookup` MCP server.
+`workflowlookup` MCP server. The system features an advanced **ValidationEngine** with three enhancement types: JSON Schema Validation, Context-Aware Validation, and Logical Composition for comprehensive step output quality assurance.
 
 > **Note**: This document focuses on the workflow-specific tools. For complete MCP protocol compliance including server initialization, tool discovery, and handshake procedures, see [MCP Protocol Handshake Specification](mcp-protocol-handshake.md).
 
@@ -89,6 +89,10 @@ Every request to the MCP server must conform to this structure:
 | -32001 | Workflow not found | The specified workflow ID does not exist |
 | -32002 | Invalid workflow | The workflow file is malformed or invalid |
 | -32003 | Step not found | The specified step ID does not exist in the workflow |
+| -32004 | Validation error | ValidationEngine encountered invalid validation criteria |
+| -32005 | State error | Invalid workflow execution state |
+| -32006 | Storage error | Error accessing workflow storage |
+| -32007 | Security error | Security validation failed |
 
 ## Tool Specifications
 
@@ -298,7 +302,7 @@ If a step's `runCondition` evaluates to false, the step is skipped and the next 
 
 ### workflow_validate
 
-Validates the output of a workflow step.
+Validates the output of a workflow step using the advanced ValidationEngine. The system supports three enhancement types: **JSON Schema Validation**, **Context-Aware Validation**, and **Logical Composition** for comprehensive output quality assurance.
 
 #### Request
 
@@ -310,7 +314,12 @@ Validates the output of a workflow step.
   "params": {
     "workflowId": "string",
     "stepId": "string",
-    "output": "string"
+    "output": "string",
+    "context": {
+      "taskScope": "large",
+      "userExpertise": "expert",
+      "complexity": 0.8
+    }
   }
 }
 ```
@@ -318,8 +327,9 @@ Validates the output of a workflow step.
 #### Parameters
 
 - `workflowId` (required): The workflow being executed
-- `stepId` (required): The step ID being validated
-- `output` (required): The output to validate
+- `stepId` (required): The step ID being validated  
+- `output` (required): The output to validate against the step's validation criteria
+- `context` (optional): Execution context for context-aware validation rules
 
 #### Response
 
@@ -337,14 +347,165 @@ Validates the output of a workflow step.
 
 #### Field Descriptions
 
-- `valid`: Whether the output meets validation criteria
-- `issues`: List of validation problems found
-- `suggestions`: List of suggestions for improvement
+- `valid`: Whether the output meets all applicable validation criteria
+- `issues`: List of specific validation problems found (empty if valid)
+- `suggestions`: List of actionable suggestions for improvement
+
+#### ValidationEngine Enhancement Types
+
+The ValidationEngine supports three types of validation enhancements:
+
+##### 1. JSON Schema Validation
+
+Validates structured output against JSON Schema specifications:
+
+```json
+{
+  "type": "schema",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "endpoint": {"type": "string", "pattern": "^/api/"},
+      "method": {"type": "string", "enum": ["GET", "POST", "PUT", "DELETE"]},
+      "authentication": {"type": "boolean"}
+    },
+    "required": ["endpoint", "method"]
+  },
+  "message": "API endpoint must follow required structure"
+}
+```
+
+##### 2. Context-Aware Validation
+
+Applies validation rules conditionally based on execution context:
+
+```json
+{
+  "type": "contains",
+  "value": "comprehensive tests",
+  "condition": {
+    "var": "taskScope",
+    "equals": "large"
+  },
+  "message": "Large tasks require comprehensive testing"
+}
+```
+
+**Supported Condition Operators:**
+- `equals`: Variable equals specific value
+- `not_equals`: Variable does not equal specific value  
+- `gt`, `gte`: Greater than, greater than or equal (numeric)
+- `lt`, `lte`: Less than, less than or equal (numeric)
+- `and`, `or`, `not`: Logical operators for complex conditions
+
+##### 3. Logical Composition
+
+Combines multiple validation rules with boolean operators:
+
+```json
+{
+  "and": [
+    {
+      "type": "contains",
+      "value": "authentication",
+      "message": "Must include authentication"
+    },
+    {
+      "or": [
+        {"type": "contains", "value": "jwt", "message": "Should use JWT"},
+        {"type": "contains", "value": "session", "message": "Should use sessions"}
+      ]
+    }
+  ]
+}
+```
+
+#### Validation Rule Types
+
+| Type | Description | Required Fields | Optional Fields |
+|------|-------------|----------------|-----------------|
+| `contains` | Checks if output contains specific text | `type`, `value`, `message` | `condition` |
+| `regex` | Validates against regular expression pattern | `type`, `pattern`, `message` | `flags`, `condition` |
+| `length` | Validates output length constraints | `type`, `message` | `min`, `max`, `condition` |
+| `schema` | Validates against JSON Schema | `type`, `schema`, `message` | `condition` |
+
+#### Example Requests and Responses
+
+##### Basic Validation Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-1",
+  "method": "workflow_validate",
+  "params": {
+    "workflowId": "auth-implementation",
+    "stepId": "create-middleware",
+    "output": "Created JWT authentication middleware that extracts tokens from Authorization header and returns 401 for invalid tokens."
+  }
+}
+```
+
+##### Context-Aware Validation Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-2", 
+  "method": "workflow_validate",
+  "params": {
+    "workflowId": "adaptive-development",
+    "stepId": "implementation",
+    "output": "Implemented basic feature functionality with standard patterns.",
+    "context": {
+      "userExpertise": "expert",
+      "complexity": 0.9,
+      "taskScope": "large"
+    }
+  }
+}
+```
+
+##### Successful Validation Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-1",
+  "result": {
+    "valid": true,
+    "issues": [],
+    "suggestions": []
+  }
+}
+```
+
+##### Failed Validation Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-2",
+  "result": {
+    "valid": false,
+    "issues": [
+      "Expert implementation should use advanced patterns",
+      "Complex tasks require optimization considerations"
+    ],
+    "suggestions": [
+      "Review validation criteria and adjust output accordingly.",
+      "Consider adding architectural patterns for expert-level implementation."
+    ]
+  }
+}
+```
 
 #### Error Cases
 
 - Returns error code `-32001` if workflow ID not found
 - Returns error code `-32003` if step ID not found in workflow
+- Returns error code `-32004` if validation criteria format is invalid
+- Returns error code `-32002` if JSON Schema validation fails due to malformed schema
 
 ## Example Session
 
@@ -456,7 +617,76 @@ Here's a complete example session showing tool usage:
 }
 ```
 
-### 4. Error Example
+### 4. Validate Step Output
+
+```json
+// Request - Advanced ValidationEngine with context-aware validation
+{
+  "jsonrpc": "2.0",
+  "id": "validate-1",
+  "method": "workflow_validate",
+  "params": {
+    "workflowId": "auth-implementation",
+    "stepId": "implement-login",
+    "output": "Created POST /auth/login endpoint that accepts email and password, validates credentials against database using bcrypt, and returns JWT token with 24h expiration on success.",
+    "context": {
+      "security": "high",
+      "environment": "production"
+    }
+  }
+}
+
+// Response - Successful validation
+{
+  "jsonrpc": "2.0",
+  "id": "validate-1",
+  "result": {
+    "valid": true,
+    "issues": [],
+    "suggestions": []
+  }
+}
+```
+
+### 5. Context-Aware Validation Example
+
+```json
+// Request - Expert-level task with high complexity
+{
+  "jsonrpc": "2.0",
+  "id": "validate-2",
+  "method": "workflow_validate",
+  "params": {
+    "workflowId": "adaptive-development",
+    "stepId": "expert-implementation",
+    "output": "Implemented feature using basic CRUD operations with standard MVC pattern.",
+    "context": {
+      "userExpertise": "expert",
+      "complexity": 0.9,
+      "taskScope": "large"
+    }
+  }
+}
+
+// Response - Failed validation with context-aware feedback
+{
+  "jsonrpc": "2.0",
+  "id": "validate-2",
+  "result": {
+    "valid": false,
+    "issues": [
+      "Expert implementation should use advanced patterns",
+      "Should include optimizations for complex features"
+    ],
+    "suggestions": [
+      "Review validation criteria and adjust output accordingly.",
+      "Consider adding architectural patterns like Repository, Strategy, or Observer for expert-level implementation."
+    ]
+  }
+}
+```
+
+### 6. Error Example
 
 ```json
 // Request
