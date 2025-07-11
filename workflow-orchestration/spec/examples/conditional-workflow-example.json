@@ -33,7 +33,28 @@
         ]
       },
       "askForFiles": true,
-      "requireConfirmation": true
+      "requireConfirmation": true,
+      "validationCriteria": {
+        "and": [
+          {
+            "type": "contains",
+            "value": "requirements",
+            "message": "Should include requirements analysis"
+          },
+          {
+            "type": "contains",
+            "value": "edge cases",
+            "condition": "context.complexity >= 0.8",
+            "message": "Should analyze edge cases for complex tasks"
+          },
+          {
+            "type": "length",
+            "min": 200,
+            "condition": "context.taskScope === 'large'",
+            "message": "Large tasks require detailed analysis"
+          }
+        ]
+      }
     },
     {
       "id": "quick-implementation",
@@ -78,7 +99,27 @@
         "var": "userExpertise", 
         "equals": "expert"
       },
-      "askForFiles": true
+      "askForFiles": true,
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "\\b(pattern|design|architecture)\\b",
+          "condition": "context.userExpertise === 'expert'",
+          "message": "Expert implementation should use advanced patterns"
+        },
+        {
+          "type": "contains",
+          "value": "optimization",
+          "condition": "context.complexity >= 0.6",
+          "message": "Should include optimizations for complex features"
+        },
+        {
+          "not": {
+            "type": "contains",
+            "value": "TODO"
+          }
+        }
+      ]
     },
     {
       "id": "comprehensive-testing",
@@ -90,7 +131,38 @@
           {"var": "userExpertise", "equals": "expert"}
         ]
       },
-      "requireConfirmation": true
+      "requireConfirmation": true,
+      "validationCriteria": {
+        "and": [
+          {
+            "or": [
+              {
+                "type": "contains",
+                "value": "unit test"
+              },
+              {
+                "type": "contains",
+                "value": "integration test"
+              },
+              {
+                "type": "contains",
+                "value": "end-to-end"
+              }
+            ]
+          },
+          {
+            "type": "regex",
+            "pattern": "\\b(describe|it|test|spec)\\b",
+            "message": "Should include proper test structure"
+          },
+          {
+            "type": "contains",
+            "value": "coverage",
+            "condition": "context.taskScope === 'large'",
+            "message": "Large tasks should include coverage analysis"
+          }
+        ]
+      }
     },
     {
       "id": "basic-testing",

@@ -109,7 +109,33 @@
         "guidance": [
           "This is the final quality check. Ensure the agent's summary and checklist validation align with your understanding of the completed work."
         ],
-        "requireConfirmation": true
+        "requireConfirmation": true,
+        "validationCriteria": {
+          "and": [
+            {
+              "type": "contains",
+              "value": "checklist",
+              "message": "Should reference the final review checklist"
+            },
+            {
+              "type": "contains",
+              "value": "complete",
+              "message": "Should confirm completion of all requirements"
+            },
+            {
+              "type": "length",
+              "min": 150,
+              "condition": "context.taskComplexity !== 'Small'",
+              "message": "Complex tasks require detailed final review"
+            },
+            {
+              "not": {
+                "type": "contains",
+                "value": "TODO"
+              }
+            }
+          ]
+        }
       }
     ]
 }

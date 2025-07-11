@@ -24,18 +24,106 @@
       "id": "create-auth-middleware",
       "title": "Create authentication middleware",
       "prompt": "Create a middleware function that extracts and validates JWT tokens from the Authorization header. Return 401 for invalid tokens.",
-      "askForFiles": true
+      "askForFiles": true,
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "jwt",
+          "message": "Implementation should include JWT token handling"
+        },
+        {
+          "type": "contains",
+          "value": "Authorization",
+          "message": "Should extract token from Authorization header"
+        },
+        {
+          "type": "regex",
+          "pattern": "\\b(401|unauthorized)\\b",
+          "flags": "i",
+          "message": "Should return 401 status for invalid tokens"
+        }
+      ]
     },
     {
       "id": "implement-login",
       "title": "Implement login endpoint",
-      "prompt": "Create a POST /auth/login endpoint that accepts email and password, validates credentials against the database, and returns a JWT token on success."
+      "prompt": "Create a POST /auth/login endpoint that accepts email and password, validates credentials against the database, and returns a JWT token on success.",
+      "validationCriteria": {
+        "and": [
+          {
+            "type": "contains",
+            "value": "POST",
+            "message": "Should implement POST endpoint"
+          },
+          {
+            "or": [
+              {
+                "type": "contains",
+                "value": "/auth/login"
+              },
+              {
+                "type": "contains",
+                "value": "/login"
+              }
+            ]
+          },
+          {
+            "type": "schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "pattern": "^/(auth/)?login$"
+                },
+                "method": {
+                  "type": "string",
+                  "enum": ["POST"]
+                },
+                "authentication": {
+                  "type": "object",
+                  "properties": {
+                    "email": {"type": "boolean"},
+                    "password": {"type": "boolean"},
+                    "jwt": {"type": "boolean"}
+                  },
+                  "required": ["email", "password", "jwt"]
+                }
+              }
+            },
+            "message": "Should implement proper login endpoint structure"
+          }
+        ]
+      }
     },
     {
       "id": "test-authentication",
       "title": "Test the authentication flow",
       "prompt": "Test the complete flow: 1) Login with valid credentials, 2) Use the token to access a protected route, 3) Verify invalid tokens are rejected",
-      "requireConfirmation": true
+      "requireConfirmation": true,
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "valid credentials",
+          "condition": "context.testType === 'comprehensive'",
+          "message": "Should test login with valid credentials"
+        },
+        {
+          "type": "contains",
+          "value": "protected route",
+          "message": "Should test access to protected routes"
+        },
+        {
+          "type": "contains",
+          "value": "invalid tokens",
+          "message": "Should verify invalid token rejection"
+        },
+        {
+          "type": "regex",
+          "pattern": "\\b(test|spec|describe|it)\\b",
+          "message": "Should include proper test structure"
+        }
+      ]
     }
   ],
   "metaGuidance": [
