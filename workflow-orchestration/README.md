@@ -52,11 +52,12 @@ workrail start
 
 * **Clean Architecture** – clear separation of **Domain → Application → Infrastructure** layers.
 * **MCP Protocol Support** – Full MCP SDK integration with proper tool definitions and stdio transport.
-* **Workflow Orchestration Tools** – 4 core tools for workflow management:
+* **Workflow Orchestration Tools** – 5 core tools for workflow management:
   - `workflow_list` - List all available workflows
   - `workflow_get` - Get detailed workflow information  
   - `workflow_next` - Get the next step in a workflow
   - `workflow_validate` - Advanced validation of step outputs with schema, context-aware, and composition rules
+  - `workflow_validate_json` - Direct JSON workflow validation with comprehensive error reporting and actionable suggestions
 * **Dependency Injection** – pluggable components are wired by `src/container.ts` (Inversify-style, no runtime reflection).
 * **Async, Secure Storage** – interchangeable back-ends: in-memory (default for tests) and file-based storage with path-traversal safeguards.
 * **Advanced ValidationEngine** – Three-tier validation system with JSON Schema validation (AJV), Context-Aware Validation (conditional rules), and Logical Composition (and/or/not operators) for comprehensive step output quality assurance.
