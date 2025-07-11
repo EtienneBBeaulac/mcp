@@ -177,7 +177,8 @@ Retrieves a specific workflow by ID.
         "title": "string",
         "prompt": "string",
         "askForFiles": boolean,
-        "requireConfirmation": boolean
+        "requireConfirmation": boolean,
+        "runCondition": object
       }
     ],
     "metaGuidance": ["string"]
@@ -217,7 +218,7 @@ Gets the next step guidance based on workflow state.
 - `workflowId` (required): The workflow being executed
 - `currentStep` (optional): The ID of the current step
 - `completedSteps` (required): Array of step IDs that have been completed
-- `context` (optional): Opaque context object passed through for state management
+- `context` (optional): Execution context object for evaluating step conditions. Can contain variables like `taskScope`, `userExpertise`, `complexity`, etc.
 
 #### Response
 
@@ -231,7 +232,8 @@ Gets the next step guidance based on workflow state.
       "title": "string",
       "prompt": "string",
       "askForFiles": boolean,
-      "requireConfirmation": boolean
+      "requireConfirmation": boolean,
+      "runCondition": object
     },
     "guidance": {
       "prompt": "string",
@@ -247,12 +249,47 @@ Gets the next step guidance based on workflow state.
 #### Field Descriptions
 
 - `step`: The next step to execute (null if workflow is complete)
+    - `runCondition`: Optional condition object that determines if this step should execute
 - `guidance`: Additional orchestration guidance
     - `prompt`: Enhanced prompt with context
     - `modelHint`: Suggested model type (e.g., "model-with-strong-reasoning")
     - `requiresConfirmation`: Whether user confirmation is needed
     - `validationCriteria`: List of criteria to validate completion
 - `isComplete`: True if all workflow steps are completed
+
+#### Conditional Step Execution
+
+Steps can include an optional `runCondition` property that determines whether the step should be executed based on the provided context. The condition uses a simple expression format:
+
+```json
+{
+  "runCondition": {
+    "var": "taskScope",
+    "equals": "large"
+  }
+}
+```
+
+**Supported operators:**
+- `equals`: Variable equals value
+- `not_equals`: Variable does not equal value
+- `gt`, `gte`, `lt`, `lte`: Numeric comparisons
+- `and`: Logical AND of multiple conditions
+- `or`: Logical OR of multiple conditions
+- `not`: Logical NOT of a condition
+
+**Example context:**
+```json
+{
+  "context": {
+    "taskScope": "large",
+    "userExpertise": "expert",
+    "complexity": 0.8
+  }
+}
+```
+
+If a step's `runCondition` evaluates to false, the step is skipped and the next eligible step is returned.
 
 #### Error Cases
 

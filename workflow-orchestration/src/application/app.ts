@@ -106,7 +106,8 @@ export function buildWorkflowApplication(
   app.register(METHOD_NAMES.WORKFLOW_NEXT, async (params: any) => {
     return getNextStepUseCase(
       params.workflowId,
-      params.completedSteps || []
+      params.completedSteps || [],
+      params.context
     );
   });
 

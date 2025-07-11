@@ -134,6 +134,7 @@ You should see:
 - **Parameters**:
   - `workflowId` (string): Workflow identifier
   - `completedSteps` (array): Array of completed step IDs
+  - `context` (object, optional): Execution context for conditional steps
 - **Returns**: Next step details or completion status
 
 ### **4. `workflow_validate`**
@@ -178,6 +179,23 @@ You should see:
 }
 ```
 
+### **3a. Start Workflow with Context (New in v1.2)**
+```bash
+# Agent uses workflow_next tool with context for conditional steps
+{
+  "name": "workflow_next",
+  "arguments": {
+    "workflowId": "adaptive-development-workflow",
+    "completedSteps": [],
+    "context": {
+      "taskScope": "large",
+      "userExpertise": "expert",
+      "complexity": 0.8
+    }
+  }
+}
+```
+
 ### **4. Validate Step Completion**
 ```bash
 # Agent uses workflow_validate tool
@@ -195,9 +213,42 @@ You should see:
 
 1. **Discovery**: Agent calls `workflow_list` to see available workflows
 2. **Selection**: Agent calls `workflow_get` to understand a specific workflow
-3. **Execution**: Agent calls `workflow_next` repeatedly to get steps
-4. **Validation**: Agent calls `workflow_validate` after completing each step
-5. **Completion**: Agent continues until workflow is complete
+3. **Context Setup**: Agent determines context variables (taskScope, userExpertise, etc.)
+4. **Execution**: Agent calls `workflow_next` repeatedly to get steps (with context for conditional workflows)
+5. **Validation**: Agent calls `workflow_validate` after completing each step
+6. **Completion**: Agent continues until workflow is complete
+
+## **🆕 New in v1.2: Conditional Workflows**
+
+### **Context-Aware Step Execution**
+Workflows can now include conditional steps that execute based on context variables:
+
+- **`taskScope`**: "small", "medium", "large"
+- **`userExpertise`**: "novice", "intermediate", "expert"  
+- **`complexity`**: Numeric value 0.1 to 1.0
+- **Custom variables**: Any key-value pairs relevant to your workflow
+
+### **Example Conditional Step**
+```json
+{
+  "id": "advanced-optimization",
+  "title": "Advanced Performance Optimization",
+  "prompt": "Implement advanced caching and optimization strategies.",
+  "runCondition": {
+    "and": [
+      {"var": "taskScope", "equals": "large"},
+      {"var": "userExpertise", "equals": "expert"}
+    ]
+  }
+}
+```
+
+### **Supported Condition Operators**
+- `equals`, `not_equals`: Value comparison
+- `gt`, `gte`, `lt`, `lte`: Numeric comparison  
+- `and`, `or`, `not`: Logical operations
+
+This enables "choose your own adventure" workflows that adapt to different scenarios and user preferences.
 
 ## **📊 Benefits for AI Agents**
 

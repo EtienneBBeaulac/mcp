@@ -68,6 +68,9 @@ Let's look at the authentication workflow example:
 - **`steps`**: The actual workflow steps
 - **`metaGuidance`**: Best practices that apply throughout
 
+**New in v1.2:**
+- **`runCondition`**: Optional condition on steps for "choose your own adventure" workflows
+
 ---
 
 ## Creating Your First Workflow
@@ -185,6 +188,34 @@ Use `askForFiles: true` when:
   "askForFiles": true
 }
 ```
+
+### When to Use `runCondition` (New in v1.2)
+
+Use `runCondition` when:
+- Different steps should execute based on task scope or complexity
+- You want "choose your own adventure" style workflows
+- Steps should be skipped based on user expertise or preferences
+- Conditional logic is needed for different scenarios
+
+**Example:**
+```json
+{
+  "id": "advanced-optimization",
+  "title": "Advanced performance optimization",
+  "prompt": "Implement advanced caching and optimization strategies.",
+  "runCondition": {
+    "and": [
+      {"var": "taskScope", "equals": "large"},
+      {"var": "userExpertise", "equals": "expert"}
+    ]
+  }
+}
+```
+
+**Supported condition operators:**
+- `equals`, `not_equals`: Value comparison
+- `gt`, `gte`, `lt`, `lte`: Numeric comparison
+- `and`, `or`, `not`: Logical operations
 
 ### Writing Good Prompts
 

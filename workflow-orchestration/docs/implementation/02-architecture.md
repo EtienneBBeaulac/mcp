@@ -59,6 +59,7 @@ Cross-cutting concerns (logging, DI) live at the root.
 * Folder: `src/application/use-cases/`
 * Pure functions with no side-effects.
 * Injected with an `IWorkflowStorage` implementation and executed by the server.
+* **v1.2**: `get-next-step` now accepts optional context parameter for conditional step evaluation.
 
 ### Validation Module (Application)
 * Centralised `src/application/validation.ts` with **Ajv** JSON-schema compiler.
@@ -96,6 +97,7 @@ Cross-cutting concerns (logging, DI) live at the root.
 * **Ajv** for high-performance JSON-schema validation (both RPC params & workflow documents).
 * **Async I/O Only** – storage interface returns `Promise` to support remote stores later.
 * **Thin Adapters** – server & storage wrappers are intentionally small; majority of logic resides in use-cases.
+* **Conditional Step Execution (v1.2)** – Safe expression evaluation enables dynamic workflows that adapt based on context variables like task scope and user expertise.
 
 ---
 

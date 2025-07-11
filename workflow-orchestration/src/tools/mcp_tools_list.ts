@@ -24,7 +24,12 @@ const tools: MCPTool[] = [
       type: 'object',
       properties: {
         workflowId: { type: 'string' },
-        completedSteps: { type: 'array', items: { type: 'string' } }
+        completedSteps: { type: 'array', items: { type: 'string' } },
+        context: { 
+          type: 'object', 
+          description: 'Optional execution context for evaluating step conditions',
+          additionalProperties: true
+        }
       },
       required: ['workflowId', 'completedSteps']
     }

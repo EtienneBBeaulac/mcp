@@ -243,7 +243,7 @@ The server responds with all available tools, their schemas, and metadata:
             },
             "context": {
               "type": "object",
-              "description": "Additional context for step guidance",
+              "description": "Optional execution context for evaluating step conditions. Can contain variables like taskScope, userExpertise, complexity, etc.",
               "additionalProperties": true
             }
           },

@@ -164,6 +164,7 @@ export interface WorkflowStep {
   guidance?: string[];
   askForFiles?: boolean;
   requireConfirmation?: boolean;
+  runCondition?: object;
 }
 
 export interface Workflow {

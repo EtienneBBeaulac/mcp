@@ -97,6 +97,8 @@ The workflow-orchestration system has several key specifications that need revie
   - Required step fields are defined
   - Optional step fields are documented
   - Field types and constraints are correct
+  - runCondition property is properly defined (if present)
+  - Conditional step logic is validated
 
 ### Example Workflows Review
 
@@ -404,14 +406,16 @@ The workflow schema doesn't support conditional steps or branching logic.
 
 **Feedback:**
 ```
-The current workflow schema only supports linear step sequences. For complex workflows, 
-we need support for conditional steps. Consider adding:
+✅ RESOLVED in v1.2: The workflow schema now supports conditional steps through the 
+'runCondition' property. This allows workflows to implement "choose your own adventure" 
+logic where steps execute based on context variables like taskScope, userExpertise, etc.
 
-1. A 'condition' field to steps that determines if they should execute
-2. A 'nextStep' field that allows non-linear flow
-3. Support for step groups or phases
+The implementation includes:
+1. Optional 'runCondition' field on steps with expression-based conditions
+2. Context parameter in workflow_next API for passing evaluation variables
+3. Safe condition evaluation with supported operators (equals, and, or, etc.)
 
-Example use case: A workflow that branches based on user input or system state.
+This enables dynamic workflows that adapt to different scenarios and user preferences.
 ```
 
 ### Example 3: Documentation Review

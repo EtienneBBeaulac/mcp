@@ -25,6 +25,11 @@ export const methodParamSchemas: Record<string, any> = {
         items: { type: 'string', pattern: '^[A-Za-z0-9_-]+$' },
         nullable: true,
         default: []
+      },
+      context: {
+        type: 'object',
+        description: 'Optional execution context for evaluating step conditions',
+        additionalProperties: true
       }
     },
     required: ['workflowId'],

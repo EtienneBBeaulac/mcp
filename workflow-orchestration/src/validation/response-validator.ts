@@ -19,7 +19,8 @@ const workflowStepSchema = z.object({
   title: z.string(),
   prompt: z.string(),
   askForFiles: z.boolean().optional(),
-  requireConfirmation: z.boolean().optional()
+  requireConfirmation: z.boolean().optional(),
+  runCondition: z.object({}).optional()
 });
 
 const workflowSchema = z.object({

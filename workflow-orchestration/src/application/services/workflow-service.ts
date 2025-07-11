@@ -10,7 +10,8 @@ export interface WorkflowService {
    */
   getNextStep(
     workflowId: string,
-    completedSteps: string[]
+    completedSteps: string[],
+    context?: ConditionContext
   ): Promise<{
     step: import('../../types/mcp-types').WorkflowStep | null;
     guidance: import('../../types/mcp-types').WorkflowGuidance;
@@ -42,6 +43,7 @@ import {
   StepNotFoundError,
   ValidationError
 } from '../../core/error-handler';
+import { evaluateCondition, ConditionContext } from '../../utils/condition-evaluator';
 
 /**
  * Default implementation of {@link WorkflowService} that relies on
@@ -60,7 +62,8 @@ export class DefaultWorkflowService implements WorkflowService {
 
   async getNextStep(
     workflowId: string,
-    completedSteps: string[]
+    completedSteps: string[],
+    context: ConditionContext = {}
   ): Promise<{ step: WorkflowStep | null; guidance: WorkflowGuidance; isComplete: boolean }> {
     const workflow = await this.storage.getWorkflowById(workflowId);
     if (!workflow) {
@@ -68,7 +71,20 @@ export class DefaultWorkflowService implements WorkflowService {
     }
 
     const completed = completedSteps || [];
-    const nextStep = workflow.steps.find((step) => !completed.includes(step.id)) || null;
+    const nextStep = workflow.steps.find((step) => {
+      // Skip if step is already completed
+      if (completed.includes(step.id)) {
+        return false;
+      }
+      
+      // If step has a runCondition, evaluate it
+      if (step.runCondition) {
+        return evaluateCondition(step.runCondition, context);
+      }
+      
+      // No condition means step is eligible
+      return true;
+    }) || null;
     const isComplete = !nextStep;
 
     let finalPrompt = 'Workflow complete.';

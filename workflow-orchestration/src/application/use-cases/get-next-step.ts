@@ -1,5 +1,6 @@
 import { WorkflowService } from '../services/workflow-service';
 import { WorkflowStep, WorkflowGuidance } from '../../types/mcp-types';
+import { ConditionContext } from '../../utils/condition-evaluator';
 
 /**
  * Factory function that creates a pure use-case for getting next workflow step.
@@ -8,13 +9,14 @@ import { WorkflowStep, WorkflowGuidance } from '../../types/mcp-types';
 export function createGetNextStep(service: WorkflowService) {
   return async (
     workflowId: string,
-    completedSteps: string[]
+    completedSteps: string[],
+    context?: ConditionContext
   ): Promise<{
     step: WorkflowStep | null;
     guidance: WorkflowGuidance;
     isComplete: boolean;
   }> => {
-    return service.getNextStep(workflowId, completedSteps);
+    return service.getNextStep(workflowId, completedSteps, context);
   };
 }
 
@@ -25,11 +27,12 @@ export function createGetNextStep(service: WorkflowService) {
 export async function getNextStep(
   service: WorkflowService,
   workflowId: string,
-  completedSteps: string[]
+  completedSteps: string[],
+  context?: ConditionContext
 ): Promise<{
   step: WorkflowStep | null;
   guidance: WorkflowGuidance;
   isComplete: boolean;
 }> {
-  return createGetNextStep(service)(workflowId, completedSteps);
+  return createGetNextStep(service)(workflowId, completedSteps, context);
 } 
