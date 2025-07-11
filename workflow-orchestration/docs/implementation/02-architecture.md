@@ -61,9 +61,71 @@ Cross-cutting concerns (logging, DI) live at the root.
 * Injected with an `IWorkflowStorage` implementation and executed by the server.
 * **v1.2**: `get-next-step` now accepts optional context parameter for conditional step evaluation.
 
-### Validation Module (Application)
-* Centralised `src/application/validation.ts` with **Ajv** JSON-schema compiler.
-* Ensures both incoming RPC params and workflow documents adhere to spec.
+### ValidationEngine (Application)
+* **File**: `src/application/services/validation-engine.ts`
+* **Purpose**: Advanced step output validation with three enhancement types for comprehensive quality assurance.
+* **Architecture**: Dependency-injected service with AJV integration and performance optimizations.
+
+#### Core Validation Enhancement Types
+
+**1. JSON Schema Validation**
+* **Technology**: AJV (Another JSON Schema Validator) with Draft 7 support
+* **Performance**: Map-based compiled schema caching for sub-millisecond validation
+* **Capabilities**: Full JSON validation (objects, arrays, primitives) with detailed error reporting
+* **Use Cases**: Structured output validation, API response validation, complex data format verification
+
+**2. Context-Aware Validation**
+* **Technology**: Integration with `condition-evaluator.ts` for dynamic rule application
+* **Capabilities**: Conditional validation rules based on execution context variables
+* **Operators**: equals, not_equals, gt, gte, lt, lte, and, or, not
+* **Use Cases**: Task-specific validation, user role-based rules, environment-dependent validation
+* **Safety**: Graceful degradation when context variables are missing
+
+**3. Logical Composition**
+* **Technology**: Recursive composition evaluation with unlimited nesting depth
+* **Operators**: AND (all must pass), OR (at least one must pass), NOT (must not pass)
+* **Format**: Both array format (backward compatible) and composition object format
+* **Use Cases**: Complex business logic validation, multi-condition requirements, sophisticated validation expressions
+
+#### Validation Rule Types
+
+```typescript
+// Basic rule types with comprehensive support
+ValidationRule {
+  type: 'contains' | 'regex' | 'length' | 'schema';
+  message: string;
+  condition?: Condition; // Optional context-aware evaluation
+  // Type-specific properties...
+}
+
+// Logical composition for complex expressions
+ValidationComposition {
+  and?: ValidationCriteria[];
+  or?: ValidationCriteria[];
+  not?: ValidationCriteria;
+}
+```
+
+#### Performance Architecture
+
+* **Schema Compilation Cache**: `Map<string, ValidateFunction>` prevents recompilation overhead
+* **Conditional Evaluation**: Rules with unmet conditions are skipped entirely
+* **Lazy Evaluation**: Composition operators short-circuit when possible (AND stops on first failure, OR stops on first success)
+* **Memory Management**: Efficient validation with minimal allocation during execution
+
+#### Error Handling & Debugging
+
+* **Structured Error Messages**: Clear, actionable validation failure descriptions
+* **AJV Error Integration**: Detailed JSON Schema validation errors with path information
+* **Validation Context**: Error messages include context about which rule failed and why
+* **Debug Information**: Comprehensive validation results with issues and suggestions
+
+#### Integration Patterns
+
+* **WorkflowService Integration**: Seamless step output validation via `validateStepOutput()`
+* **Backward Compatibility**: Legacy string-based validation rules still supported
+* **Dependency Injection**: Clean separation from storage and transport concerns
+* **Testing Support**: Extensive test coverage (72 tests) demonstrating all validation patterns
 
 ### Storage Adapters (Infrastructure)
 * Folder: `src/infrastructure/storage/`
@@ -85,8 +147,31 @@ Cross-cutting concerns (logging, DI) live at the root.
 1. **Request** – Agent sends JSON-RPC over stdin.
 2. **RPC Layer** parses & validates parameters (Ajv).
 3. **Use-Case** executes core logic, querying storage via injected adapter.
-4. **Domain Error**? → mapped to JSON-RPC error.
-5. **Response** emitted on stdout.
+4. **ValidationEngine** – For `workflow_validate` calls, applies advanced validation rules to step output.
+5. **Domain Error**? → mapped to JSON-RPC error.
+6. **Response** emitted on stdout.
+
+### Validation Flow Detail
+
+```
+Step Output → ValidationEngine.validate() → {
+  Context Evaluation → Filter applicable rules
+  ↓
+  Criteria Assessment → {
+    Array Format: Apply each rule sequentially
+    Composition: Recursive logical evaluation (and/or/not)
+  }
+  ↓
+  Rule Execution → {
+    contains: String inclusion check
+    regex: Pattern matching with flags
+    length: Min/max constraints
+    schema: AJV compilation and validation
+  }
+  ↓
+  Result Aggregation → ValidationResult
+}
+```
 
 ---
 
@@ -95,6 +180,10 @@ Cross-cutting concerns (logging, DI) live at the root.
 * **Clean Architecture** chosen to isolate domain logic from transport/storage concerns and ease future adapter swaps (e.g., WebSocket transport).
 * **TypeScript** with strict null-checks enabled.
 * **Ajv** for high-performance JSON-schema validation (both RPC params & workflow documents).
+* **Advanced ValidationEngine Architecture** – Three-tier validation system (JSON Schema + Context-Aware + Logical Composition) provides comprehensive output quality assurance without sacrificing performance.
+* **Schema Compilation Caching** – Map-based validator caching prevents repeated AJV compilation overhead during high-frequency validation operations.
+* **Context-Aware Validation** – Dynamic rule application based on execution context enables task-specific, user-role-based, and environment-dependent validation patterns.
+* **Backward-Compatible Validation** – Support for both legacy array-based rules and modern composition syntax ensures smooth migration paths.
 * **Async I/O Only** – storage interface returns `Promise` to support remote stores later.
 * **Thin Adapters** – server & storage wrappers are intentionally small; majority of logic resides in use-cases.
 * **Conditional Step Execution (v1.2)** – Safe expression evaluation enables dynamic workflows that adapt based on context variables like task scope and user expertise.
@@ -116,7 +205,70 @@ Cross-cutting concerns (logging, DI) live at the root.
 | `src/core/server.ts` JSON-RPC wrapper | `src/infrastructure/rpc/server.ts` | Now a pure adapter, delegates to use-cases. |
 | Modules in `src/tools/` | Removed | Logic moved to application use-cases. |
 | `src/workflow/*.ts` storage impls | `src/infrastructure/storage/*` | Names unchanged; import paths updated. |
-| Ad-hoc validation utilities | `src/application/validation.ts` | Single point of truth; uses Ajv. |
+| Ad-hoc validation utilities | `src/application/services/validation-engine.ts` | Advanced ValidationEngine with three enhancement types. |
+
+---
+
+## Documentation Standards & Terminology
+
+### Core Validation Terminology
+
+**Standardized Terms** (use consistently across all documentation):
+* **ValidationEngine** – The core validation service class
+* **ValidationRule** – Individual validation criteria (contains, regex, length, schema)
+* **ValidationComposition** – Logical grouping of rules with and/or/not operators
+* **ValidationCriteria** – Union type supporting both rules and compositions
+* **ValidationResult** – Structured output with valid/issues/suggestions
+* **Context-Aware Validation** – Rules that apply conditionally based on execution context
+* **Condition Context** – Variables available for conditional rule evaluation
+
+### Code Example Standards
+
+**TypeScript Code Blocks**: Always include proper typing
+```typescript
+// ✅ Good - includes types and context
+const result: ValidationResult = await engine.validate(output, rules, context);
+
+// ❌ Bad - no types or context
+const result = engine.validate(output, rules);
+```
+
+**JSON Examples**: Always validate against current schema
+```json
+{
+  "validationCriteria": {
+    "and": [
+      { "type": "contains", "value": "success", "message": "Must contain success" },
+      { "type": "length", "min": 10, "message": "Must be detailed" }
+    ]
+  }
+}
+```
+
+### Documentation Structure Standards
+
+**Section Headers**: Use descriptive, action-oriented titles
+* ✅ "Implementing Advanced Validation Rules"
+* ❌ "Validation"
+
+**Code Comments**: Explain the why, not just the what
+```typescript
+// Apply conditional rules only when context matches
+if (rule.condition && !evaluateCondition(rule.condition, context)) {
+  continue; // Skip rule when condition not met
+}
+```
+
+### Cross-Reference Standards
+
+**File References**: Always use relative paths from current document
+* `../../spec/workflow.schema.json` 
+* `../implementation/13-advanced-validation-guide.md`
+
+**Validation Examples**: Must demonstrate real-world use cases
+* Task-specific validation scenarios
+* Performance optimization patterns
+* Error handling and debugging approaches
 
 ---
 
@@ -124,5 +276,7 @@ Cross-cutting concerns (logging, DI) live at the root.
 
 * [Getting Started Guide](01-getting-started.md)
 * [Development Phases](03-development-phases.md)
+* [Advanced Validation Guide](13-advanced-validation-guide.md)
+* [Simple Workflow Guide](09-simple-workflow-guide.md)
 * [API Specification](../../spec/mcp-api-v1.0.md)
 * [Workflow Schema](../../spec/workflow.schema.json) 
