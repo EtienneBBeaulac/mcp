@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { ValidationEngine, ValidationRule } from '../../src/application/services/validation-engine';
+import { ValidationEngine, ValidationRule, ValidationComposition } from '../../src/application/services/validation-engine';
 import { ValidationError } from '../../src/core/error-handler';
 import { ConditionContext } from '../../src/utils/condition-evaluator';
 
@@ -761,6 +761,291 @@ describe('ValidationEngine', () => {
       const result = await engine.validate('Created something successfully', rules, context);
       expect(result.valid).toBe(true);
       expect(result.issues).toHaveLength(0);
+    });
+     });
+
+  describe('logical composition validation', () => {
+    it('should handle AND operator with all rules passing', async () => {
+      const composition: ValidationComposition = {
+        and: [
+          { type: 'contains', value: 'success', message: 'Must contain success' },
+          { type: 'contains', value: 'completed', message: 'Must contain completed' },
+          { type: 'length', min: 10, message: 'Must be at least 10 characters' }
+        ]
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle AND operator with one rule failing', async () => {
+      const composition: ValidationComposition = {
+        and: [
+          { type: 'contains', value: 'success', message: 'Must contain success' },
+          { type: 'contains', value: 'failed', message: 'Must contain failed' },
+          { type: 'length', min: 10, message: 'Must be at least 10 characters' }
+        ]
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Validation composition failed');
+    });
+
+    it('should handle OR operator with one rule passing', async () => {
+      const composition: ValidationComposition = {
+        or: [
+          { type: 'contains', value: 'failed', message: 'Must contain failed' },
+          { type: 'contains', value: 'success', message: 'Must contain success' },
+          { type: 'contains', value: 'error', message: 'Must contain error' }
+        ]
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle OR operator with all rules failing', async () => {
+      const composition: ValidationComposition = {
+        or: [
+          { type: 'contains', value: 'failed', message: 'Must contain failed' },
+          { type: 'contains', value: 'error', message: 'Must contain error' },
+          { type: 'contains', value: 'warning', message: 'Must contain warning' }
+        ]
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Validation composition failed');
+    });
+
+    it('should handle NOT operator with rule failing (composition passes)', async () => {
+      const composition: ValidationComposition = {
+        not: { type: 'contains', value: 'error', message: 'Must not contain error' }
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle NOT operator with rule passing (composition fails)', async () => {
+      const composition: ValidationComposition = {
+        not: { type: 'contains', value: 'success', message: 'Must not contain success' }
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Validation composition failed');
+    });
+
+         it('should handle nested composition with AND and OR', async () => {
+       const composition: ValidationComposition = {
+         and: [
+           { type: 'contains', value: 'Task', message: 'Must mention task' },
+           {
+             or: [
+               { type: 'contains', value: 'success', message: 'Must contain success' },
+               { type: 'contains', value: 'completed', message: 'Must contain completed' }
+             ]
+           }
+         ]
+       };
+       
+       const result = await engine.validate('Task completed successfully', composition);
+       expect(result.valid).toBe(true);
+       expect(result.issues).toHaveLength(0);
+     });
+
+    it('should handle complex nested composition with multiple levels', async () => {
+      const composition: ValidationComposition = {
+        or: [
+          {
+            and: [
+              { type: 'contains', value: 'error', message: 'Must contain error' },
+              { type: 'contains', value: 'critical', message: 'Must contain critical' }
+            ]
+          },
+          {
+            and: [
+              { type: 'contains', value: 'success', message: 'Must contain success' },
+              {
+                not: { type: 'contains', value: 'warning', message: 'Must not contain warning' }
+              }
+            ]
+          }
+        ]
+      };
+      
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle composition with schema validation', async () => {
+      const composition: ValidationComposition = {
+        and: [
+          {
+            type: 'schema',
+            schema: {
+              type: 'object',
+              properties: { status: { type: 'string' } },
+              required: ['status']
+            },
+            message: 'Must be valid status object'
+          },
+          {
+            or: [
+              { type: 'contains', value: 'success', message: 'Must contain success' },
+              { type: 'contains', value: 'completed', message: 'Must contain completed' }
+            ]
+          }
+        ]
+      };
+      
+      const validJson = '{"status": "success"}';
+      const result = await engine.validate(validJson, composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle composition with context-aware rules', async () => {
+      const context: ConditionContext = {
+        environment: 'production',
+        priority: 'high'
+      };
+      
+      const composition: ValidationComposition = {
+        and: [
+          { type: 'contains', value: 'completed', message: 'Must contain completed' },
+          {
+            or: [
+              {
+                type: 'contains',
+                value: 'urgent',
+                condition: { var: 'priority', equals: 'high' },
+                message: 'High priority must mention urgent'
+              },
+              {
+                type: 'contains',
+                value: 'normal',
+                condition: { var: 'priority', equals: 'low' },
+                message: 'Low priority must mention normal'
+              }
+            ]
+          }
+        ]
+      };
+      
+      const result = await engine.validate('Task completed with urgent priority', composition, context);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle empty composition gracefully', async () => {
+      const composition: ValidationComposition = {};
+      
+      const result = await engine.validate('Any output', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle NOT with nested composition', async () => {
+      const composition: ValidationComposition = {
+        not: {
+          and: [
+            { type: 'contains', value: 'error', message: 'Must contain error' },
+            { type: 'contains', value: 'critical', message: 'Must contain critical' }
+          ]
+        }
+      };
+      
+      // Should pass because NOT(error AND critical) = NOT(false) = true
+      const result = await engine.validate('Task completed successfully', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle composition with different rule types', async () => {
+      const composition: ValidationComposition = {
+        and: [
+          { type: 'length', min: 20, message: 'Must be detailed' },
+          {
+            or: [
+              { type: 'regex', pattern: 'success', message: 'Must match success pattern' },
+              { type: 'contains', value: 'completed', message: 'Must contain completed' }
+            ]
+          },
+          {
+            not: { type: 'contains', value: 'error', message: 'Must not contain error' }
+          }
+        ]
+      };
+      
+      const result = await engine.validate('Task has been completed successfully with all requirements met', composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should maintain backward compatibility with array format', async () => {
+      const arrayRules: ValidationRule[] = [
+        { type: 'contains', value: 'success', message: 'Must contain success' },
+        { type: 'length', min: 10, message: 'Must be at least 10 characters' }
+      ];
+      
+      const result = await engine.validate('Task completed successfully', arrayRules);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle complex real-world composition scenario', async () => {
+      const composition: ValidationComposition = {
+        and: [
+          // Basic requirements
+          { type: 'contains', value: 'ticket', message: 'Must mention tickets' },
+          { type: 'length', min: 50, message: 'Must be detailed' },
+          
+          // Status requirements (at least one must be true)
+          {
+            or: [
+              { type: 'contains', value: 'created', message: 'Must mention creation' },
+              { type: 'contains', value: 'updated', message: 'Must mention update' },
+              { type: 'contains', value: 'resolved', message: 'Must mention resolution' }
+            ]
+          },
+          
+          // Quality requirements (must not contain error indicators)
+          {
+            not: {
+              or: [
+                { type: 'contains', value: 'error', message: 'Must not contain error' },
+                { type: 'contains', value: 'failed', message: 'Must not contain failed' }
+              ]
+            }
+          }
+        ]
+      };
+      
+      const validOutput = 'Successfully created multiple tickets for the project. All tickets have been properly categorized and assigned to the appropriate team members. The ticket creation process completed without any issues.';
+      const result = await engine.validate(validOutput, composition);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle composition validation with detailed error reporting', async () => {
+      const composition: ValidationComposition = {
+        and: [
+          { type: 'contains', value: 'nonexistent', message: 'Must contain nonexistent' },
+          { type: 'length', min: 1000, message: 'Must be very long' }
+        ]
+      };
+      
+      const result = await engine.validate('Short output', composition);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Validation composition failed');
+      expect(result.suggestions).toContain('Review validation criteria and adjust output accordingly.');
     });
   });
 

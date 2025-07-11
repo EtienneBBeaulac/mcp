@@ -14,6 +14,14 @@ export interface ValidationRule {
   condition?: Condition; // for context-aware validation
 }
 
+export interface ValidationComposition {
+  and?: ValidationCriteria[];
+  or?: ValidationCriteria[];
+  not?: ValidationCriteria;
+}
+
+export type ValidationCriteria = ValidationRule | ValidationComposition;
+
 export interface ValidationResult {
   valid: boolean;
   issues: string[];
@@ -54,40 +62,66 @@ export class ValidationEngine {
       throw new ValidationError(`Invalid JSON schema: ${error}`);
     }
   }
-  
+
   /**
-   * Validates a step output against an array of validation criteria.
+   * Evaluates validation criteria (either array or composition format).
    * 
    * @param output - The step output to validate
-   * @param criteria - Array of validation rules to apply
-   * @param context - Optional context for context-aware validation
-   * @returns ValidationResult with validation status and any issues
+   * @param criteria - Validation criteria to evaluate
+   * @param context - Execution context for conditional validation
+   * @returns ValidationResult with validation status and issues
    */
-  async validate(
+  private evaluateCriteria(
     output: string,
-    criteria: ValidationRule[],
-    context?: ConditionContext
-  ): Promise<ValidationResult> {
+    criteria: ValidationRule[] | ValidationComposition,
+    context: ConditionContext
+  ): ValidationResult {
+    try {
+      // Handle array format (backward compatibility)
+      if (Array.isArray(criteria)) {
+        return this.evaluateRuleArray(output, criteria, context);
+      }
+
+      // Handle composition format
+      if (this.isValidationComposition(criteria)) {
+        const compositionResult = this.evaluateComposition(output, criteria, context);
+        return {
+          valid: compositionResult,
+          issues: compositionResult ? [] : ['Validation composition failed'],
+          suggestions: compositionResult ? [] : ['Review validation criteria and adjust output accordingly.']
+        };
+      }
+
+      // Invalid criteria format
+      throw new ValidationError('Invalid validation criteria format');
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      throw new ValidationError(`Error evaluating validation criteria: ${error}`);
+    }
+  }
+
+  /**
+   * Evaluates an array of validation rules (legacy format).
+   * 
+   * @param output - The step output to validate
+   * @param rules - Array of validation rules to apply
+   * @param context - Execution context for conditional validation
+   * @returns ValidationResult with validation status and issues
+   */
+  private evaluateRuleArray(
+    output: string,
+    rules: ValidationRule[],
+    context: ConditionContext
+  ): ValidationResult {
     const issues: string[] = [];
 
-    // Handle empty or invalid criteria
-    if (!Array.isArray(criteria) || criteria.length === 0) {
-      // Fallback basic validation - output should not be empty
-      if (typeof output !== 'string' || output.trim().length === 0) {
-        issues.push('Output is empty or invalid.');
-      }
-      return {
-        valid: issues.length === 0,
-        issues,
-        suggestions: issues.length > 0 ? ['Provide valid output content.'] : []
-      };
-    }
-
     // Process each validation rule
-    for (const rule of criteria) {
+    for (const rule of rules) {
       try {
         // Check if rule condition is met (if condition exists)
-        if (rule.condition && !evaluateCondition(rule.condition, context || {})) {
+        if (rule.condition && !evaluateCondition(rule.condition, context)) {
           // Skip this rule if condition is not met
           continue;
         }
@@ -99,6 +133,133 @@ export class ValidationEngine {
         }
         throw new ValidationError(`Error evaluating validation rule: ${error}`);
       }
+    }
+
+    return {
+      valid: issues.length === 0,
+      issues,
+      suggestions: issues.length > 0 ? ['Review validation criteria and adjust output accordingly.'] : []
+    };
+  }
+
+  /**
+   * Evaluates a validation composition with logical operators.
+   * 
+   * @param output - The step output to validate
+   * @param composition - The validation composition to evaluate
+   * @param context - Execution context for conditional validation
+   * @returns Boolean indicating if the composition is valid
+   */
+  private evaluateComposition(
+    output: string,
+    composition: ValidationComposition,
+    context: ConditionContext
+  ): boolean {
+    // Handle AND operator
+    if (composition.and) {
+      return composition.and.every(criteria => 
+        this.evaluateSingleCriteria(output, criteria, context)
+      );
+    }
+
+    // Handle OR operator
+    if (composition.or) {
+      return composition.or.some(criteria => 
+        this.evaluateSingleCriteria(output, criteria, context)
+      );
+    }
+
+    // Handle NOT operator
+    if (composition.not) {
+      return !this.evaluateSingleCriteria(output, composition.not, context);
+    }
+
+    // Empty composition is considered valid
+    return true;
+  }
+
+  /**
+   * Evaluates a single validation criteria (rule or composition).
+   * 
+   * @param output - The step output to validate
+   * @param criteria - Single validation criteria to evaluate
+   * @param context - Execution context for conditional validation
+   * @returns Boolean indicating if the criteria is valid
+   */
+  private evaluateSingleCriteria(
+    output: string,
+    criteria: ValidationCriteria,
+    context: ConditionContext
+  ): boolean {
+    if (this.isValidationRule(criteria)) {
+      // Check if rule condition is met (if condition exists)
+      if (criteria.condition && !evaluateCondition(criteria.condition, context)) {
+        // Skip this rule if condition is not met (consider as valid)
+        return true;
+      }
+
+      const issues: string[] = [];
+      this.evaluateRule(output, criteria, issues);
+      return issues.length === 0;
+    }
+
+    if (this.isValidationComposition(criteria)) {
+      return this.evaluateComposition(output, criteria, context);
+    }
+
+    throw new ValidationError('Invalid validation criteria type');
+  }
+
+  /**
+   * Type guard to check if criteria is a ValidationRule.
+   */
+  private isValidationRule(criteria: ValidationCriteria): criteria is ValidationRule {
+    return typeof criteria === 'object' && 'type' in criteria;
+  }
+
+  /**
+   * Type guard to check if criteria is a ValidationComposition.
+   */
+  private isValidationComposition(criteria: ValidationCriteria): criteria is ValidationComposition {
+    return typeof criteria === 'object' && 
+           !('type' in criteria) &&
+           (Object.keys(criteria).length === 0 || 
+            'and' in criteria || 'or' in criteria || 'not' in criteria);
+  }
+  
+  /**
+   * Validates a step output against validation criteria.
+   * 
+   * @param output - The step output to validate
+   * @param criteria - Array of validation rules or composition object to apply
+   * @param context - Optional context for context-aware validation
+   * @returns ValidationResult with validation status and any issues
+   */
+  async validate(
+    output: string,
+    criteria: ValidationRule[] | ValidationComposition,
+    context?: ConditionContext
+  ): Promise<ValidationResult> {
+    const issues: string[] = [];
+
+    // Handle empty or invalid criteria
+    if (!criteria || (Array.isArray(criteria) && criteria.length === 0)) {
+      // Fallback basic validation - output should not be empty
+      if (typeof output !== 'string' || output.trim().length === 0) {
+        issues.push('Output is empty or invalid.');
+      }
+      return {
+        valid: issues.length === 0,
+        issues,
+        suggestions: issues.length > 0 ? ['Provide valid output content.'] : []
+      };
+    }
+
+    // Evaluate criteria (either array format or composition format)
+    const isValid = this.evaluateCriteria(output, criteria, context || {});
+    
+    if (!isValid.valid) {
+      issues.push(...isValid.issues);
     }
 
     const valid = issues.length === 0;
