@@ -255,7 +255,7 @@ describe('ValidationEngine', () => {
     });
   });
 
-  describe('schema validation (placeholder)', () => {
+  describe('schema validation', () => {
     it('should handle schema rule without schema property', async () => {
       const rules: ValidationRule[] = [
         { type: 'schema', message: 'Schema validation failed' }
@@ -265,12 +265,200 @@ describe('ValidationEngine', () => {
       expect(result.issues).toContain('Schema validation failed');
     });
 
-    it('should handle schema rule with schema property (placeholder)', async () => {
+    it('should validate valid JSON against object schema', async () => {
       const rules: ValidationRule[] = [
-        { type: 'schema', schema: { type: 'object' }, message: 'Schema validation failed' }
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              age: { type: 'number' }
+            },
+            required: ['name', 'age']
+          }, 
+          message: 'Object schema validation failed' 
+        }
       ];
-      const result = await engine.validate('{"test": "value"}', rules);
-      expect(result.valid).toBe(true); // Placeholder implementation accepts all
+      const validJson = '{"name": "John", "age": 30}';
+      const result = await engine.validate(validJson, rules);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should fail validation for invalid JSON against object schema', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              age: { type: 'number' }
+            },
+            required: ['name', 'age']
+          }, 
+          message: 'Object schema validation failed' 
+        }
+      ];
+      const invalidJson = '{"name": "John"}'; // missing required 'age'
+      const result = await engine.validate(invalidJson, rules);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Object schema validation failed');
+    });
+
+    it('should handle non-JSON input for schema validation', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { type: 'object' }, 
+          message: 'Invalid JSON input' 
+        }
+      ];
+      const result = await engine.validate('not json', rules);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Invalid JSON input');
+    });
+
+    it('should validate array schema', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 1
+          }, 
+          message: 'Array schema validation failed' 
+        }
+      ];
+      const validJson = '["apple", "banana", "cherry"]';
+      const result = await engine.validate(validJson, rules);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should fail validation for invalid array schema', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 1
+          }, 
+          message: 'Array schema validation failed' 
+        }
+      ];
+      const invalidJson = '[]'; // empty array, but minItems is 1
+      const result = await engine.validate(invalidJson, rules);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Array schema validation failed');
+    });
+
+    it('should provide detailed AJV error messages when custom message not provided', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'object',
+            properties: {
+              priority: { type: 'string', enum: ['Low', 'Medium', 'High'] }
+            },
+            required: ['priority']
+          },
+          message: '' // Use empty message to test default AJV error formatting
+        }
+      ];
+      const invalidJson = '{"priority": "Invalid"}';
+      const result = await engine.validate(invalidJson, rules);
+      expect(result.valid).toBe(false);
+      expect(result.issues[0]).toContain('Validation Error at');
+      expect(result.issues[0]).toContain('priority');
+    });
+
+    it('should cache compiled schemas for performance', async () => {
+      const schema = { 
+        type: 'object',
+        properties: { name: { type: 'string' } }
+      };
+      const rules: ValidationRule[] = [
+        { type: 'schema', schema, message: 'Schema validation failed' }
+      ];
+      
+      // First validation - should compile and cache
+      const result1 = await engine.validate('{"name": "test"}', rules);
+      expect(result1.valid).toBe(true);
+      
+      // Second validation with same schema - should use cache
+      const result2 = await engine.validate('{"name": "test2"}', rules);
+      expect(result2.valid).toBe(true);
+      
+      // Verify both validations worked correctly
+      expect(result1.issues).toHaveLength(0);
+      expect(result2.issues).toHaveLength(0);
+    });
+
+    it('should handle invalid JSON schema definition', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'invalid_type' // invalid schema type
+          }, 
+          message: 'Schema validation failed' 
+        }
+      ];
+      
+      await expect(engine.validate('{"test": "value"}', rules))
+        .rejects.toThrow('Invalid JSON schema');
+    });
+
+    it('should handle multiple schema validations', async () => {
+      const rules: ValidationRule[] = [
+        { 
+          type: 'schema', 
+          schema: { type: 'object' }, 
+          message: 'Must be object' 
+        },
+        { 
+          type: 'schema', 
+          schema: { 
+            type: 'object',
+            properties: { name: { type: 'string' } },
+            required: ['name']
+          }, 
+          message: 'Must have name property' 
+        }
+      ];
+      
+      const validJson = '{"name": "John"}';
+      const result = await engine.validate(validJson, rules);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle basic JSON types validation', async () => {
+      // Test string validation
+      const stringRules: ValidationRule[] = [
+        { type: 'schema', schema: { type: 'string' }, message: 'Must be string' }
+      ];
+      const stringResult = await engine.validate('"hello"', stringRules);
+      expect(stringResult.valid).toBe(true);
+      
+      // Test number validation
+      const numberRules: ValidationRule[] = [
+        { type: 'schema', schema: { type: 'number' }, message: 'Must be number' }
+      ];
+      const numberResult = await engine.validate('42', numberRules);
+      expect(numberResult.valid).toBe(true);
+      
+      // Test boolean validation
+      const booleanRules: ValidationRule[] = [
+        { type: 'schema', schema: { type: 'boolean' }, message: 'Must be boolean' }
+      ];
+      const booleanResult = await engine.validate('true', booleanRules);
+      expect(booleanResult.valid).toBe(true);
     });
   });
 

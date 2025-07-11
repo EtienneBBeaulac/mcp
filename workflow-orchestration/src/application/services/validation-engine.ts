@@ -1,4 +1,5 @@
 import { ValidationError } from '../../core/error-handler';
+import Ajv from 'ajv';
 
 export interface ValidationRule {
   type: 'contains' | 'regex' | 'length' | 'schema';
@@ -23,6 +24,34 @@ export interface ValidationResult {
  * evaluating validation criteria against step outputs.
  */
 export class ValidationEngine {
+  private ajv: Ajv;
+  private schemaCache = new Map<string, any>();
+  
+  constructor() {
+    this.ajv = new Ajv({ allErrors: true });
+  }
+
+  /**
+   * Compiles a JSON schema with caching for performance.
+   * 
+   * @param schema - The JSON schema to compile
+   * @returns Compiled schema validator function
+   */
+  private compileSchema(schema: Record<string, any>): any {
+    const schemaKey = JSON.stringify(schema);
+    
+    if (this.schemaCache.has(schemaKey)) {
+      return this.schemaCache.get(schemaKey);
+    }
+    
+    try {
+      const compiledSchema = this.ajv.compile(schema);
+      this.schemaCache.set(schemaKey, compiledSchema);
+      return compiledSchema;
+    } catch (error) {
+      throw new ValidationError(`Invalid JSON schema: ${error}`);
+    }
+  }
   
   /**
    * Validates a step output against an array of validation criteria.
@@ -121,13 +150,39 @@ export class ValidationEngine {
           break;
         }
         case 'schema': {
-          // TODO: Implement JSON Schema validation with ajv in Phase 1, Step 5
-          // For now, provide a placeholder that acknowledges the rule type
           if (!rule.schema) {
             issues.push(rule.message || 'Schema validation rule requires a schema property');
-          } else {
-            // Placeholder: accept all outputs for now until full implementation
-            // This prevents throwing "unsupported rule type" errors
+            break;
+          }
+          
+          try {
+            // Parse the output as JSON
+            let parsedOutput;
+            try {
+              parsedOutput = JSON.parse(output);
+            } catch (parseError: any) {
+              issues.push(rule.message || 'Output is not valid JSON for schema validation');
+              break;
+            }
+            
+            // Compile and validate against the schema
+            const validate = this.compileSchema(rule.schema);
+            const isValid = validate(parsedOutput);
+            
+            if (!isValid) {
+              // Format AJV errors for better readability
+              const errorMessages = validate.errors?.map((error: any) => 
+                `Validation Error at '${error.instancePath}': ${error.message}`
+              ) || ['Schema validation failed'];
+              
+              issues.push(rule.message || errorMessages.join('; '));
+            }
+          } catch (error: any) {
+            // Handle schema compilation errors
+            if (error instanceof ValidationError) {
+              throw error;
+            }
+            throw new ValidationError(`Schema validation error: ${error}`);
           }
           break;
         }
