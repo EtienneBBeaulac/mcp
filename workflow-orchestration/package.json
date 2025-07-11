@@ -1,13 +1,15 @@
 {
-  "name": "@etienneb/workrail",
-  "version": "0.0.2-beta.0",
+  "name": "@exaudeus/workrail",
+  "version": "0.0.3",
   "description": "MCP server for structured workflow orchestration and step-by-step task guidance",
   "license": "MIT",
   "bin": {
-    "mcp-server-workflow-orchestration": "dist/mcp-server.js"
+    "workrail": "dist/mcp-server.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "spec",
+    "workflows"
   ],
   "scripts": {
     "build": "tsc && shx chmod +x dist/*.js",

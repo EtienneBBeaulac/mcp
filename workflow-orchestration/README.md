@@ -81,7 +81,7 @@ Add this to your `claude_desktop_config.json`:
       "command": "npx",
       "args": [
         "-y",
-        "@etienneb/workrail"
+        "@exaudeus/workrail"
       ]
     }
   }
@@ -117,7 +117,7 @@ For manual installation, add this to your User Settings (JSON) or `.vscode/mcp.j
         "command": "npx",
         "args": [
           "-y",
-          "@etienneb/workrail"
+          "@exaudeus/workrail"
         ]
       }
     }

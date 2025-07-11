@@ -39,7 +39,7 @@ Add this to your Cursor configuration:
         "command": "npx",
         "args": [
           "-y",
-          "@etienneb/workrail"
+          "@exaudeus/workrail"
         ]
       }
     }

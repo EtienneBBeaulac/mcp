@@ -960,7 +960,7 @@ Workflows are stored locally on the user's filesystem:
 
 **Default Location Options:**
 ```
-~/.workrail/workflows/     # User's home directory
+~/.exaudeus/workflows/     # User's home directory
 ./node_modules/@mc.../workflows/       # Bundled with npm package
 $MCP_WORKFLOWS_DIR/                    # Environment variable override
 ```
@@ -1042,19 +1042,19 @@ Users install the server via npm and configure their agent:
 **Installation:**
 ```bash
 # Global installation
-npm install -g @etienneb/workrail
+npm install -g @exaudeus/workrail
 
 # Or use npx (no installation needed)
-npx @etienneb/workrail
+npx @exaudeus/workrail
 ```
 
 **Adding Custom Workflows:**
 ```bash
 # Create custom workflows directory
-mkdir -p ~/.workrail/workflows/custom
+mkdir -p ~/.exaudeus/workflows/custom
 
 # Add your workflow
-cp my-workflow.json ~/.workrail/workflows/custom/
+cp my-workflow.json ~/.exaudeus/workflows/custom/
 ```
 
 ### Security Model
@@ -1137,7 +1137,7 @@ consider these additional security aspects:
 **Workflow Updates:**
 ```bash
 # Update bundled workflows
-npm update @etienneb/workrail
+npm update @exaudeus/workrail
 
 # Or pull latest community workflows
 workflow-lookup update community
@@ -1197,7 +1197,7 @@ Add this to your `firebender.json`:
       "command": "npx",
       "args": [
         "-y",
-        "@etienneb/workrail"
+        "@exaudeus/workrail"
       ]
     }
   }
@@ -1248,7 +1248,7 @@ Add this to your `claude_desktop_config.json`:
       "command": "npx",
       "args": [
         "-y",
-        "@etienneb/workrail"
+        "@exaudeus/workrail"
       ]
     }
   }
@@ -1277,7 +1277,7 @@ Alternatively, add to `.vscode/mcp.json` in your workspace to share configuratio
         "command": "npx",
         "args": [
           "-y",
-          "@etienneb/workrail"
+          "@exaudeus/workrail"
         ]
       }
     }
@@ -1845,7 +1845,7 @@ The `sequentialthinking` MCP server is an existing tool designed for tracking ch
   "mcpServers": {
     "workflow-lookup": {
       "command": "npx",
-              "args": ["-y", "@etienneb/workrail"]
+              "args": ["-y", "@exaudeus/workrail"]
     },
     "sequential-thinking": {
       "command": "npx",

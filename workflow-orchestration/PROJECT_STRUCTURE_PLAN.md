@@ -137,7 +137,7 @@ workflow-orchestration/
 
 ```json
 {
-  "name": "@etienneb/workrail",
+  "name": "@exaudeus/workrail",
   "version": "1.0.0",
   "description": "MCP server for workflow orchestration and guidance",
   "main": "dist/index.js",
