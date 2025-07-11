@@ -1,5 +1,6 @@
 import { createDefaultWorkflowStorage } from './infrastructure/storage/storage.js';
 import { DefaultWorkflowService, WorkflowService } from './application/services/workflow-service.js';
+import { ValidationEngine } from './application/services/validation-engine.js';
 import { IWorkflowStorage } from './types/storage.js';
 import { createWorkflowLookupServer } from './infrastructure/rpc/server.js';
 import { WorkflowLookupServer } from './types/server.js';
@@ -11,6 +12,7 @@ import { WorkflowLookupServer } from './types/server.js';
  */
 export interface AppContainer {
   storage: IWorkflowStorage;
+  validationEngine: ValidationEngine;
   workflowService: WorkflowService;
   server: WorkflowLookupServer;
 }
@@ -22,12 +24,14 @@ export interface AppContainer {
  */
 export function createAppContainer(overrides: Partial<AppContainer> = {}): AppContainer {
   const storage = overrides.storage ?? createDefaultWorkflowStorage();
+  const validationEngine = overrides.validationEngine ?? new ValidationEngine();
   const workflowService =
-    overrides.workflowService ?? new DefaultWorkflowService(storage);
+    overrides.workflowService ?? new DefaultWorkflowService(storage, validationEngine);
   const server = overrides.server ?? createWorkflowLookupServer(workflowService);
 
   return {
     storage,
+    validationEngine,
     workflowService,
     server
   };

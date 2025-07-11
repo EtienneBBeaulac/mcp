@@ -40,17 +40,20 @@ import { createDefaultWorkflowStorage } from '../../infrastructure/storage';
 import { IWorkflowStorage } from '../../types/storage';
 import {
   WorkflowNotFoundError,
-  StepNotFoundError,
-  ValidationError
+  StepNotFoundError
 } from '../../core/error-handler';
 import { evaluateCondition, ConditionContext } from '../../utils/condition-evaluator';
+import { ValidationEngine } from './validation-engine';
 
 /**
  * Default implementation of {@link WorkflowService} that relies on
  * the existing {@link FileWorkflowStorage} backend.
  */
 export class DefaultWorkflowService implements WorkflowService {
-  constructor(private readonly storage: IWorkflowStorage = createDefaultWorkflowStorage()) {}
+  constructor(
+    private readonly storage: IWorkflowStorage = createDefaultWorkflowStorage(),
+    private readonly validationEngine: ValidationEngine = new ValidationEngine()
+  ) {}
 
   async listWorkflowSummaries(): Promise<WorkflowSummary[]> {
     return this.storage.listWorkflowSummaries();
@@ -122,75 +125,9 @@ export class DefaultWorkflowService implements WorkflowService {
       throw new StepNotFoundError(stepId, workflowId);
     }
 
-    // Validation logic (moved from workflow_validate handler)
-    const issues: string[] = [];
-    const criteria = (step as any).validationCriteria as unknown;
-
-    const evaluateRule = (rule: any) => {
-      if (typeof rule === 'string') {
-        const re = new RegExp(rule);
-        if (!re.test(output)) {
-          issues.push(`Output does not match pattern: ${rule}`);
-        }
-        return;
-      }
-
-      if (rule && typeof rule === 'object') {
-        switch (rule.type) {
-          case 'contains': {
-            const value = rule.value as string;
-            if (typeof value !== 'string' || !output.includes(value)) {
-              issues.push(rule.message || `Output must include "${value}"`);
-            }
-            break;
-          }
-          case 'regex': {
-            try {
-              const re = new RegExp(rule.pattern, rule.flags || undefined);
-              if (!re.test(output)) {
-                issues.push(rule.message || `Pattern mismatch: ${rule.pattern}`);
-              }
-            } catch {
-              throw new ValidationError(`Invalid regex pattern in validationCriteria: ${rule.pattern}`);
-            }
-            break;
-          }
-          case 'length': {
-            const { min, max } = rule;
-            if (typeof min === 'number' && output.length < min) {
-              issues.push(rule.message || `Output shorter than minimum length ${min}`);
-            }
-            if (typeof max === 'number' && output.length > max) {
-              issues.push(rule.message || `Output exceeds maximum length ${max}`);
-            }
-            break;
-          }
-          default:
-            throw new ValidationError(`Unsupported validation rule type: ${rule.type}`);
-        }
-        return;
-      }
-
-      // Unknown rule format
-      throw new ValidationError('Invalid validationCriteria format.');
-    };
-
-    if (Array.isArray(criteria) && criteria.length > 0) {
-      criteria.forEach(evaluateRule);
-    } else {
-      // Fallback basic validation
-      if (typeof output !== 'string' || output.trim().length === 0) {
-        issues.push('Output is empty or invalid.');
-      }
-    }
-
-    const valid = issues.length === 0;
-
-    return {
-      valid,
-      issues,
-      suggestions: valid ? [] : ['Review validation criteria and adjust output accordingly.']
-    };
+    // Use ValidationEngine to handle validation logic
+    const criteria = (step as any).validationCriteria as any[] || [];
+    return this.validationEngine.validate(output, criteria);
   }
 }
 

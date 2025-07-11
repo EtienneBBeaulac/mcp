@@ -142,6 +142,46 @@
               }
             },
             "additionalProperties": false
+          },
+          "validationCriteria": {
+            "type": "array",
+            "description": "Optional validation rules to check step output quality",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["contains", "regex", "length"],
+                  "description": "Type of validation rule"
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Expected value for 'contains' type"
+                },
+                "pattern": {
+                  "type": "string",
+                  "description": "Regex pattern for 'regex' type"
+                },
+                "flags": {
+                  "type": "string",
+                  "description": "Regex flags for 'regex' type"
+                },
+                "min": {
+                  "type": "number",
+                  "description": "Minimum length for 'length' type"
+                },
+                "max": {
+                  "type": "number",
+                  "description": "Maximum length for 'length' type"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Error message when validation fails"
+                }
+              },
+              "required": ["type", "message"],
+              "additionalProperties": false
+            }
           }
         },
         "required": [

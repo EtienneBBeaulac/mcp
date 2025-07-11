@@ -36,6 +36,34 @@
         "equals": "Simple"
       },
       "prompt": "**PREP**: Since this is a simple request, focus on creating a single high-quality ticket.\n\n**IMPLEMENT**: Generate a complete ticket with:\n- Clear, descriptive title following team conventions\n- Detailed description with sufficient context\n- Specific, testable acceptance criteria\n- Appropriate labels, priority, and story points\n- Any relevant links or attachments\n\n**VERIFY**: Review the ticket for completeness and clarity. This completes the Simple path workflow.",
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Title:?",
+          "message": "Ticket must include a clear title (e.g., 'Title:' or '## Title')"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Description:?",
+          "message": "Ticket must include a detailed description (e.g., 'Description:' or '## Description')"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Acceptance Criteria:?",
+          "message": "Ticket must include specific acceptance criteria (e.g., 'Acceptance Criteria:' or '## Acceptance Criteria')"
+        },
+        {
+          "type": "regex",
+          "pattern": "\\[\\s*\\].{5,}",
+          "message": "Acceptance criteria should include checkboxes followed by descriptive text (at least 5 characters)."
+        },
+        {
+          "type": "length",
+          "min": 300,
+          "max": 2000,
+          "message": "Ticket should be between 300-2000 characters for adequate detail"
+        }
+      ],
       "guidance": [
         "This is the complete fast track - workflow ends after this step",
         "Focus on quality over quantity - one excellent ticket",
@@ -88,6 +116,43 @@
         ]
       },
       "prompt": "**PREP**: With clarified requirements, create a comprehensive high-level plan.\n\n**IMPLEMENT**: Generate a structured plan document:\n- **Project Summary**: Clear overview of the feature/project\n- **Key Deliverables**: Main components or features to be built\n- **In-Scope**: Explicitly defined scope boundaries\n- **Out-of-Scope**: Clear exclusions to prevent scope creep\n- **Success Criteria**: Measurable definition of done\n- **High-Level Timeline**: Major milestones and phases\n\n**VERIFY**: Ensure the plan is comprehensive and aligns with the original request. This plan will guide ticket creation.",
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Project Summary:?",
+          "message": "Plan must include a Project Summary section"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Key Deliverables:?",
+          "message": "Plan must include a Key Deliverables section"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*In-Scope:?",
+          "message": "Plan must explicitly define In-Scope items"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Out-of-Scope:?",
+          "message": "Plan must explicitly define Out-of-Scope items"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*Success Criteria:?",
+          "message": "Plan must include measurable Success Criteria"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)##?\\s*High-Level Timeline:?",
+          "message": "Plan must include a High-Level Timeline section"
+        },
+        {
+          "type": "length",
+          "min": 800,
+          "message": "Plan should be at least 800 characters for comprehensive coverage"
+        }
+      ],
       "guidance": [
         "This plan becomes the foundation for all ticket generation",
         "Be explicit about scope to prevent misunderstandings",
@@ -135,6 +200,28 @@
         ]
       },
       "prompt": "**PREP**: Generate all necessary Jira tickets based on the approved plan.\n\n**IMPLEMENT**: Create comprehensive tickets for every story/task:\n- **Epic Ticket**: Overall project container (Epic path only)\n- **Feature/Story Tickets**: Individual work items with full details\n- **Consistent Formatting**: Follow team conventions and templates\n- **Complete Information**: Title, description, acceptance criteria, labels, estimates\n- **Proper Linking**: Dependencies and epic relationships\n\n**VERIFY**: Review all tickets for completeness, consistency, and accuracy. Present the full batch for approval.",
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "(?i)##\\s*(Ticket\\s*\\d+|Epic)",
+          "message": "Output must contain multiple numbered tickets (e.g., '## Ticket 1') or an Epic ('## Epic')"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)Story Points?:",
+          "message": "Tickets should include story point estimates"
+        },
+        {
+          "type": "regex",
+          "pattern": "(?i)Priority:",
+          "message": "Tickets should include priority levels"
+        },
+        {
+          "type": "length",
+          "min": 1000,
+          "message": "Batch ticket output should be substantial (1000+ characters) for multiple tickets"
+        }
+      ],
       "guidance": [
         "Automated batch generation saves significant time",
         "Ensure consistency across all tickets",
