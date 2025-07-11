@@ -507,6 +507,163 @@ Combines multiple validation rules with boolean operators:
 - Returns error code `-32004` if validation criteria format is invalid
 - Returns error code `-32002` if JSON Schema validation fails due to malformed schema
 
+### workflow_validate_json
+
+Validates workflow JSON content directly without external tools or storage dependencies. This tool provides comprehensive validation including JSON syntax checking, schema compliance validation, and actionable error messages optimized for LLM consumption.
+
+#### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "workflow_validate_json",
+  "params": {
+    "workflowJson": "string"
+  }
+}
+```
+
+#### Parameters
+
+- `workflowJson` (required): The complete workflow JSON content as a string to validate
+
+#### Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "valid": boolean,
+    "issues": ["string"],
+    "suggestions": ["string"]
+  }
+}
+```
+
+#### Field Descriptions
+
+- `valid`: Whether the workflow JSON is syntactically correct and schema-compliant
+- `issues`: List of specific validation problems found (empty if valid)
+- `suggestions`: List of actionable suggestions for fixing validation issues
+
+#### Validation Process
+
+The tool performs comprehensive validation in the following order:
+
+1. **JSON Syntax Validation**: Parses JSON and reports syntax errors with line/column information
+2. **Schema Compliance**: Validates against the workflow schema using the same ValidationEngine used by the storage layer
+3. **Error Enhancement**: Provides LLM-friendly error messages with specific suggestions for resolution
+
+#### Example Requests and Responses
+
+##### Valid Workflow JSON
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-1",
+  "method": "workflow_validate_json",
+  "params": {
+    "workflowJson": "{\"id\":\"test-workflow\",\"name\":\"Test Workflow\",\"description\":\"A simple test workflow\",\"version\":\"1.0.0\",\"steps\":[{\"id\":\"step1\",\"title\":\"First Step\",\"prompt\":\"Do something useful\"}]}"
+  }
+}
+```
+
+##### Valid Workflow Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-1",
+  "result": {
+    "valid": true,
+    "issues": [],
+    "suggestions": []
+  }
+}
+```
+
+##### Invalid JSON Syntax
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-2",
+  "method": "workflow_validate_json",
+  "params": {
+    "workflowJson": "{\"id\":\"test-workflow\",\"name\":\"Test Workflow\",\"description\":\"Missing closing brace\""
+  }
+}
+```
+
+##### JSON Syntax Error Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-2",
+  "result": {
+    "valid": false,
+    "issues": [
+      "JSON syntax error: Unexpected end of JSON input at position 75"
+    ],
+    "suggestions": [
+      "Check for missing closing braces, brackets, or quotes",
+      "Validate JSON syntax using a JSON validator or formatter"
+    ]
+  }
+}
+```
+
+##### Schema Validation Error
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-3",
+  "method": "workflow_validate_json",
+  "params": {
+    "workflowJson": "{\"id\":\"test-workflow\",\"name\":\"Test Workflow\"}"
+  }
+}
+```
+
+##### Schema Error Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-3",
+  "result": {
+    "valid": false,
+    "issues": [
+      "Missing required property 'description'",
+      "Missing required property 'steps'"
+    ],
+    "suggestions": [
+      "Add required 'description' field with a meaningful description",
+      "Add required 'steps' array with at least one step object"
+    ]
+  }
+}
+```
+
+#### Use Cases
+
+- **Workflow Development**: Validate workflow JSON during creation and editing
+- **CI/CD Integration**: Automated validation in deployment pipelines
+- **Real-time Validation**: Live validation in workflow editors and management tools
+- **Troubleshooting**: Diagnose workflow loading issues and syntax problems
+- **LLM Integration**: Programmatic validation with enhanced error messages for AI agents
+
+#### Error Cases
+
+- Returns error code `-32602` if `workflowJson` parameter is missing or empty
+- Returns error code `-32603` if internal validation engine encounters unexpected errors
+- JSON syntax and schema validation errors are returned as successful responses with `valid: false`
+
 ## Example Session
 
 Here's a complete example session showing tool usage:
@@ -686,7 +843,63 @@ Here's a complete example session showing tool usage:
 }
 ```
 
-### 6. Error Example
+### 6. Validate Workflow JSON
+
+```json
+// Request - Validate workflow JSON directly
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-1",
+  "method": "workflow_validate_json",
+  "params": {
+    "workflowJson": "{\"id\":\"sample-workflow\",\"name\":\"Sample Workflow\",\"description\":\"A workflow for demonstration\",\"version\":\"1.0.0\",\"steps\":[{\"id\":\"demo-step\",\"title\":\"Demo Step\",\"prompt\":\"Perform the demo action\"}]}"
+  }
+}
+
+// Response - Successful validation
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-1",
+  "result": {
+    "valid": true,
+    "issues": [],
+    "suggestions": []
+  }
+}
+```
+
+### 7. JSON Validation Error Example
+
+```json
+// Request - Invalid workflow JSON
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-2",
+  "method": "workflow_validate_json",
+  "params": {
+    "workflowJson": "{\"id\":\"invalid-workflow\",\"name\":\"Invalid Workflow\"}"
+  }
+}
+
+// Response - Validation failed with actionable suggestions
+{
+  "jsonrpc": "2.0",
+  "id": "validate-json-2",
+  "result": {
+    "valid": false,
+    "issues": [
+      "Missing required property 'description'",
+      "Missing required property 'steps'"
+    ],
+    "suggestions": [
+      "Add required 'description' field with a meaningful description",
+      "Add required 'steps' array with at least one step object"
+    ]
+  }
+}
+```
+
+### 8. Error Example
 
 ```json
 // Request

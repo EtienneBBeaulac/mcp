@@ -38,7 +38,7 @@ Advanced features and scalability considerations.
 Complete reference materials and troubleshooting.
 
 - **[api-reference.md](reference/api-reference.md)** - Complete API documentation
-- **[configuration-reference.md](reference/configuration-reference.md)** - Configuration options and examples
+- **[configuration.md](reference/configuration.md)** - Configuration options and examples
 - **[troubleshooting.md](reference/troubleshooting.md)** - Common issues and solutions
 
 ---
@@ -73,7 +73,7 @@ Complete reference materials and troubleshooting.
 
 1. **Deployment**: [Deployment Guide](implementation/07-deployment-guide.md)
 2. **Scaling**: [Scaling Strategies](advanced/03-scaling-strategies.md)
-3. **Configuration**: [Configuration Reference](reference/configuration-reference.md)
+3. **Configuration**: [Configuration Reference](reference/configuration.md)
 4. **Troubleshooting**: [Troubleshooting Guide](reference/troubleshooting.md)
 
 ---
@@ -121,7 +121,7 @@ Complete reference materials and troubleshooting.
 **⚡ Performance Engineer**
 - [Performance Guide](implementation/06-performance-guide.md)
 - [Scaling Strategies](advanced/03-scaling-strategies.md)
-- [Configuration Reference](reference/configuration-reference.md)
+- [Configuration Reference](reference/configuration.md)
 
 **🚀 DevOps Engineer**
 - [Deployment Guide](implementation/07-deployment-guide.md)
@@ -202,7 +202,7 @@ Use these templates for consistency:
 
 - **Implementation**: Check the [Implementation Guides](implementation/)
 - **API Usage**: Check the [API Reference](reference/api-reference.md)
-- **Configuration**: Check the [Configuration Reference](reference/configuration-reference.md)
+- **Configuration**: Check the [Configuration Reference](reference/configuration.md)
 - **Troubleshooting**: Check the [Troubleshooting Guide](reference/troubleshooting.md)
 
 ### Community Resources

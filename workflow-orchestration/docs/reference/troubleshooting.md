@@ -39,6 +39,25 @@
 - **Validation failed**: Check workflow JSON against schema and fix errors.
 - **Step execution fails**: Review step prompts, required fields, and agent logs.
 
+### Workflow JSON Validation Issues
+
+- **"JSON syntax error"**: Check for missing quotes, commas, or braces in workflow JSON.
+- **"Missing required property"**: Ensure all required fields (id, name, description, steps) are present.
+- **"Invalid workflow structure"**: Verify workflow follows the schema specification.
+- **"Validation timeout"**: Large workflows may need increased timeout settings.
+
+**Common JSON Syntax Issues:**
+- Missing closing braces `}` or brackets `]`
+- Unescaped quotes in string values
+- Trailing commas in arrays or objects
+- Invalid escape sequences
+
+**Schema Validation Errors:**
+- Missing required `id`, `name`, `description`, or `steps` fields
+- Invalid `id` pattern (must be alphanumeric with hyphens/underscores)
+- Empty `steps` array (must contain at least one step)
+- Invalid step structure (missing `id`, `title`, or `prompt`)
+
 ---
 
 ## API & Connectivity

@@ -25,6 +25,7 @@
 | PORT               | Port for MCP server                         | 8080                                 |
 | LOG_LEVEL          | Logging verbosity                           | info, debug, warn, error             |
 | WORKFLOWS_PATH     | Path to workflow definitions                 | ./workflows                          |
+| VALIDATION_TIMEOUT | Timeout for workflow validation (ms)        | 30000                                |
 | SESSION_SECRET     | Secret for session management                | randomstring                         |
 | JWT_SECRET         | Secret for JWT authentication               | randomstring                         |
 | RATE_LIMIT_WINDOW  | Rate limit window in ms                     | 60000                                |
@@ -62,6 +63,7 @@ REDIS_URL=redis://redis:6379
 PORT=8080
 LOG_LEVEL=info
 WORKFLOWS_PATH=./workflows
+VALIDATION_TIMEOUT=30000
 SESSION_SECRET=changeme
 JWT_SECRET=changeme
 RATE_LIMIT_WINDOW=60000
