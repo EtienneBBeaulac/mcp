@@ -80,6 +80,37 @@ class WorkflowOrchestrationServer {
   public async validateStep(workflowId: string, stepId: string, output: string): Promise<CallToolResult> {
     return this.callWorkflowMethod('workflow_validate', { workflowId, stepId, output });
   }
+
+  public async validateWorkflowJson(workflowJson: string): Promise<CallToolResult> {
+    try {
+      // Import and use the validation use case
+      const { createValidateWorkflowJson } = await import('./application/use-cases/validate-workflow-json.js');
+      const validateWorkflowJsonUseCase = createValidateWorkflowJson();
+      
+      const result = await validateWorkflowJsonUseCase(workflowJson);
+      
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+    } catch (error) {
+      console.error(`Workflow JSON validation failed:`, error);
+      
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: error instanceof Error ? error.message : String(error),
+            method: 'workflow_validate_json',
+            workflowJson: workflowJson.substring(0, 100) + (workflowJson.length > 100 ? '...' : '')
+          }, null, 2)
+        }],
+        isError: true
+      };
+    }
+  }
 }
 
 // Define the workflow orchestration tools
@@ -174,6 +205,35 @@ const WORKFLOW_VALIDATE_TOOL: Tool = {
   }
 };
 
+const WORKFLOW_VALIDATE_JSON_TOOL: Tool = {
+  name: "workflow_validate_json",
+  description: `Validates workflow JSON content directly without external tools. Use this tool when you need to verify that a workflow JSON file is syntactically correct and follows the proper schema.
+
+  This tool provides comprehensive validation including:
+  - JSON syntax validation with detailed error messages
+  - Workflow schema compliance checking
+  - User-friendly error reporting with actionable suggestions
+  - Support for all workflow features (steps, conditions, validation criteria, etc.)
+
+  Example usage:
+  - Validate a newly created workflow before saving
+  - Check workflow syntax when editing workflow files
+  - Verify workflow structure when troubleshooting issues
+  - Ensure workflow compliance before deployment`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      workflowJson: {
+        type: "string",
+        description: "The complete workflow JSON content as a string to validate",
+        minLength: 1
+      }
+    },
+    required: ["workflowJson"],
+    additionalProperties: false
+  }
+};
+
 // Create and configure the MCP server
 const server = new Server(
   {
@@ -195,7 +255,8 @@ server.setRequestHandler(ListToolsRequestSchema, async (): Promise<ListToolsResu
     WORKFLOW_LIST_TOOL,
     WORKFLOW_GET_TOOL, 
     WORKFLOW_NEXT_TOOL,
-    WORKFLOW_VALIDATE_TOOL
+    WORKFLOW_VALIDATE_TOOL,
+    WORKFLOW_VALIDATE_JSON_TOOL
   ],
 }));
 
@@ -232,6 +293,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
         };
       }
       return await workflowServer.validateStep(args['workflowId'] as string, args['stepId'] as string, args['output'] as string);
+      
+    case "workflow_validate_json":
+      if (!args?.['workflowJson']) {
+        return {
+          content: [{ type: "text", text: "Error: workflowJson parameter is required" }],
+          isError: true
+        };
+      }
+      return await workflowServer.validateWorkflowJson(args['workflowJson'] as string);
       
     default:
       return {
