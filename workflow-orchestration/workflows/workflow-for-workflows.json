@@ -1,19 +1,21 @@
 {
   "id": "workflow-for-workflows",
   "name": "Workflow for Creating New Workflows",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A meta-workflow to guide the creation, validation, and deployment of new, reusable workflow templates.",
   "preconditions": [
     "User has a clear idea of the recurring task or problem the new workflow should solve.",
-    "The 'workflow-lookup' MCP server is running and accessible.",
-    "The agent has access to 'create_file', 'edit_file', and 'run_terminal_cmd' tools."
+    "The agent has access to 'create_file', 'edit_file', 'run_terminal_cmd', 'workflow_validate_json', and 'workflow_validate' tools."
   ],
   "metaGuidance": [
     "The goal is to create a *reusable template*, not a single-use script. Use placeholders like [User provides X] where appropriate.",
     "Prompts should define goals and roles for the agent, not a rigid script. This allows the agent to use its intelligence to best achieve the task.",
     "At each step, the agent should confirm with the user before proceeding with a file modification or command.",
     "Maintain a clear distinction between the workflow being created and this meta-workflow.",
-    "Save progress frequently by confirming file edits."
+    "Save progress frequently by confirming file edits.",
+    "Leverage MCP tools throughout: Use 'workflow_list' and 'workflow_get' for template discovery, 'workflow_validate_json' for comprehensive validation, and 'workflow_validate' for step-by-step output validation.",
+    "When validation fails, the MCP tools provide detailed error messages and actionable suggestions - use these to guide improvements rather than guessing at fixes.",
+    "Version 0.0.2 updates: Enhanced validation using MCP tools (workflow_validate_json and workflow_validate), removed redundant server preconditions, improved tool integration throughout the workflow, removed feedback loop phase, and simplified deployment to focus on workflow completion rather than file system operations."
   ],
   "steps": [
     {
@@ -37,7 +39,7 @@
     {
       "id": "phase-3-validation",
       "title": "Phase 3: Syntactic & Structural Validation",
-      "prompt": "The first draft is complete. Now, we must ensure it is technically valid.\n\n**1. Run Validation (Agent's Goal):**\n   - Your goal is to validate the new workflow file. Announce your plan to use the `run_terminal_cmd` tool to execute `workflow-lookup validate [filename]`.\n\n**2. Analyze & Fix (Agent's Goal):**\n   - If validation fails, your goal is to fix it. Parse the error, explain the issue, propose a fix, and use `edit_file` to correct it. Repeat until validation passes.",
+      "prompt": "The first draft is complete. Now, we must ensure it is technically valid.\n\n**1. Run Validation (Agent's Goal):**\n   - Your goal is to validate the new workflow file. Use the `workflow_validate_json` tool to validate the workflow JSON content directly. Read the file content and pass it to the tool for comprehensive validation.\n\n**2. Analyze & Fix (Agent's Goal):**\n   - If validation fails, your goal is to fix it. The `workflow_validate_json` tool provides detailed error messages and actionable suggestions. Parse the validation results, explain the issues, propose fixes based on the tool's suggestions, and use `edit_file` to correct them. Repeat until validation passes.",
       "guidance": [
         "Validation errors are expected on the first run. Treat them as a checklist, not a failure.",
         "Fix one error at a time and re-run validation to avoid introducing new issues."
@@ -46,28 +48,21 @@
     {
       "id": "phase-4-refinement",
       "title": "Phase 4: Structured Red-Teaming",
-      "prompt": "The workflow is now technically valid. Next, we will rigorously test its logic against multiple personas.\n\n**1. Select a Step (User's Role):**\n   - Please choose a critical step from the new workflow to test.\n\n**2. Structured Simulation (Agent's Goal):**\n   - Your goal is to analyze the selected prompt from the following three perspectives:\n     - **The Novice Persona:** Is there jargon or assumed knowledge that would confuse a newcomer?\n     - **The Rushed Expert Persona:** How could a busy expert misinterpret or shortcut this step? Can it be made more concise?\n     - **The Adversarial LLM Persona:** What ambiguity could be exploited to produce a plausible but incorrect result?\n   - For each persona, provide your findings and suggest specific revisions. Use `edit_file` to implement approved changes.",
+      "prompt": "The workflow is now technically valid. Next, we will rigorously test its logic against multiple personas.\n\n**1. Select a Step (User's Role):**\n   - Please choose a critical step from the new workflow to test.\n\n**2. Structured Simulation (Agent's Goal):**\n   - Your goal is to analyze the selected prompt from the following three perspectives:\n     - **The Novice Persona:** Is there jargon or assumed knowledge that would confuse a newcomer?\n     - **The Rushed Expert Persona:** How could a busy expert misinterpret or shortcut this step? Can it be made more concise?\n     - **The Adversarial LLM Persona:** What ambiguity could be exploited to produce a plausible but incorrect result?\n   - For each persona, provide your findings and suggest specific revisions. Use `edit_file` to implement approved changes.\n\n**3. Validate Step Output (Agent's Goal):**\n   - After making revisions, use the `workflow_validate` tool to validate the updated step against the overall workflow structure and ensure it maintains consistency.",
       "guidance": [
         "When simulating personas, be critical. The goal is to find flaws now so that users don't find them later.",
-        "Focus on clarity and ambiguity. If a prompt *can* be misinterpreted, assume it *will* be."
+        "Focus on clarity and ambiguity. If a prompt *can* be misinterpreted, assume it *will* be.",
+        "Use the `workflow_validate` tool to ensure step revisions maintain consistency with the overall workflow structure and don't introduce new issues."
       ]
     },
     {
       "id": "phase-5-deployment",
-      "title": "Phase 5: Finalization & Deployment",
-      "prompt": "The workflow has been drafted, validated, and refined. It is ready for deployment.\n\n**1. Final Review (Collaborative Task):**\n   - Let's perform a final review of the workflow's `name` and `description` to ensure they are clear and easily discoverable.\n\n**2. Deploy (Agent's Goal):**\n   - Once final approval is given, your goal is to move the workflow file into the primary `workflows/` directory. Announce your plan to use the `run_terminal_cmd` tool with the `mv` command to accomplish this.",
+      "title": "Phase 5: Finalization & Completion",
+      "prompt": "The workflow has been drafted, validated, and refined. Let's complete the process.\n\n**1. Final Review (Collaborative Task):**\n   - Let's perform a final review of the workflow's `name` and `description` to ensure they are clear and easily discoverable.\n   - Review the overall workflow structure and ensure it meets the original requirements.\n\n**2. Final Validation (Agent's Goal):**\n   - Perform one final validation using the `workflow_validate_json` tool to ensure the completed workflow is fully compliant.\n   - Confirm the workflow is ready for use and deployment by the user in their preferred location.",
       "guidance": [
         "The `name` and `description` are how others will discover this workflow. Make them descriptive and concise.",
-        "Before moving the file, do a final `ls` to confirm the target directory exists."
-      ]
-    },
-    {
-      "id": "phase-6-feedback-loop",
-      "title": "Phase 6: Establishing a Continuous Improvement Loop",
-      "prompt": "A great workflow evolves. Let's create a mechanism for future feedback.\n\n**1. Create Feedback File (Agent's Goal):**\n   - Your goal is to create a companion feedback file. Announce your plan to use `create_file` to create a file named `[workflow-id].feedback.md` in a `workflow-feedback/` directory.\n\n**2. Populate Feedback Template (Agent's Goal):**\n   - Use `edit_file` to add a basic feedback template to the new file, including sections for 'Success Stories', 'Pain Points', and 'Suggestions for Improvement'.\n\n**3. Link to Feedback (Agent's Goal):**\n   - Announce your plan to add a new `metaGuidance` entry to the *workflow we just created*. The guidance should say: 'After using this workflow, please record your experience in `workflow-feedback/[workflow-id].feedback.md`.' Use `edit_file` to add this.",
-      "guidance": [
-        "Ensure the feedback filename (`[workflow-id].feedback.md`) exactly matches the workflow's `id` for easy association.",
-        "The link in the `metaGuidance` should be a relative path to ensure it works for all users."
+        "Focus on completing the workflow creation process rather than assuming specific deployment permissions or locations.",
+        "The user will handle deployment to their preferred workflow directory based on their system setup."
       ]
     }
   ]
