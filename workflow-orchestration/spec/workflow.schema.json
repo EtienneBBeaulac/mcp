@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workflowlookup.io/schemas/workflow/v1.0.0",
+  "$id": "https://workflowlookup.io/schemas/workflow/v0.0.1",
   "title": "Workflow Schema",
   "description": "Schema for defining workflows in the Workflow Orchestration System",
   "type": "object",
@@ -26,9 +26,9 @@
     },
     "version": {
       "type": "string",
-      "description": "Semantic version of the workflow (e.g., 1.0.0, 2.1.3)",
+      "description": "Semantic version of the workflow (e.g., 0.0.1, 0.1.0)",
       "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
-      "examples": ["1.0.0", "2.1.3", "1.0.0-beta.1"]
+      "examples": ["0.0.1", "0.1.0", "0.0.1-alpha.1"]
     },
     "preconditions": {
       "type": "array",

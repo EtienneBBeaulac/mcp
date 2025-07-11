@@ -1,7 +1,7 @@
 {
   "id": "workflow-for-workflows",
   "name": "Workflow for Creating New Workflows",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A meta-workflow to guide the creation, validation, and deployment of new, reusable workflow templates.",
   "preconditions": [
     "User has a clear idea of the recurring task or problem the new workflow should solve.",

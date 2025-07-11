@@ -1,6 +1,6 @@
 {
   "name": "@modelcontextprotocol/server-workflow-orchestration",
-  "version": "1.2.0",
+  "version": "0.0.1",
   "description": "MCP server for structured workflow orchestration and step-by-step task guidance",
   "license": "MIT",
   "bin": {

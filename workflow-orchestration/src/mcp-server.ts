@@ -178,7 +178,7 @@ const WORKFLOW_VALIDATE_TOOL: Tool = {
 const server = new Server(
   {
     name: "workflow-orchestration-server",
-    version: "1.2.0",
+    version: "0.0.1",
   },
   {
     capabilities: {

@@ -1,6 +1,6 @@
 # Testing Strategy Guide
 
-> 🧪 **Quality & Testing Strategy – Updated for v1.2 (Clean Architecture implementation)**
+> 🧪 **Quality & Testing Strategy – Alpha Release v0.0.1 (MVP Testing Complete)**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/yourusername/workflow-orchestration/ci.yml?branch=main)]()
 [![Coverage](https://img.shields.io/badge/coverage-90%25-green)]()

@@ -1,6 +1,6 @@
 # Architecture Guide
 
-> 🏗️ **System Architecture & Design Decisions – Clean Architecture Edition (v1.2)**
+> 🏗️ **System Architecture & Design Decisions – Clean Architecture Edition (v0.0.1-alpha)**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/yourusername/workflow-orchestration/ci.yml?branch=main)]()
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
@@ -59,7 +59,7 @@ Cross-cutting concerns (logging, DI) live at the root.
 * Folder: `src/application/use-cases/`
 * Pure functions with no side-effects.
 * Injected with an `IWorkflowStorage` implementation and executed by the server.
-* **v1.2**: `get-next-step` now accepts optional context parameter for conditional step evaluation.
+* **Current**: `get-next-step` accepts optional context parameter for conditional step evaluation.
 
 ### ValidationEngine (Application)
 * **File**: `src/application/services/validation-engine.ts`
@@ -186,7 +186,7 @@ Step Output → ValidationEngine.validate() → {
 * **Backward-Compatible Validation** – Support for both legacy array-based rules and modern composition syntax ensures smooth migration paths.
 * **Async I/O Only** – storage interface returns `Promise` to support remote stores later.
 * **Thin Adapters** – server & storage wrappers are intentionally small; majority of logic resides in use-cases.
-* **Conditional Step Execution (v1.2)** – Safe expression evaluation enables dynamic workflows that adapt based on context variables like task scope and user expertise.
+* **Conditional Step Execution** – Safe expression evaluation enables dynamic workflows that adapt based on context variables like task scope and user expertise.
 
 ---
 
@@ -200,7 +200,7 @@ Step Output → ValidationEngine.validate() → {
 
 ## Migration Paths
 
-| From… | To (v1.2) | Migration Notes |
+| From… | To (v0.0.1-alpha) | Migration Notes |
 |-------|-----------|-----------------|
 | `src/core/server.ts` JSON-RPC wrapper | `src/infrastructure/rpc/server.ts` | Now a pure adapter, delegates to use-cases. |
 | Modules in `src/tools/` | Removed | Logic moved to application use-cases. |

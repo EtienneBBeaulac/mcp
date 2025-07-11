@@ -2,7 +2,7 @@
   "id": "adaptive-development-workflow",
   "name": "Adaptive Development Workflow",
   "description": "A dynamic workflow that adapts steps based on task complexity, user expertise, and project scope",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "preconditions": [
     "Development environment is set up",
     "Task requirements are understood",

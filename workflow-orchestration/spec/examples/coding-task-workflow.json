@@ -1,7 +1,7 @@
 {
     "id": "coding-task-workflow",
     "name": "Excellent Adaptive Coding Workflow with Devil's Advocate Review",
-    "version": "1.0.0",
+    "version": "0.0.1",
     "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks, performs a critical self-review of its own plans, provides efficiency options, enforces closed-loop validation, and defines a robust protocol for handling failures.",
     "preconditions": [
         "User has a clear task description (e.g., from Jira, a dev doc, or a BRD).",

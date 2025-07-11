@@ -3,7 +3,7 @@
 > **Reliable, test-driven workflow execution for AI coding assistants – powered by Clean Architecture**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/yourusername/workflow-orchestration/ci.yml?branch=main)]()
-[![Version](https://img.shields.io/badge/version-1.2.0-blue)]()
+[![Version](https://img.shields.io/badge/version-0.0.1--alpha-orange)]()
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
 
 ---

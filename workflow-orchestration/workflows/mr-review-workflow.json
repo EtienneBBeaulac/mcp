@@ -1,7 +1,7 @@
 {
   "id": "mr-review-workflow",
   "name": "Adaptive MR Review Workflow",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "An adaptive workflow to guide an AI agent in performing a comprehensive code review. It adjusts its rigor based on MR complexity and includes checkpoints for architectural and self-critique to provide deep, actionable feedback.",
   "preconditions": [
     "User has the full code diff accessible (e.g., as text in a file).",

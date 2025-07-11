@@ -3,7 +3,7 @@
 > 🔍 **Comprehensive Guide to the Advanced ValidationEngine System**
 
 [![Status](https://img.shields.io/badge/status-complete-green.svg)](https://github.com/yourusername/workflow-orchestration-system)
-[![ValidationEngine](https://img.shields.io/badge/ValidationEngine-v1.2-blue.svg)](src/application/services/validation-engine.ts)
+[![ValidationEngine](https://img.shields.io/badge/ValidationEngine-v0.0.1--alpha-orange.svg)](src/application/services/validation-engine.ts)
 [![Tests](https://img.shields.io/badge/tests-72_passing-green.svg)](tests/unit/validation-engine.test.ts)
 
 ## 📋 Table of Contents
@@ -868,6 +868,6 @@ console.log(`Validation took ${endTime - startTime} milliseconds`);
 ---
 
 **Last Updated**: 2024-01-15  
-**ValidationEngine Version**: 1.2.0  
+**ValidationEngine Version**: 0.0.1-alpha  
 **Test Coverage**: 72 tests passing  
 **Maintained By**: Documentation Team 

@@ -1120,7 +1120,7 @@ consider these additional security aspects:
 {
   "id": "ai-task-implementation",
   "version": "2.1.0",
-  "minServerVersion": "1.0.0",
+      "minServerVersion": "0.0.1",
   "changelog": {
     "2.1.0": "Added validation step",
     "2.0.0": "New prep/implement/verify pattern"

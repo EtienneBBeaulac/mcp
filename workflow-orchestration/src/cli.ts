@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name('workflow-lookup')
   .description('MCP server for workflow orchestration and guidance')
-  .version('1.0.0');
+  .version('0.0.1');
 
 program
   .command('start')

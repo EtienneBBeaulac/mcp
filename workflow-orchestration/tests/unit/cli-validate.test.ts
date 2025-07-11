@@ -120,7 +120,7 @@ describe('CLI Validate Command', () => {
         id: 'test-workflow',
         name: 123, // Should be string
         description: 'Test description',
-        version: '1.0.0',
+        version: '0.0.1',
         steps: []
       };
       const tempFile = createTempFile(JSON.stringify(invalidWorkflow));
@@ -189,7 +189,7 @@ describe('CLI Validate Command', () => {
         id: 'minimal',
         name: 'Minimal',
         description: 'A minimal workflow',
-        version: '1.0.0',
+        version: '0.0.1',
         steps: [{
           id: 'step1',
           title: 'Step 1',
@@ -208,7 +208,7 @@ describe('CLI Validate Command', () => {
         id: 'unicode-test',
         name: 'Unicode Test 🚀',
         description: 'A workflow with émojis and accénts',
-        version: '1.0.0',
+        version: '0.0.1',
         steps: [{
           id: 'unicode-step',
           title: 'Unicode Step 💻',
@@ -227,7 +227,7 @@ describe('CLI Validate Command', () => {
         id: 'space-test',
         name: 'Space Test',
         description: 'Test workflow',
-        version: '1.0.0',
+        version: '0.0.1',
         steps: [{
           id: 'space-step',
           title: 'Space Step',
@@ -268,7 +268,7 @@ describe('CLI Validate Command', () => {
         id: 'INVALID_ID_WITH_CAPS', // Only ID error
         name: 'Valid Name',
         description: 'Valid description',
-        version: '1.0.0',
+        version: '0.0.1',
         steps: [{
           id: 'valid-step',
           title: 'Valid Step',

@@ -3,7 +3,7 @@
 > 🚀 **How to Create and Understand Workflows for the Workflow Orchestration System**
 
 [![Status](https://img.shields.io/badge/status-specification-orange.svg)](https://github.com/yourusername/workflow-orchestration-system)
-[![Spec Version](https://img.shields.io/badge/spec-1.0.0-blue.svg)](specs/)
+[![Spec Version](https://img.shields.io/badge/spec-0.0.1--alpha-orange.svg)](specs/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
 
 ## 📋 Table of Contents
@@ -68,7 +68,7 @@ Let's look at the authentication workflow example:
 - **`steps`**: The actual workflow steps
 - **`metaGuidance`**: Best practices that apply throughout
 
-**New in v1.2:**
+**Available in current release:**
 - **`runCondition`**: Optional condition on steps for "choose your own adventure" workflows
 
 ---
@@ -189,7 +189,7 @@ Use `askForFiles: true` when:
 }
 ```
 
-### When to Use `runCondition` (New in v1.2)
+### When to Use `runCondition`
 
 Use `runCondition` when:
 - Different steps should execute based on task scope or complexity
@@ -671,5 +671,5 @@ Combine multiple validation rules with logical operators:
 ---
 
 **Last Updated**: 2024-01-15  
-**Documentation Version**: 1.0.0  
+**Documentation Version**: 0.0.1-alpha  
 **Maintained By**: Documentation Team 

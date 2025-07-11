@@ -2,7 +2,7 @@
   "id": "INVALID_ID_WITH_CAPS",
   "name": "",
   "description": "This workflow has multiple validation errors",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "preconditions": [
     "Valid precondition",
     ""

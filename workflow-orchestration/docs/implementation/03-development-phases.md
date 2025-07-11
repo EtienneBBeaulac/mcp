@@ -1,6 +1,6 @@
 # Development Phases Guide
 
-> 📅 **Implementation Roadmap & Milestones – Updated for v1.2 (Phases 1-2 complete, Phase 3 in progress)**
+> 📅 **Implementation Roadmap & Milestones – Alpha Release v0.0.1 (MVP Complete, Alpha Testing Phase)**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/yourusername/workflow-orchestration/ci.yml?branch=main)]()
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
@@ -32,7 +32,7 @@ The roadmap is designed to deliver value incrementally, with clear milestones an
 
 ## Phase 1 – MVP (✅ Complete)
 
-> **Status:** Delivered in v1.2.0, all objectives met and covered by tests.
+> **Status:** Delivered in v0.0.1-alpha, all objectives met and covered by tests.
 
 ### Deliverables Achieved
 | Deliverable | Outcome |
@@ -52,7 +52,7 @@ The roadmap is designed to deliver value incrementally, with clear milestones an
 
 ## Phase 2 – Enhanced Features (✅ Complete)
 
-> **Status:** Delivered in v1.2.0, all objectives met with comprehensive test coverage.
+> **Status:** Delivered in v0.0.1-alpha, all objectives met with comprehensive test coverage.
 
 ### Goals Achieved
 1. **Persistent State** – plug-in persistence layer (e.g., SQLite or Redis) under `IWorkflowStateStore`.

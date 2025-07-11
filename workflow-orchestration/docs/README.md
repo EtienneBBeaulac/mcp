@@ -3,7 +3,7 @@
 > 📚 **Complete Documentation for the Workflow Orchestration System**
 
 [![Status](https://img.shields.io/badge/status-implementation-green.svg)](https://github.com/yourusername/workflow-orchestration-system)
-[![Spec Version](https://img.shields.io/badge/spec-1.0.0-blue.svg)](specs/)
+[![Spec Version](https://img.shields.io/badge/spec-0.0.1--alpha-orange.svg)](specs/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
 
 ## 📋 Documentation Structure
@@ -230,5 +230,5 @@ Use these templates for consistency:
 ---
 
 **Last Updated**: 2024-01-15  
-**Documentation Version**: 1.0.0  
+**Documentation Version**: 0.0.1-alpha  
 **Maintained By**: Documentation Team 

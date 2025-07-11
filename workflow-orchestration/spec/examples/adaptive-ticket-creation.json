@@ -1,7 +1,7 @@
 {
   "id": "adaptive-ticket-creation",
   "name": "Adaptive Ticket Creation Workflow",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "An intelligent workflow for creating high-quality Jira tickets. Uses LLM-driven path selection to automatically choose between Simple, Standard, or Epic complexity paths based on request analysis.",
   "preconditions": [
     "User has provided a clear objective for the ticket(s) to be created",

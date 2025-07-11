@@ -577,7 +577,7 @@ Brief description of the changes.
 1. **Feature Freeze**
    ```bash
    # Create release branch
-   git checkout -b release/v1.2.0
+   git checkout -b release/v0.1.0
    ```
 
 2. **Update Version**
@@ -617,14 +617,14 @@ Brief description of the changes.
 ```bash
 # 1. Merge to main
 git checkout main
-git merge release/v1.2.0
+   git merge release/v0.1.0
 
 # 2. Create tag
-git tag -a v1.2.0 -m "Release v1.2.0"
+   git tag -a v0.1.0 -m "Release v0.1.0"
 
 # 3. Push changes
 git push origin main
-git push origin v1.2.0
+   git push origin v0.1.0
 
 # 4. Create GitHub release
 # Use GitHub web interface to create release from tag

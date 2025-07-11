@@ -1,6 +1,6 @@
 # Getting Started Guide
 
-> 🚀 **How to Run, Explore, and Contribute to the Workflow Orchestration Server (v1.2)**
+> 🚀 **How to Run, Explore, and Contribute to the Workflow Orchestration Server (v0.0.1-alpha)**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/yourusername/workflow-orchestration/ci.yml?branch=main)]()
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
@@ -18,7 +18,7 @@
 
 ## Project Status
 
-**Current Version:** `1.2.0` – **Phases 1-2 complete, Phase 3 in progress** ✅
+**Current Version:** `0.0.1-alpha` – **MVP Development & Alpha Testing** ✅
 
 | Area | Status |
 |------|--------|
@@ -44,7 +44,7 @@ It enforces best-practice patterns (prepare → implement → verify) and integr
 {
   "id": "hello-world",
   "name": "Hello World Tutorial",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "steps": [
     { "id": "prep", "prompt": "Create a hello world file", "requireConfirmation": true },
     { "id": "verify", "prompt": "Print contents of the file" }

@@ -7,7 +7,7 @@ const mockWorkflow: Workflow = {
   id: 'test-workflow',
   name: 'Test Workflow',
   description: 'A workflow for testing.',
-  version: '1.0.0',
+      version: '0.0.1',
   steps: [
     { id: 'step1', title: 'Step 1', prompt: 'Prompt for step 1' },
     {

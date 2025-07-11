@@ -179,7 +179,7 @@ You should see:
 }
 ```
 
-### **3a. Start Workflow with Context (New in v1.2)**
+### **3a. Start Workflow with Context**
 ```bash
 # Agent uses workflow_next tool with context for conditional steps
 {
@@ -218,7 +218,7 @@ You should see:
 5. **Validation**: Agent calls `workflow_validate` after completing each step
 6. **Completion**: Agent continues until workflow is complete
 
-## **🆕 New in v1.2: Conditional Workflows**
+## **🔄 Conditional Workflows**
 
 ### **Context-Aware Step Execution**
 Workflows can now include conditional steps that execute based on context variables:
