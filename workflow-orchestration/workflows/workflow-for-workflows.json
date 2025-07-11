@@ -3,6 +3,13 @@
   "name": "Workflow for Creating New Workflows",
   "version": "0.0.2",
   "description": "A meta-workflow to guide the creation, validation, and deployment of new, reusable workflow templates.",
+  "clarificationPrompts": [
+    "What type of workflow are you creating? (e.g., coding, analysis, content creation, process management)",
+    "What recurring problem or task should this workflow solve?",
+    "Who is the intended audience for this workflow? (e.g., beginners, experts, specific roles)",
+    "Do you have any example workflows or documentation that might be relevant?",
+    "Are there any specific constraints or requirements for this workflow?"
+  ],
   "preconditions": [
     "User has a clear idea of the recurring task or problem the new workflow should solve.",
     "The agent has access to 'create_file', 'edit_file', 'run_terminal_cmd', 'workflow_validate_json', and 'workflow_validate' tools."
@@ -15,17 +22,21 @@
     "Save progress frequently by confirming file edits.",
     "Leverage MCP tools throughout: Use 'workflow_list' and 'workflow_get' for template discovery, 'workflow_validate_json' for comprehensive validation, and 'workflow_validate' for step-by-step output validation.",
     "When validation fails, the MCP tools provide detailed error messages and actionable suggestions - use these to guide improvements rather than guessing at fixes.",
-    "Version 0.0.2 updates: Enhanced validation using MCP tools (workflow_validate_json and workflow_validate), removed redundant server preconditions, improved tool integration throughout the workflow, removed feedback loop phase, and simplified deployment to focus on workflow completion rather than file system operations."
+    "Tailor guidance based on workflow type: coding workflows need technical precision, process workflows need clarity, analysis workflows need thoroughness, and content workflows need engagement.",
+    "Version 0.0.2 updates: Enhanced validation using MCP tools (workflow_validate_json and workflow_validate), removed redundant server preconditions, improved tool integration throughout the workflow, removed feedback loop phase, simplified deployment to focus on workflow completion rather than file system operations, added clarification prompts for better requirements gathering, added file sharing capability to discovery phase, added validation criteria for quality assurance, and added confirmation gates on key phases."
   ],
   "steps": [
     {
       "id": "phase-1-discovery",
       "title": "Phase 1: Assisted Discovery & Ideation",
-      "prompt": "We will begin by defining the problem with data and finding a suitable template.\n\n**1. Define the Goal (User's Role):**\n   - Please state your initial hypothesis for the problem this workflow solves and its primary failure mode.\n\n**2. Guided Data Gathering (Agent's Goal):**\n   - Your goal is to help the user validate their hypothesis. Prompt them to use their tools (`grep`, `git log`, etc.) to find evidence. Ask for things like:\n     - Key excerpts from bug reports or incident post-mortems.\n     - Common themes in PR review comments.\n     - Examples of 'TODO' or 'HACK' comments in the relevant codebase.\n\n**3. Synthesize & Find Template (Agent's Goal):**\n   - Your goal is to synthesize the gathered data into a refined problem statement.\n   - Once the problem is clear, find the most suitable existing workflow to use as a template by using `workflow_list` and `workflow_get`.",
+      "prompt": "We will begin by defining the problem with data and finding a suitable template.\n\n**1. Define the Goal (User's Role):**\n   - Please state your initial hypothesis for the problem this workflow solves and its primary failure mode.\n   - Specify the workflow type (e.g., coding, analysis, content creation, process management) to help tailor the guidance.\n\n**2. Guided Data Gathering (Agent's Goal):**\n   - Your goal is to help the user validate their hypothesis. Prompt them to use their tools (`grep`, `git log`, etc.) to find evidence. Ask for things like:\n     - Key excerpts from bug reports or incident post-mortems.\n     - Common themes in PR review comments.\n     - Examples of 'TODO' or 'HACK' comments in the relevant codebase.\n\n**3. Synthesize & Find Template (Agent's Goal):**\n   - Your goal is to synthesize the gathered data into a refined problem statement.\n   - Once the problem is clear, find the most suitable existing workflow to use as a template by using `workflow_list` and `workflow_get`.\n   - Set the workflowType context variable based on the user's specifications.",
       "guidance": [
         "Focus on finding the root cause of the problem, not just the symptoms.",
-        "A good template is one that solves a problem of similar *structure*, even if the domain is different."
-      ]
+        "A good template is one that solves a problem of similar *structure*, even if the domain is different.",
+        "If the user shares example workflows or documentation, review them for insights and patterns."
+      ],
+      "askForFiles": true,
+      "requireConfirmation": true
     },
     {
       "id": "phase-2-authoring",
@@ -34,6 +45,28 @@
       "guidance": [
         "When writing prompts, use clear placeholders like `[User provides X]` to indicate where customization is needed.",
         "Remember: `metaGuidance` is for global rules, while step `prompts` are for specific actions."
+      ],
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "\"id\":\\s*\"[a-zA-Z0-9_-]+\"",
+          "message": "Workflow must have a valid id field with alphanumeric characters, underscores, or hyphens"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"name\":\\s*\"[^\"]{3,}\"",
+          "message": "Workflow must have a descriptive name (at least 3 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"description\":\\s*\"[^\"]{20,}\"",
+          "message": "Workflow must have a meaningful description (at least 20 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"steps\":\\s*\\[",
+          "message": "Workflow must have a steps array with at least one step"
+        }
       ]
     },
     {
@@ -43,7 +76,8 @@
       "guidance": [
         "Validation errors are expected on the first run. Treat them as a checklist, not a failure.",
         "Fix one error at a time and re-run validation to avoid introducing new issues."
-      ]
+      ],
+      "requireConfirmation": true
     },
     {
       "id": "phase-4-refinement",
@@ -58,11 +92,24 @@
     {
       "id": "phase-5-deployment",
       "title": "Phase 5: Finalization & Completion",
-      "prompt": "The workflow has been drafted, validated, and refined. Let's complete the process.\n\n**1. Final Review (Collaborative Task):**\n   - Let's perform a final review of the workflow's `name` and `description` to ensure they are clear and easily discoverable.\n   - Review the overall workflow structure and ensure it meets the original requirements.\n\n**2. Final Validation (Agent's Goal):**\n   - Perform one final validation using the `workflow_validate_json` tool to ensure the completed workflow is fully compliant.\n   - Confirm the workflow is ready for use and deployment by the user in their preferred location.",
+      "prompt": "The workflow has been drafted, validated, and refined. Let's complete the process.\n\n**1. Final Review (Collaborative Task):**\n   - Let's perform a final review of the workflow's `name` and `description` to ensure they are clear and easily discoverable.\n   - Review the overall workflow structure and ensure it meets the original requirements.\n   - Confirm the workflow is appropriate for its intended audience and workflow type.\n\n**2. Final Validation (Agent's Goal):**\n   - Perform one final validation using the `workflow_validate_json` tool to ensure the completed workflow is fully compliant.\n   - Confirm the workflow is ready for use and deployment by the user in their preferred location.",
       "guidance": [
         "The `name` and `description` are how others will discover this workflow. Make them descriptive and concise.",
         "Focus on completing the workflow creation process rather than assuming specific deployment permissions or locations.",
-        "The user will handle deployment to their preferred workflow directory based on their system setup."
+        "The user will handle deployment to their preferred workflow directory based on their system setup.",
+        "Consider the workflow type when giving final advice - coding workflows need different considerations than process workflows."
+      ],
+      "validationCriteria": [
+        {
+          "type": "length",
+          "min": 500,
+          "message": "Final workflow should be comprehensive (at least 500 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"steps\":\\s*\\[[^\\]]+\\]",
+          "message": "Final workflow must have at least one complete step"
+        }
       ]
     }
   ]
