@@ -26,10 +26,10 @@ The codebase now implements the full MVP described in the original specification
   - `workflow_list` - List all available workflows
   - `workflow_get` - Get detailed workflow information  
   - `workflow_next` - Get the next step in a workflow
-  - `workflow_validate` - Validate step completion
+  - `workflow_validate` - Advanced validation of step outputs with schema, context-aware, and composition rules
 * **Dependency Injection** – pluggable components are wired by `src/container.ts` (Inversify-style, no runtime reflection).
 * **Async, Secure Storage** – interchangeable back-ends: in-memory (default for tests) and file-based storage with path-traversal safeguards.
-* **Centralised Validation** – JSON-schema validation for every RPC request + workflow schema validation.
+* **Advanced ValidationEngine** – Three-tier validation system with JSON Schema validation (AJV), Context-Aware Validation (conditional rules), and Logical Composition (and/or/not operators) for comprehensive step output quality assurance.
 * **Typed Error Mapping** – domain errors (`WorkflowNotFoundError`, `ValidationError`, …) automatically translate to proper JSON-RPC codes.
 * **CLI Validation** – `validate` command for testing workflow files locally with comprehensive error reporting.
 * **Comprehensive Test Coverage** – 81 tests passing, 7 failing (performance optimizations in progress), 88 total tests covering storage, validation, error mapping, CLI, and server logic.
@@ -150,7 +150,7 @@ For manual installation, add this to your User Settings (JSON) or `.vscode/mcp.j
 workflow-orchestration/
   ├─ src/
   │   ├─ domain/               # Pure entities & errors (no dependencies)
-  │   ├─ application/          # Use-cases, services, validation (depends on domain)
+  │   ├─ application/          # Use-cases, services, ValidationEngine (depends on domain)
   │   ├─ infrastructure/
   │   │   ├─ rpc/              # JSON-RPC server adapter
   │   │   └─ storage/          # File, in-memory, caching, schema-validating adapters
