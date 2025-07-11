@@ -262,7 +262,102 @@ npm run validate-workflow your-workflow.json
 - [ ] Are clarification prompts clear and relevant?
 - [ ] Is metaGuidance helpful and specific?
 
-### Step 3: Common Validation Errors
+### Step 3: Advanced Step Output Validation
+
+The workflow system includes a powerful **ValidationEngine** that can validate step outputs using three enhancement types:
+
+#### JSON Schema Validation
+Validate structured output against a JSON schema:
+
+```json
+{
+  "id": "create-user-api",
+  "title": "Create user API endpoint",
+  "prompt": "**PREP**: Design the API endpoint structure.\n\n**IMPLEMENT**: Create the endpoint with proper validation.\n\n**VERIFY**: Test the endpoint with various inputs.",
+  "validationCriteria": [
+    {
+      "type": "schema",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "endpoint": {"type": "string", "pattern": "^/api/users(/.*)?$"},
+          "method": {"type": "string", "enum": ["POST", "PUT", "PATCH"]},
+          "validation": {
+            "type": "object",
+            "properties": {
+              "required": {"type": "array", "items": {"type": "string"}},
+              "properties": {"type": "object"}
+            },
+            "required": ["required", "properties"]
+          }
+        },
+        "required": ["endpoint", "method", "validation"]
+      }
+    }
+  ]
+}
+```
+
+#### Context-Aware Validation
+Apply validation rules conditionally based on context:
+
+```json
+{
+  "id": "database-migration",
+  "title": "Create database migration",
+  "prompt": "**PREP**: Analyze the database changes needed.\n\n**IMPLEMENT**: Create migration files.\n\n**VERIFY**: Test migration in development environment.",
+  "validationCriteria": [
+    {
+      "type": "contains",
+      "value": "CREATE TABLE",
+      "condition": "context.migrationType === 'create'"
+    },
+    {
+      "type": "contains", 
+      "value": "ALTER TABLE",
+      "condition": "context.migrationType === 'modify'"
+    },
+    {
+      "type": "regex",
+      "pattern": "rollback|down|revert",
+      "condition": "context.requiresRollback === true"
+    }
+  ]
+}
+```
+
+#### Logical Composition Validation
+Combine multiple validation rules with logical operators:
+
+```json
+{
+  "id": "security-implementation",
+  "title": "Implement security measures",
+  "prompt": "**PREP**: Identify security requirements.\n\n**IMPLEMENT**: Add authentication and authorization.\n\n**VERIFY**: Test security measures thoroughly.",
+  "validationCriteria": {
+    "and": [
+      {
+        "or": [
+          {"type": "contains", "value": "jwt"},
+          {"type": "contains", "value": "session"}
+        ]
+      },
+      {
+        "type": "regex",
+        "pattern": "\\b(authorize|permission|role)\\b"
+      },
+      {
+        "not": {
+          "type": "contains",
+          "value": "password"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Step 4: Common Validation Errors
 
 **Missing Required Fields:**
 ```json
@@ -289,6 +384,31 @@ npm run validate-workflow your-workflow.json
 {
   "id": "my workflow",
   // Should be: "my-workflow"
+}
+```
+
+**Invalid Validation Criteria:**
+```json
+// ❌ Invalid schema format
+{
+  "type": "schema",
+  "schema": "not a valid schema object"
+}
+
+// ❌ Invalid condition syntax
+{
+  "type": "contains",
+  "value": "test",
+  "condition": "invalid javascript syntax"
+}
+
+// ❌ Missing logical operator
+{
+  "validationCriteria": {
+    "invalidOperator": [
+      {"type": "contains", "value": "test"}
+    ]
+  }
 }
 ```
 
@@ -404,13 +524,48 @@ npm run validate-workflow your-workflow.json
       "id": "implement-feature",
       "title": "Implement the feature",
       "prompt": "**PREP**: Set up the development environment and review the plan.\n\n**IMPLEMENT**: Write the code following the implementation plan.\n\n**VERIFY**: Test the implementation and ensure it meets requirements.",
-      "askForFiles": true
+      "askForFiles": true,
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "function",
+          "condition": "context.language === 'javascript'"
+        },
+        {
+          "type": "contains",
+          "value": "def ",
+          "condition": "context.language === 'python'"
+        },
+        {
+          "type": "regex",
+          "pattern": "\\b(test|spec)\\b"
+        }
+      ]
     },
     {
       "id": "test-and-validate",
       "title": "Test and validate the feature",
       "prompt": "**PREP**: Review the implementation and identify test scenarios.\n\n**IMPLEMENT**: Write comprehensive tests for the feature.\n\n**VERIFY**: Run tests and validate the feature works correctly.",
-      "requireConfirmation": true
+      "requireConfirmation": true,
+      "validationCriteria": {
+        "and": [
+          {
+            "or": [
+              {"type": "contains", "value": "describe"},
+              {"type": "contains", "value": "test"}
+            ]
+          },
+          {
+            "type": "regex",
+            "pattern": "\\b(expect|assert|should)\\b"
+          },
+          {
+            "type": "length",
+            "min": 100,
+            "condition": "context.testCoverage === 'comprehensive'"
+          }
+        ]
+      }
     }
   ],
   "metaGuidance": [
@@ -458,7 +613,24 @@ npm run validate-workflow your-workflow.json
       "id": "implement-fix",
       "title": "Implement the fix",
       "prompt": "**PREP**: Plan the fix based on the root cause analysis.\n\n**IMPLEMENT**: Apply the fix with minimal changes.\n\n**VERIFY**: Test that the fix resolves the bug without introducing new issues.",
-      "requireConfirmation": true
+      "requireConfirmation": true,
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "fix",
+          "condition": "context.bugSeverity === 'high'"
+        },
+        {
+          "type": "regex",
+          "pattern": "\\b(error|exception|null|undefined)\\b"
+        },
+        {
+          "not": {
+            "type": "contains",
+            "value": "TODO"
+          }
+        }
+      ]
     },
     {
       "id": "test-fix",
@@ -489,6 +661,8 @@ npm run validate-workflow your-workflow.json
 
 ## References
 
+- [Advanced Validation Guide](13-advanced-validation-guide.md) - Complete guide to ValidationEngine features
+- [Architecture Guide](02-architecture.md) - Technical details of the ValidationEngine
 - [Workflow Schema](../spec/workflow.schema.json)
 - [Valid Example](../spec/examples/valid-workflow.json)
 - [API Specification](../spec/mcp-api-v1.0.md)
