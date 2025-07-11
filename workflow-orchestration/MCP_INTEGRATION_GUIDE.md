@@ -39,7 +39,7 @@ Add this to your Cursor configuration:
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-workflow-orchestration"
+          "@etienneb/workrail"
         ]
       }
     }

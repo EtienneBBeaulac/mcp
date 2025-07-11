@@ -1,6 +1,6 @@
 {
-  "name": "@modelcontextprotocol/server-workflow-orchestration",
-  "version": "0.0.1",
+  "name": "@etienneb/workrail",
+  "version": "0.0.2-beta.0",
   "description": "MCP server for structured workflow orchestration and step-by-step task guidance",
   "license": "MIT",
   "bin": {

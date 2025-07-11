@@ -246,10 +246,10 @@ export class FileWorkflowStorage implements IWorkflowStorage {
 
 /**
  * Helper factory that resolves the workflow directory according to the
- * previous behaviour (env override → bundled examples).
+ * previous behaviour (env override → bundled workflows).
  */
 export function createDefaultFileWorkflowStorage(): FileWorkflowStorage {
-  const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../../spec/examples');
+  const DEFAULT_WORKFLOW_DIR = path.resolve(__dirname, '../../../workflows');
   const envPath = process.env['WORKFLOW_STORAGE_PATH'];
   const resolved = envPath ? path.resolve(envPath) : null;
   const directory = resolved && existsSync(resolved) ? resolved : DEFAULT_WORKFLOW_DIR;
