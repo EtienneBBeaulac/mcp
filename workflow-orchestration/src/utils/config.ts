@@ -19,8 +19,11 @@ const configSchema = z.object({
   MCP_SERVER_PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
 
   // Workflow storage
-  WORKFLOW_STORAGE_PATH: z.string().default('./workflows'),
+  WORKFLOW_STORAGE_PATH: z.string().optional(),
   WORKFLOW_STORAGE_TYPE: z.enum(['file', 'database']).default('file'),
+  WORKFLOW_INCLUDE_BUNDLED: z.string().transform(val => val !== 'false').default('true'),
+  WORKFLOW_INCLUDE_USER: z.string().transform(val => val !== 'false').default('true'),
+  WORKFLOW_INCLUDE_PROJECT: z.string().transform(val => val !== 'false').default('true'),
 
   // Security settings
   JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters').default('your-super-secret-jwt-key-change-this-in-production'),
@@ -129,7 +132,7 @@ export class Configuration {
       logLevel: this.config.LOG_LEVEL,
       workflowStorage: {
         type: this.config.WORKFLOW_STORAGE_TYPE,
-        path: this.config.WORKFLOW_STORAGE_PATH,
+        path: this.config.WORKFLOW_STORAGE_PATH || './workflows',
       },
       security: {
         jwtSecret: this.config.JWT_SECRET,
@@ -270,7 +273,7 @@ export class Configuration {
       logLevel: this.config.LOG_LEVEL,
       workflowStorage: {
         type: this.config.WORKFLOW_STORAGE_TYPE,
-        path: this.config.WORKFLOW_STORAGE_PATH,
+        path: this.config.WORKFLOW_STORAGE_PATH || './workflows',
       },
       security: {
         hasApiKey: !!this.config.MCP_API_KEY,

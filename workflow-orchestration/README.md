@@ -18,6 +18,36 @@ The codebase now implements the full MVP described in the original specification
 
 ---
 
+## 🚀 Quick Start
+
+```bash
+# Install globally
+npm install -g @exaudeus/workrail
+
+# Initialize your personal workflow directory
+workrail init
+
+# List all available workflows (bundled + your custom ones)
+workrail list
+
+# Check workflow sources and status
+workrail sources
+
+# Validate a workflow file
+workrail validate my-workflow.json
+
+# Start the MCP server
+workrail start
+```
+
+**Multiple Workflow Sources**: WorkRail automatically loads workflows from:
+- **Bundled workflows** (included with the package)
+- **User workflows** (`~/.workrail/workflows/`)
+- **Project workflows** (`./workflows/`)
+- **Custom directories** (via `WORKFLOW_STORAGE_PATH` environment variable)
+
+---
+
 ## ✨ Key Features
 
 * **Clean Architecture** – clear separation of **Domain → Application → Infrastructure** layers.
