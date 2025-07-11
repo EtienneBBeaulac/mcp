@@ -22,7 +22,7 @@
 
 | Area | Status |
 |------|--------|
-| JSON-RPC API (`workflow_list`, `get`, `next`, `validate`, `validate_json`) | **Done** |
+| JSON-RPC API (`workflow_list`, `get`, `next`, `validate`, `workflow_validate_json`) | **Done** |
 | Clean Architecture refactor (Domain / Application / Infrastructure) | **Done** |
 | Async storage adapters (file, in-memory, cache, schema-validating) | **Done** |
 | Centralised request & workflow validation (Ajv) | **Done** |

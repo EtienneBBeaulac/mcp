@@ -63,7 +63,7 @@ This document summarizes how the Workflow Orchestration System achieves full MCP
           "additionalProperties": false
         }
       }
-      // ... all four tools with complete schemas
+      // ... all five tools with complete schemas
     ]
   }
 }
@@ -106,7 +106,7 @@ This document summarizes how the Workflow Orchestration System achieves full MCP
    - Complete error handling
 
 2. **[MCP Tool API](mcp-api-v1.0.md)** ✅ **ENHANCED**
-   - Four core workflow tools
+   - Five core workflow tools
    - JSON-RPC 2.0 implementation
    - Workflow-specific error codes
    - Request/response examples
@@ -156,7 +156,7 @@ This document summarizes how the Workflow Orchestration System achieves full MCP
 - Protocol version management
 
 ✅ **Comprehensive Tool Specifications**
-- Four core workflow tools with complete schemas
+- Five core workflow tools with complete schemas
 - Input validation and error handling
 - Request/response examples
 

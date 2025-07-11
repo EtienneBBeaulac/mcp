@@ -29,15 +29,15 @@ Core documentation for developers building the system.
 ### 🔧 **Advanced Topics** (`advanced/`)
 Advanced features and scalability considerations.
 
-- **[01-plugin-system.md](advanced/01-plugin-system.md)** - Plugin architecture and development
-- **[02-multi-tenancy.md](advanced/02-multi-tenancy.md)** - Multi-tenant support
-- **[03-scaling-strategies.md](advanced/03-scaling-strategies.md)** - Horizontal scaling and distributed systems
-- **[04-workflow-versioning.md](advanced/04-workflow-versioning.md)** - Versioning and migration strategies
+- **[contributing.md](advanced/contributing.md)** - Contributing guidelines
+- **[deployment.md](advanced/deployment.md)** - Deployment strategies
+- **[performance.md](advanced/performance.md)** - Performance optimization
+- **[security.md](advanced/security.md)** - Security considerations
 
 ### 📖 **Reference Documentation** (`reference/`)
 Complete reference materials and troubleshooting.
 
-- **[api-reference.md](reference/api-reference.md)** - Complete API documentation
+- **[mcp-api-v1.0.md](../spec/mcp-api-v1.0.md)** - Complete API documentation
 - **[configuration.md](reference/configuration.md)** - Configuration options and examples
 - **[troubleshooting.md](reference/troubleshooting.md)** - Common issues and solutions
 
@@ -72,7 +72,7 @@ Complete reference materials and troubleshooting.
 ### For DevOps Engineers
 
 1. **Deployment**: [Deployment Guide](implementation/07-deployment-guide.md)
-2. **Scaling**: [Scaling Strategies](advanced/03-scaling-strategies.md)
+2. **Scaling**: [Performance Guide](advanced/performance.md)
 3. **Configuration**: [Configuration Reference](reference/configuration.md)
 4. **Troubleshooting**: [Troubleshooting Guide](reference/troubleshooting.md)
 
@@ -116,24 +116,24 @@ Complete reference materials and troubleshooting.
 **🔒 Security Engineer**
 - [Security Guide](implementation/05-security-guide.md)
 - [Architecture](implementation/02-architecture.md)
-- [API Reference](reference/api-reference.md)
+- [API Reference](../spec/mcp-api-v1.0.md)
 
 **⚡ Performance Engineer**
 - [Performance Guide](implementation/06-performance-guide.md)
-- [Scaling Strategies](advanced/03-scaling-strategies.md)
+- [Performance Guide](advanced/performance.md)
 - [Configuration Reference](reference/configuration.md)
 
 **🚀 DevOps Engineer**
 - [Deployment Guide](implementation/07-deployment-guide.md)
-- [Scaling Strategies](advanced/03-scaling-strategies.md)
+- [Deployment Guide](advanced/deployment.md)
 - [Troubleshooting](reference/troubleshooting.md)
 
 ### By Topic
 
 **🏗️ Architecture**
 - [System Architecture](implementation/02-architecture.md)
-- [Plugin System](advanced/01-plugin-system.md)
-- [Multi-Tenancy](advanced/02-multi-tenancy.md)
+- [Security Guide](advanced/security.md)
+- [Performance Guide](advanced/performance.md)
 
 **🔧 Development**
 - [Getting Started](implementation/01-getting-started.md)
@@ -146,7 +146,7 @@ Complete reference materials and troubleshooting.
 
 **🚀 Operations**
 - [Deployment Guide](implementation/07-deployment-guide.md)
-- [Scaling Strategies](advanced/03-scaling-strategies.md)
+- [Deployment Guide](advanced/deployment.md)
 - [Troubleshooting](reference/troubleshooting.md)
 
 ---
@@ -182,11 +182,7 @@ Complete reference materials and troubleshooting.
 
 ### Documentation Templates
 
-Use these templates for consistency:
-
-- **[Getting Started Template](templates/getting-started-template.md)**
-- **[Architecture Template](templates/architecture-template.md)**
-- **[Reference Template](templates/reference-template.md)**
+Use existing documentation files as templates for consistency when creating new documents.
 
 ---
 
@@ -201,7 +197,7 @@ Use these templates for consistency:
 ### Technical Questions
 
 - **Implementation**: Check the [Implementation Guides](implementation/)
-- **API Usage**: Check the [API Reference](reference/api-reference.md)
+- **API Usage**: Check the [API Reference](../spec/mcp-api-v1.0.md)
 - **Configuration**: Check the [Configuration Reference](reference/configuration.md)
 - **Troubleshooting**: Check the [Troubleshooting Guide](reference/troubleshooting.md)
 

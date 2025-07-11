@@ -132,7 +132,7 @@
 
 **Phase 1: Foundation (4-6 weeks)**
 - Basic MCP server implementation
-- Core API tools (list, get, next, validate, validate_json)
+- Core API tools (list, get, next, validate, workflow_validate_json)
 - Workflow storage system
 - Basic validation
 - JSON validation use case implementation
