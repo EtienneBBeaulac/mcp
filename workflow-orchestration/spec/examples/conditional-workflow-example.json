@@ -34,27 +34,31 @@
       },
       "askForFiles": true,
       "requireConfirmation": true,
-      "validationCriteria": {
-        "and": [
-          {
-            "type": "contains",
-            "value": "requirements",
-            "message": "Should include requirements analysis"
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "requirements",
+          "message": "Should include requirements analysis"
+        },
+        {
+          "type": "contains",
+          "value": "edge cases",
+          "condition": {
+            "var": "complexity",
+            "gte": 0.8
           },
-          {
-            "type": "contains",
-            "value": "edge cases",
-            "condition": "context.complexity >= 0.8",
-            "message": "Should analyze edge cases for complex tasks"
+          "message": "Should analyze edge cases for complex tasks"
+        },
+        {
+          "type": "length",
+          "min": 200,
+          "condition": {
+            "var": "taskScope",
+            "equals": "large"
           },
-          {
-            "type": "length",
-            "min": 200,
-            "condition": "context.taskScope === 'large'",
-            "message": "Large tasks require detailed analysis"
-          }
-        ]
-      }
+          "message": "Large tasks require detailed analysis"
+        }
+      ]
     },
     {
       "id": "quick-implementation",
@@ -104,20 +108,25 @@
         {
           "type": "regex",
           "pattern": "\\b(pattern|design|architecture)\\b",
-          "condition": "context.userExpertise === 'expert'",
+          "condition": {
+            "var": "userExpertise",
+            "equals": "expert"
+          },
           "message": "Expert implementation should use advanced patterns"
         },
         {
           "type": "contains",
           "value": "optimization",
-          "condition": "context.complexity >= 0.6",
+          "condition": {
+            "var": "complexity",
+            "gte": 0.6
+          },
           "message": "Should include optimizations for complex features"
         },
         {
-          "not": {
-            "type": "contains",
-            "value": "TODO"
-          }
+          "type": "regex",
+          "pattern": "(?!.*TODO)",
+          "message": "Should not contain TODO items"
         }
       ]
     },
@@ -132,37 +141,27 @@
         ]
       },
       "requireConfirmation": true,
-      "validationCriteria": {
-        "and": [
-          {
-            "or": [
-              {
-                "type": "contains",
-                "value": "unit test"
-              },
-              {
-                "type": "contains",
-                "value": "integration test"
-              },
-              {
-                "type": "contains",
-                "value": "end-to-end"
-              }
-            ]
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "\\b(unit test|integration test|end-to-end)\\b",
+          "message": "Should include comprehensive test types"
+        },
+        {
+          "type": "regex",
+          "pattern": "\\b(describe|it|test|spec)\\b",
+          "message": "Should include proper test structure"
+        },
+        {
+          "type": "contains",
+          "value": "coverage",
+          "condition": {
+            "var": "taskScope",
+            "equals": "large"
           },
-          {
-            "type": "regex",
-            "pattern": "\\b(describe|it|test|spec)\\b",
-            "message": "Should include proper test structure"
-          },
-          {
-            "type": "contains",
-            "value": "coverage",
-            "condition": "context.taskScope === 'large'",
-            "message": "Large tasks should include coverage analysis"
-          }
-        ]
-      }
+          "message": "Large tasks should include coverage analysis"
+        }
+      ]
     },
     {
       "id": "basic-testing",

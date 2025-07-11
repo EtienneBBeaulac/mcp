@@ -48,53 +48,33 @@
       "id": "implement-login",
       "title": "Implement login endpoint",
       "prompt": "Create a POST /auth/login endpoint that accepts email and password, validates credentials against the database, and returns a JWT token on success.",
-      "validationCriteria": {
-        "and": [
-          {
-            "type": "contains",
-            "value": "POST",
-            "message": "Should implement POST endpoint"
-          },
-          {
-            "or": [
-              {
-                "type": "contains",
-                "value": "/auth/login"
-              },
-              {
-                "type": "contains",
-                "value": "/login"
-              }
-            ]
-          },
-          {
-            "type": "schema",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "endpoint": {
-                  "type": "string",
-                  "pattern": "^/(auth/)?login$"
-                },
-                "method": {
-                  "type": "string",
-                  "enum": ["POST"]
-                },
-                "authentication": {
-                  "type": "object",
-                  "properties": {
-                    "email": {"type": "boolean"},
-                    "password": {"type": "boolean"},
-                    "jwt": {"type": "boolean"}
-                  },
-                  "required": ["email", "password", "jwt"]
-                }
-              }
-            },
-            "message": "Should implement proper login endpoint structure"
-          }
-        ]
-      }
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "POST",
+          "message": "Should implement POST endpoint"
+        },
+        {
+          "type": "regex",
+          "pattern": "/(auth/)?login",
+          "message": "Should implement login endpoint"
+        },
+        {
+          "type": "contains",
+          "value": "email",
+          "message": "Should handle email authentication"
+        },
+        {
+          "type": "contains",
+          "value": "password",
+          "message": "Should handle password authentication"
+        },
+        {
+          "type": "contains",
+          "value": "jwt",
+          "message": "Should return JWT token"
+        }
+      ]
     },
     {
       "id": "test-authentication",
@@ -105,7 +85,10 @@
         {
           "type": "contains",
           "value": "valid credentials",
-          "condition": "context.testType === 'comprehensive'",
+          "condition": {
+            "var": "testType",
+            "equals": "comprehensive"
+          },
           "message": "Should test login with valid credentials"
         },
         {
