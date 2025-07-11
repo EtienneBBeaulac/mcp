@@ -1,13 +1,14 @@
 import { ValidationError } from '../../core/error-handler';
 
 export interface ValidationRule {
-  type: 'contains' | 'regex' | 'length';
+  type: 'contains' | 'regex' | 'length' | 'schema';
   message: string;
   value?: string;      // for 'contains' type
   pattern?: string;    // for 'regex' type
   flags?: string;      // for 'regex' type
   min?: number;        // for 'length' type
   max?: number;        // for 'length' type
+  schema?: Record<string, any>; // for 'schema' type
 }
 
 export interface ValidationResult {
@@ -116,6 +117,17 @@ export class ValidationEngine {
           }
           if (typeof max === 'number' && output.length > max) {
             issues.push(rule.message || `Output exceeds maximum length ${max}`);
+          }
+          break;
+        }
+        case 'schema': {
+          // TODO: Implement JSON Schema validation with ajv in Phase 1, Step 5
+          // For now, provide a placeholder that acknowledges the rule type
+          if (!rule.schema) {
+            issues.push(rule.message || 'Schema validation rule requires a schema property');
+          } else {
+            // Placeholder: accept all outputs for now until full implementation
+            // This prevents throwing "unsupported rule type" errors
           }
           break;
         }

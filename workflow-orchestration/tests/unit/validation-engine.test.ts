@@ -255,6 +255,25 @@ describe('ValidationEngine', () => {
     });
   });
 
+  describe('schema validation (placeholder)', () => {
+    it('should handle schema rule without schema property', async () => {
+      const rules: ValidationRule[] = [
+        { type: 'schema', message: 'Schema validation failed' }
+      ];
+      const result = await engine.validate('hello world', rules);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('Schema validation failed');
+    });
+
+    it('should handle schema rule with schema property (placeholder)', async () => {
+      const rules: ValidationRule[] = [
+        { type: 'schema', schema: { type: 'object' }, message: 'Schema validation failed' }
+      ];
+      const result = await engine.validate('{"test": "value"}', rules);
+      expect(result.valid).toBe(true); // Placeholder implementation accepts all
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle null criteria', async () => {
       const result = await engine.validate('hello world', null as any);

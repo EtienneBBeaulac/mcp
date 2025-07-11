@@ -151,7 +151,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "enum": ["contains", "regex", "length"],
+                  "enum": ["contains", "regex", "length", "schema"],
                   "description": "Type of validation rule"
                 },
                 "value": {
@@ -177,6 +177,11 @@
                 "message": {
                   "type": "string",
                   "description": "Error message when validation fails"
+                },
+                "schema": {
+                  "type": "object",
+                  "description": "JSON Schema object for 'schema' type validation",
+                  "additionalProperties": true
                 }
               },
               "required": ["type", "message"],
