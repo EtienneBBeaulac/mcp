@@ -124,7 +124,7 @@
 
 #### **Architecture Alignment**
 - Security follows established modular tool patterns
-- Security validation integrates with existing validation engine
+- Security validation integrates with existing ValidationEngine
 - Security state integrates with workflow state management
 - Security components maintain local-first approach
 
