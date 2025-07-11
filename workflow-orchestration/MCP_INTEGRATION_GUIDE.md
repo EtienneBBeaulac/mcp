@@ -113,7 +113,7 @@ echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"workflow_l
 
 You should see:
 - ✅ Two workflows loaded: `ai-task-prompt-workflow` and `simple-auth-implementation`
-- ✅ Four tools available: `workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`
+- ✅ Five tools available: `workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`, `workflow_validate_json`
 - ✅ JSON-RPC responses with proper structure
 
 ## **🛠️ Available Tools**
@@ -144,6 +144,17 @@ You should see:
   - `stepId` (string): Step identifier
   - `output` (string): Step output to validate
 - **Returns**: Validation result and feedback
+
+### **5. `workflow_validate_json`**
+- **Description**: Validates workflow JSON content directly without external tools
+- **Parameters**:
+  - `workflowJson` (string): Complete workflow JSON content as a string to validate
+- **Returns**: Comprehensive validation results including JSON syntax validation, schema compliance checking, and actionable error suggestions
+- **Use Cases**: 
+  - Validate newly created workflows before saving
+  - Check workflow syntax when editing workflow files
+  - Verify workflow structure when troubleshooting issues
+  - Ensure workflow compliance before deployment
 
 ## **💡 Usage Examples**
 
@@ -209,6 +220,43 @@ You should see:
 }
 ```
 
+### **5. Validate Workflow JSON**
+```bash
+# Agent uses workflow_validate_json tool
+{
+  "name": "workflow_validate_json",
+  "arguments": {
+    "workflowJson": "{\"id\": \"my-workflow\", \"name\": \"My Workflow\", \"description\": \"A sample workflow\", \"steps\": [{\"id\": \"step1\", \"title\": \"First Step\", \"prompt\": \"Do something\"}]}"
+  }
+}
+```
+
+**Example Response for Valid Workflow**:
+```json
+{
+  "valid": true,
+  "message": "Workflow JSON is valid and follows the schema correctly"
+}
+```
+
+**Example Response for Invalid Workflow**:
+```json
+{
+  "valid": false,
+  "message": "Workflow validation failed",
+  "issues": [
+    "JSON parsing error: Unexpected token in JSON at position 45",
+    "Schema validation: Missing required field 'version'",
+    "Schema validation: Field 'steps' must be an array with at least 1 item"
+  ],
+  "suggestions": [
+    "Check JSON syntax for missing quotes or brackets",
+    "Add required 'version' field to workflow definition",
+    "Ensure 'steps' array contains at least one step definition"
+  ]
+}
+```
+
 ## **🔄 Typical Workflow**
 
 1. **Discovery**: Agent calls `workflow_list` to see available workflows
@@ -217,6 +265,16 @@ You should see:
 4. **Execution**: Agent calls `workflow_next` repeatedly to get steps (with context for conditional workflows)
 5. **Validation**: Agent calls `workflow_validate` after completing each step
 6. **Completion**: Agent continues until workflow is complete
+
+### **Alternative: JSON Validation Workflow**
+
+For workflow creation and debugging scenarios:
+
+1. **Creation**: Agent creates or edits workflow JSON content
+2. **Validation**: Agent calls `workflow_validate_json` to verify JSON syntax and schema compliance
+3. **Debugging**: If validation fails, agent reviews error messages and suggestions
+4. **Refinement**: Agent corrects issues and re-validates until workflow is valid
+5. **Deployment**: Agent saves or uses the validated workflow
 
 ## **🔄 Conditional Workflows**
 
@@ -266,6 +324,12 @@ This enables "choose your own adventure" workflows that adapt to different scena
 - **Validation feedback** for continuous improvement
 - **Adaptive workflows** based on project context
 - **Reusable patterns** across similar tasks
+
+### **🔍 Workflow Quality Assurance**
+- **JSON syntax validation** with detailed error messages
+- **Schema compliance checking** for workflow structure
+- **Actionable error suggestions** for quick problem resolution
+- **Programmatic validation** without external dependencies
 
 ## **🚀 Advanced Features**
 
@@ -321,10 +385,18 @@ export WORKFLOW_DIR=/path/to/custom/workflows
    - Solution: Run `npm install` and `npm run build:mcp`
 
 2. **"Unknown tool" errors**
-   - Solution: Check tool names match exactly: `workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`
+   - Solution: Check tool names match exactly: `workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`, `workflow_validate_json`
 
 3. **"Parameter required" errors**
    - Solution: Ensure all required parameters are provided and properly typed
+
+4. **"JSON parsing error" with workflow_validate_json**
+   - Solution: Check for missing quotes, brackets, or commas in JSON content
+   - Tip: Use proper JSON escaping when passing workflow content as string parameter
+
+5. **"Schema validation failed" with workflow_validate_json**
+   - Solution: Review error messages for specific missing fields or incorrect types
+   - Tip: Check that required fields like `id`, `name`, `description`, and `steps` are present
 
 ### **Debug Mode**
 Enable debug logging:
