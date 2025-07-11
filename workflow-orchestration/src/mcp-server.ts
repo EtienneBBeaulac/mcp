@@ -85,14 +85,13 @@ class WorkflowOrchestrationServer {
 // Define the workflow orchestration tools
 const WORKFLOW_LIST_TOOL: Tool = {
   name: "workflow_list",
-  description: `List all available workflows in the system.
-  
-  Returns a comprehensive list of workflow definitions that can be used to guide structured task completion. Each workflow includes metadata like name, description, and step count.
-  
-  Use this tool to:
-  - Discover available workflows for different types of tasks
-  - Get an overview of workflow options before starting a task
-  - Browse workflow catalogs for specific domains (auth, API development, etc.)`,
+  description: `Your primary tool for any complex or multi-step request. Call this FIRST to see if a reliable, pre-defined workflow exists, as this is the preferred method over improvisation.
+
+  Your process:
+  1. Call this tool to get a list of available workflows.
+  2. Analyze the returned descriptions to find a match for the user's goal.
+  3. If a good match is found, suggest it to the user and use \`workflow_get\` to start.
+  4. If NO match is found, inform the user and then attempt to solve the task using your general abilities.`,
   inputSchema: {
     type: "object",
     properties: {},
@@ -102,15 +101,7 @@ const WORKFLOW_LIST_TOOL: Tool = {
 
 const WORKFLOW_GET_TOOL: Tool = {
   name: "workflow_get",
-  description: `Get detailed information about a specific workflow.
-  
-  Retrieves the complete workflow definition including all steps, preconditions, guidance, and metadata. This provides the full blueprint for executing a structured task.
-  
-  Use this tool to:
-  - Get the complete step-by-step instructions for a workflow
-  - Understand preconditions and requirements before starting
-  - Review clarification prompts and meta-guidance
-  - Plan the execution of a complex task`,
+  description: `Starts a specific workflow and retrieves its first step. Call this tool AFTER you have used \`workflow_list\` and the user has confirmed which workflow to start.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -127,15 +118,7 @@ const WORKFLOW_GET_TOOL: Tool = {
 
 const WORKFLOW_NEXT_TOOL: Tool = {
   name: "workflow_next",
-  description: `Get the next step in a workflow progression.
-  
-  Determines what step should be executed next based on the workflow definition and currently completed steps. Provides intelligent step sequencing and completion detection.
-  
-  Use this tool to:
-  - Get the next actionable step in a workflow
-  - Understand step dependencies and prerequisites  
-  - Determine if a workflow is complete
-  - Receive contextual guidance for the current stage`,
+  description: `Executes a workflow by getting the next step. Use this tool in a loop to progress through a workflow. You must provide the \`workflowId\` and a list of \`completedSteps\`.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -161,15 +144,7 @@ const WORKFLOW_NEXT_TOOL: Tool = {
 
 const WORKFLOW_VALIDATE_TOOL: Tool = {
   name: "workflow_validate",
-  description: `Validate the completion of a workflow step.
-  
-  Checks if a step has been properly completed based on the step requirements and provided output. Provides feedback and validation results to ensure quality execution.
-  
-  Use this tool to:
-  - Verify that a step meets its completion criteria
-  - Get feedback on step output quality
-  - Ensure proper progression through workflow steps
-  - Validate deliverables before moving to next step`,
+  description: `(Optional but Recommended) Verifies the output of a step before proceeding. Use this after completing a step to check if your work is valid to prevent errors.`,
   inputSchema: {
     type: "object",
     properties: {
