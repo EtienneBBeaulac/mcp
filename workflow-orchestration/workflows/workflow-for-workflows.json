@@ -1,13 +1,13 @@
 {
   "id": "workflow-for-workflows",
-  "name": "Workflow for Creating New Workflows",
+  "name": "Progressive Workflow Creation Guide",
   "version": "0.0.2",
-  "description": "A meta-workflow to guide the creation, validation, and deployment of new, reusable workflow templates.",
+  "description": "An adaptive meta-workflow that guides users through creating high-quality workflow templates with personalized learning paths. Offers three experience-based approaches: Basic (step-by-step with detailed explanations), Intermediate (balanced guidance with examples), and Advanced (comprehensive features with expert context). All paths can produce sophisticated workflows - the difference is in explanation depth and feature introduction timing.",
   "clarificationPrompts": [
+    "What's your experience level with workflow creation? (New to this / Some experience / Very experienced)",
     "What type of workflow are you creating? (e.g., coding, analysis, content creation, process management)",
     "What recurring problem or task should this workflow solve?",
     "Who is the intended audience for this workflow? (e.g., beginners, experts, specific roles)",
-    "Do you have any example workflows or documentation that might be relevant?",
     "Are there any specific constraints or requirements for this workflow?"
   ],
   "preconditions": [
@@ -15,36 +15,44 @@
     "The agent has access to 'create_file', 'edit_file', 'run_terminal_cmd', 'workflow_validate_json', and 'workflow_validate' tools."
   ],
   "metaGuidance": [
+    "PROGRESSIVE LEARNING: Adapt to user experience level. Use learningPath variable for guidance depth - detailed for 'basic', balanced for 'intermediate', expert for 'advanced'.",
+    "QUALITY FOCUS: All learning paths can produce sophisticated workflows. The difference is in HOW features are taught, not WHICH features are available. Introduce advanced features when the use case demands it, regardless of path.",
     "The goal is to create a *reusable template*, not a single-use script. Use placeholders like [User provides X] where appropriate.",
     "Prompts should define goals and roles for the agent, not a rigid script. This allows the agent to use its intelligence to best achieve the task.",
     "At each step, the agent should confirm with the user before proceeding with a file modification or command.",
     "Maintain a clear distinction between the workflow being created and this meta-workflow.",
     "Save progress frequently by confirming file edits.",
-    "Leverage MCP tools throughout: Use 'workflow_list' and 'workflow_get' for template discovery, 'workflow_validate_json' for comprehensive validation, and 'workflow_validate' for step-by-step output validation.",
+    "TOOL INTEGRATION: Leverage MCP tools throughout - Use 'workflow_list' and 'workflow_get' for template discovery, 'workflow_validate_json' for comprehensive validation, and 'workflow_validate' for step-by-step output validation.",
     "When validation fails, the MCP tools provide detailed error messages and actionable suggestions - use these to guide improvements rather than guessing at fixes.",
-    "Tailor guidance based on workflow type: coding workflows need technical precision, process workflows need clarity, analysis workflows need thoroughness, and content workflows need engagement.",
-    "Version 0.0.2 updates: Enhanced validation using MCP tools (workflow_validate_json and workflow_validate), removed redundant server preconditions, improved tool integration throughout the workflow, removed feedback loop phase, simplified deployment to focus on workflow completion rather than file system operations, added clarification prompts for better requirements gathering, added file sharing capability to discovery phase, added validation criteria for quality assurance, and added confirmation gates on key phases."
+    "PATH-SPECIFIC GUIDANCE: Tailor explanation depth by learningPath. Basic: detailed explanations. Intermediate: balanced with examples. Advanced: comprehensive with expert context.",
+        "FEATURE TEACHING: Introduce features progressively within each path. Even basic users should learn about conditional steps and context variables when their workflow needs them - just with more explanation of why and how."
   ],
   "steps": [
     {
-      "id": "phase-1-discovery",
-      "title": "Phase 1: Assisted Discovery & Ideation",
-      "prompt": "We will begin by defining the problem with data and finding a suitable template.\n\n**1. Define the Goal (User's Role):**\n   - Please state your initial hypothesis for the problem this workflow solves and its primary failure mode.\n   - Specify the workflow type (e.g., coding, analysis, content creation, process management) to help tailor the guidance.\n\n**2. Guided Data Gathering (Agent's Goal):**\n   - Your goal is to help the user validate their hypothesis. Prompt them to use their tools (`grep`, `git log`, etc.) to find evidence. Ask for things like:\n     - Key excerpts from bug reports or incident post-mortems.\n     - Common themes in PR review comments.\n     - Examples of 'TODO' or 'HACK' comments in the relevant codebase.\n\n**3. Synthesize & Find Template (Agent's Goal):**\n   - Your goal is to synthesize the gathered data into a refined problem statement.\n   - Once the problem is clear, find the most suitable existing workflow to use as a template by using `workflow_list` and `workflow_get`.\n   - Set the workflowType context variable based on the user's specifications.",
+      "id": "phase-1-assessment",
+      "title": "Phase 1: Personalized Learning Path Assessment",
+      "prompt": "Welcome! This workflow will guide you through creating a high-quality workflow template with a personalized approach based on your experience level.\n\n**STEP 1: Choose Your Learning Path**\n\nPlease select your experience level with workflow creation:\n\n🌱 **Basic Path - \"Learn by Doing with Explanation\"**\n   - New to workflows or want thorough understanding\n   - Step-by-step guidance with detailed explanations\n   - Progressive introduction of advanced features with context\n   - Focus: Understanding concepts and building confidence\n\n🚀 **Intermediate Path - \"Balanced Guidance with Examples\"**\n   - Some experience with automation or process design\n   - Structured approach with practical examples\n   - Feature recommendations based on your use case\n   - Focus: Efficient workflow creation with best practices\n\n🏆 **Advanced Path - \"Full Features with Expert Context\"**\n   - Experienced with workflow/automation tools\n   - Comprehensive feature access from the start\n   - Architectural guidance and performance considerations\n   - Focus: Sophisticated workflow engineering\n\n**STEP 2: Set Learning Path Context**\n\nAgent: Based on the user's selection, set the `learningPath` context variable to 'basic', 'intermediate', or 'advanced'.\n\n**STEP 3: Discovery & Ideation (Path-Adaptive)**\n\nNow let's define your workflow requirements:\n\n- State your initial hypothesis for the problem this workflow should solve\n- Specify the workflow type (coding, analysis, content creation, process management, etc.)\n- Describe your intended audience and any specific constraints\n\nAgent: Adapt your guidance depth based on the selected learning path. Use `workflow_list` and `workflow_get` to find suitable templates. Provide path-appropriate explanations of template selection strategies.",
       "guidance": [
-        "Focus on finding the root cause of the problem, not just the symptoms.",
-        "A good template is one that solves a problem of similar *structure*, even if the domain is different.",
-        "If the user shares example workflows or documentation, review them for insights and patterns."
+        "ADAPTIVE GUIDANCE: Tailor your explanation depth to the selected learning path. Basic users need detailed explanations, Advanced users need concise expert context.",
+        "QUALITY FOCUS: All paths should result in high-quality workflows. The difference is in teaching approach, not final capability.",
+        "PATH EXPLANATION: Clearly explain what each learning path offers so users can make an informed choice.",
+        "TEMPLATE STRATEGY: Focus on structural similarity rather than domain similarity when recommending templates.",
+        "PROGRESSIVE TEACHING: Even in basic path, introduce advanced features when the use case demands them - just with more explanation."
       ],
       "askForFiles": true,
       "requireConfirmation": true
     },
     {
-      "id": "phase-2-authoring",
-      "title": "Phase 2: Structured Authoring & Drafting",
-      "prompt": "Now we will create the first draft of the new workflow file.\n\n**1. Create the File (Agent's Goal):**\n   - Ask the user for a filename for the new workflow (e.g., `my-new-workflow.json`).\n   - Use the `create_file` tool to create this file, using the template JSON from Phase 1 as the initial content.\n\n**2. Iterative Drafting (Collaborative Task):**\n   - Guide the user through the JSON structure in a specific order: `id`, `name`, `version`, `description`, `preconditions`, `metaGuidance`, and finally the `steps`.\n   - For each section, the user will provide the high-level content, and your goal as the agent is to translate it into correctly formatted JSON and use the `edit_file` tool to update the file.",
+      "id": "phase-2-basic",
+      "runCondition": {"var": "learningPath", "equals": "basic"},
+      "title": "Phase 2: Guided Workflow Creation (Basic Path)",
+      "prompt": "Let's create your workflow step-by-step with detailed explanations! 🌱\n\n**UNDERSTANDING WORKFLOWS:**\nA workflow is like a recipe that guides someone (or an AI) through a complex task. It has:\n- **Metadata**: Name, description, and settings\n- **Steps**: The actual instructions to follow\n- **Features**: Special capabilities like conditional logic\n\n**STEP 1: Create Your Workflow File**\nAgent: Ask the user for a filename (e.g., `my-workflow.json`) and create the file using the template from Phase 1. Explain each field as you add it.\n\n**STEP 2: Build the Structure Together**\nWe'll go through each part of your workflow:\n\n1. **Basic Info** (`id`, `name`, `version`, `description`)\n   - Agent: Explain why each field matters and help craft clear, descriptive content\n\n2. **Setup Requirements** (`preconditions`)\n   - Agent: Explain what preconditions are and why they prevent problems\n\n3. **Global Rules** (`metaGuidance`)\n   - Agent: Explain the difference between global rules and step-specific instructions\n\n4. **The Action Steps** (`steps`)\n   - Agent: Start with simple linear steps, but explain that workflows can also have:\n     - **Conditional steps**: \"Do this IF condition is true\"\n     - **Context variables**: Information that flows between steps\n     - **Validation**: Automatic quality checks\n   - If the user's workflow needs these features, introduce them with clear examples\n\n**LEARNING FOCUS:** Understanding what each piece does and why it's useful.",
       "guidance": [
-        "When writing prompts, use clear placeholders like `[User provides X]` to indicate where customization is needed.",
-        "Remember: `metaGuidance` is for global rules, while step `prompts` are for specific actions."
+        "EXPLAIN EVERYTHING: This user is learning. Explain the purpose of each JSON field and workflow concept.",
+        "PROGRESSIVE FEATURES: Start with basics, introduce advanced features (conditional steps, context variables) when the use case needs them - with full explanations.",
+        "USE ANALOGIES: Compare workflow concepts to familiar things (recipes, instruction manuals, etc.).",
+        "ENCOURAGE QUESTIONS: Invite the user to ask about anything that's unclear.",
+        "QUALITY TEACHING: Even though this is the basic path, don't compromise on workflow quality - just explain more."
       ],
       "validationCriteria": [
         {
@@ -70,34 +78,166 @@
       ]
     },
     {
-      "id": "phase-3-validation",
-      "title": "Phase 3: Syntactic & Structural Validation",
-      "prompt": "The first draft is complete. Now, we must ensure it is technically valid.\n\n**1. Run Validation (Agent's Goal):**\n   - Your goal is to validate the new workflow file. Use the `workflow_validate_json` tool to validate the workflow JSON content directly. Read the file content and pass it to the tool for comprehensive validation.\n\n**2. Analyze & Fix (Agent's Goal):**\n   - If validation fails, your goal is to fix it. The `workflow_validate_json` tool provides detailed error messages and actionable suggestions. Parse the validation results, explain the issues, propose fixes based on the tool's suggestions, and use `edit_file` to correct them. Repeat until validation passes.",
+      "id": "phase-2-intermediate",
+      "runCondition": {"var": "learningPath", "equals": "intermediate"},
+      "title": "Phase 2: Structured Workflow Development (Intermediate Path)",
+      "prompt": "Let's build your workflow with a structured approach and best practices! 🚀\n\n**STEP 1: Initialize Workflow File**\nAgent: Request a filename and create the workflow file using the template from Phase 1. Use efficient, clear explanations.\n\n**STEP 2: Core Structure Development**\nWe'll build your workflow systematically:\n\n1. **Metadata & Identity** (`id`, `name`, `version`, `description`)\n   - Focus on discoverability and clear communication\n   - Best practice: Make names searchable and descriptions actionable\n\n2. **Operational Requirements** (`preconditions`, `metaGuidance`)\n   - Define what's needed before starting\n   - Establish global rules for consistency\n\n3. **Enhanced Features** (based on your workflow type):\n   - **Clarification Prompts**: Gather better input upfront\n   - **Validation Criteria**: Automatic quality checks\n   - **Context Variables**: When you need information to flow between steps\n   - **Conditional Logic**: For workflows with decision points\n\n4. **Step Architecture**\n   - Design clear, actionable steps\n   - Add confirmation gates for critical actions\n   - Include file sharing when collaboration is needed\n\n**FEATURE RECOMMENDATIONS:**\nAgent: Based on the workflow type, recommend specific features. For example:\n- Coding workflows → validation criteria + confirmation gates\n- Analysis workflows → context variables + clarification prompts\n- Process workflows → conditional steps + clear guidance\n\n**EFFICIENCY FOCUS:** Building professionally structured workflows with appropriate features.",
       "guidance": [
-        "Validation errors are expected on the first run. Treat them as a checklist, not a failure.",
-        "Fix one error at a time and re-run validation to avoid introducing new issues."
+        "STRUCTURED APPROACH: Follow a logical sequence with clear reasoning for each decision.",
+        "FEATURE RECOMMENDATIONS: Suggest appropriate features based on workflow type and use case.",
+        "BEST PRACTICES: Share proven patterns and explain why they work.",
+        "PRACTICAL EXAMPLES: Use real-world scenarios to illustrate concepts.",
+        "BALANCED DEPTH: Provide enough detail to understand without overwhelming with basics."
+      ],
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "\"id\":\\s*\"[a-zA-Z0-9_-]+\"",
+          "message": "Workflow must have a valid id field with alphanumeric characters, underscores, or hyphens"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"name\":\\s*\"[^\"]{3,}\"",
+          "message": "Workflow must have a descriptive name (at least 3 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"description\":\\s*\"[^\"]{20,}\"",
+          "message": "Workflow must have a meaningful description (at least 20 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"steps\":\\s*\\[",
+          "message": "Workflow must have a steps array with at least one step"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-advanced",
+      "runCondition": {"var": "learningPath", "equals": "advanced"},
+      "title": "Phase 2: Comprehensive Workflow Architecture (Advanced Path)",
+      "prompt": "Let's architect a sophisticated workflow with full feature utilization! 🏆\n\n**STEP 1: Rapid File Initialization**\nAgent: Create the workflow file with the template foundation. Focus on architectural decisions.\n\n**STEP 2: Architectural Design**\nComprehensive workflow engineering:\n\n1. **Core Architecture** (`id`, `name`, `version`, `description`)\n   - Semantic versioning strategy\n   - Namespace considerations for organizational use\n   - Description as API documentation\n\n2. **Operational Design** (`preconditions`, `metaGuidance`, `contextVariables`)\n   - Comprehensive precondition modeling\n   - Sophisticated metaGuidance for complex scenarios\n   - Context variable architecture for data flow\n\n3. **Advanced Feature Implementation**:\n   - **Complex Conditional Logic**: Nested conditions, multiple variable evaluation\n   - **Validation Architecture**: Multi-layered validation with custom criteria\n   - **User Experience Design**: Clarification prompts, confirmation patterns, file sharing\n   - **Performance Considerations**: Step efficiency, resource optimization\n\n4. **Enterprise-Grade Features**:\n   - **Error Handling**: Comprehensive failure modes\n   - **Scalability**: Design for reuse and extension\n   - **Maintainability**: Clear separation of concerns\n   - **Integration**: API-ready for workflow orchestration systems\n\n**ARCHITECTURAL DECISIONS:**\nAgent: Discuss trade-offs and design patterns. Consider:\n- When to use conditional vs. separate workflows\n- Context variable scope and lifecycle\n- Validation strategy (fail-fast vs. comprehensive)\n- Step granularity for optimal user experience\n\n**MASTERY FOCUS:** Creating enterprise-grade workflows with sophisticated architecture.",
+      "guidance": [
+        "ARCHITECTURAL THINKING: Focus on design patterns, scalability, and maintainability.",
+        "FULL FEATURE ACCESS: Leverage the complete feature set appropriately for the use case.",
+        "PERFORMANCE AWARENESS: Consider efficiency and resource implications.",
+        "ENTERPRISE PATTERNS: Apply proven enterprise workflow patterns.",
+        "EXPERT CONTEXT: Assume understanding of complex concepts, focus on sophisticated applications."
+      ],
+      "validationCriteria": [
+        {
+          "type": "regex",
+          "pattern": "\"id\":\\s*\"[a-zA-Z0-9_-]+\"",
+          "message": "Workflow must have a valid id field with alphanumeric characters, underscores, or hyphens"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"name\":\\s*\"[^\"]{3,}\"",
+          "message": "Workflow must have a descriptive name (at least 3 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"description\":\\s*\"[^\"]{20,}\"",
+          "message": "Workflow must have a meaningful description (at least 20 characters)"
+        },
+        {
+          "type": "regex",
+          "pattern": "\"steps\":\\s*\\[",
+          "message": "Workflow must have a steps array with at least one step"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-basic",
+      "runCondition": {"var": "learningPath", "equals": "basic"},
+      "title": "Phase 3: Learning Through Validation (Basic Path)",
+      "prompt": "Great! Your workflow draft is complete. Now let's make sure it works perfectly! 🌱\n\n**UNDERSTANDING VALIDATION:**\nValidation is like proofreading - it catches mistakes before they cause problems. Our validation tool will check:\n- **Syntax**: Is the JSON format correct?\n- **Structure**: Are all required fields present?\n- **Logic**: Do the conditions and references make sense?\n\n**STEP 1: Run Your First Validation**\nAgent: Use `workflow_validate_json` to check the workflow. Explain what the tool is doing and why each check matters.\n\n**STEP 2: Learning from Errors (Don't worry - errors are normal!)**\nAgent: If there are errors (and there usually are!):\n1. **Explain each error type** in simple terms\n2. **Show exactly where** the problem is\n3. **Explain why** it's a problem\n4. **Guide the fix** step-by-step\n5. **Rerun validation** to see progress\n\n**COMMON ERROR TYPES YOU MIGHT SEE:**\n- **Missing quotes**: JSON needs quotes around text\n- **Missing commas**: JSON items need separators\n- **Invalid references**: Steps referencing things that don't exist\n- **Logic errors**: Conditions that don't make sense\n\n**LEARNING GOAL:** Understanding what makes a workflow valid and why each rule exists.\n\nRemember: Every error is a learning opportunity! Professional developers deal with validation errors all the time.",
+      "guidance": [
+        "EDUCATIONAL APPROACH: Treat each error as a teaching moment. Explain what went wrong and why the rule exists.",
+        "STEP-BY-STEP FIXES: Guide through each fix individually, don't overwhelm with multiple changes.",
+        "ENCOURAGE LEARNING: Emphasize that errors are normal and part of the learning process.",
+        "EXPLAIN THE WHY: Help user understand the reasoning behind validation rules.",
+        "BUILD CONFIDENCE: Celebrate when validation passes and acknowledge progress."
       ],
       "requireConfirmation": true
     },
     {
-      "id": "phase-4-refinement",
-      "title": "Phase 4: Structured Red-Teaming",
-      "prompt": "The workflow is now technically valid. Next, we will rigorously test its logic against multiple personas.\n\n**1. Select a Step (User's Role):**\n   - Please choose a critical step from the new workflow to test.\n\n**2. Structured Simulation (Agent's Goal):**\n   - Your goal is to analyze the selected prompt from the following three perspectives:\n     - **The Novice Persona:** Is there jargon or assumed knowledge that would confuse a newcomer?\n     - **The Rushed Expert Persona:** How could a busy expert misinterpret or shortcut this step? Can it be made more concise?\n     - **The Adversarial LLM Persona:** What ambiguity could be exploited to produce a plausible but incorrect result?\n   - For each persona, provide your findings and suggest specific revisions. Use `edit_file` to implement approved changes.\n\n**3. Validate Step Output (Agent's Goal):**\n   - After making revisions, use the `workflow_validate` tool to validate the updated step against the overall workflow structure and ensure it maintains consistency.",
+      "id": "phase-3-intermediate",
+      "runCondition": {"var": "learningPath", "equals": "intermediate"},
+      "title": "Phase 3: Systematic Validation & Quality Assurance (Intermediate Path)",
+      "prompt": "Time to validate and refine your workflow with systematic quality checks! 🚀\n\n**VALIDATION STRATEGY:**\nWe'll use a layered approach to ensure your workflow is both technically correct and professionally robust.\n\n**STEP 1: Comprehensive Validation**\nAgent: Execute `workflow_validate_json` for complete structural and logical validation.\n\n**STEP 2: Error Pattern Analysis**\nAgent: When issues are found:\n1. **Categorize errors** by type (syntax, logic, reference, etc.)\n2. **Identify patterns** that might indicate systemic issues\n3. **Prioritize fixes** (critical syntax errors first, then logic improvements)\n4. **Apply fixes systematically** using `edit_file`\n5. **Re-validate incrementally** to confirm progress\n\n**QUALITY CHECKPOINTS:**\n- **Structural Integrity**: All required fields, proper JSON formatting\n- **Logical Consistency**: Step references, condition logic, context variables\n- **Best Practice Compliance**: Naming conventions, description quality\n- **Feature Integration**: Proper use of advanced features\n\n**PROFESSIONAL PATTERNS:**\n- Group related fixes together for efficiency\n- Document any trade-offs or design decisions\n- Test edge cases in conditional logic\n- Ensure error messages are actionable\n\n**EFFICIENCY FOCUS:** Systematic error resolution with pattern recognition for faster iteration.",
       "guidance": [
-        "When simulating personas, be critical. The goal is to find flaws now so that users don't find them later.",
-        "Focus on clarity and ambiguity. If a prompt *can* be misinterpreted, assume it *will* be.",
-        "Use the `workflow_validate` tool to ensure step revisions maintain consistency with the overall workflow structure and don't introduce new issues."
+        "SYSTEMATIC APPROACH: Handle errors methodically, grouping similar issues for efficient resolution.",
+        "PATTERN RECOGNITION: Help user identify common error patterns and prevention strategies.",
+        "PROFESSIONAL STANDARDS: Apply industry best practices for validation and quality assurance.",
+        "EFFICIENT ITERATION: Balance thoroughness with practical development speed.",
+        "QUALITY FOCUS: Ensure the workflow meets professional standards beyond just 'working'."
+      ],
+      "requireConfirmation": true
+    },
+    {
+      "id": "phase-3-advanced",
+      "runCondition": {"var": "learningPath", "equals": "advanced"},
+      "title": "Phase 3: Advanced Validation & Architectural Review (Advanced Path)",
+      "prompt": "Execute comprehensive validation with performance and architectural considerations! 🏆\n\n**ENTERPRISE VALIDATION APPROACH:**\nMulti-layered validation encompassing syntax, logic, performance, and architectural integrity.\n\n**STEP 1: Comprehensive Technical Validation**\nAgent: Deploy `workflow_validate_json` for complete validation coverage.\n\n**STEP 2: Advanced Error Analysis & Resolution**\nAgent: For any issues identified:\n1. **Root Cause Analysis**: Trace errors to architectural decisions\n2. **Impact Assessment**: Evaluate consequences for scalability and maintainability\n3. **Strategic Resolution**: Fix underlying patterns, not just symptoms\n4. **Performance Optimization**: Consider validation implications for execution efficiency\n5. **Architectural Refinement**: Ensure fixes align with overall design principles\n\n**ENTERPRISE QUALITY GATES:**\n- **Architectural Consistency**: Design patterns, separation of concerns\n- **Performance Implications**: Validation overhead, execution efficiency\n- **Scalability Considerations**: Context variable scope, conditional complexity\n- **Maintainability Factors**: Code clarity, documentation completeness\n- **Integration Readiness**: API compatibility, orchestration system compliance\n\n**ADVANCED VALIDATION CONSIDERATIONS:**\n- **Complex Conditional Logic**: Nested condition validation, variable scope\n- **Context Variable Architecture**: Data flow integrity, lifecycle management\n- **Performance Optimization**: Validation caching, step efficiency\n- **Error Handling Strategy**: Graceful failure modes, recovery patterns\n\n**ARCHITECTURAL REFINEMENT:**\nUse validation feedback to refine architectural decisions and optimize for enterprise deployment.\n\n**MASTERY INDICATORS:** Zero validation errors, optimized performance, enterprise-ready architecture.",
+      "guidance": [
+        "ARCHITECTURAL PERSPECTIVE: View validation through the lens of overall system design and long-term maintainability.",
+        "PERFORMANCE AWARENESS: Consider validation overhead and execution efficiency implications.",
+        "ENTERPRISE STANDARDS: Apply enterprise-grade quality gates and compliance requirements.",
+        "STRATEGIC THINKING: Fix root causes and patterns, not just individual errors.",
+        "OPTIMIZATION FOCUS: Use validation as an opportunity to refine and optimize the workflow architecture."
+      ],
+      "requireConfirmation": true
+    },
+    {
+      "id": "phase-4-basic",
+      "runCondition": {"var": "learningPath", "equals": "basic"},
+      "title": "Phase 4: Simple Testing & Improvement (Basic Path)",
+      "prompt": "Excellent! Your workflow is technically sound. Now let's make sure it's clear and easy to use! 🌱\n\n**WHY TEST WORKFLOWS?**\nTesting helps us find problems before real users do. It's like having friends read your writing before you publish it!\n\n**STEP 1: Choose What to Test**\nUser: Pick one important step from your workflow - maybe the most complex one or the one users will struggle with most.\n\n**STEP 2: Simple Persona Testing**\nAgent: Let's test your chosen step by imagining different types of users:\n\n**👶 The Beginner User:**\n- Would someone new to this topic understand the instructions?\n- Are there any technical words that need explanation?\n- Are the steps clear and specific enough?\n\n**⚡ The Busy User:**\n- Could someone in a hurry misunderstand this?\n- Is it too long or wordy?\n- Could we make it clearer or more direct?\n\n**STEP 3: Make It Better**\nAgent: Based on what we find:\n1. **Explain each problem** in simple terms\n2. **Suggest specific improvements**\n3. **Make the changes** using `edit_file`\n4. **Check our work** with `workflow_validate`\n\n**LEARNING GOAL:** Understanding how to make instructions clear for everyone.\n\nRemember: Good workflows work for both experts and beginners!",
+      "guidance": [
+        "SIMPLE APPROACH: Focus on clarity and basic usability rather than complex edge cases.",
+        "EDUCATIONAL FOCUS: Explain why each test matters and what good instructions look like.",
+        "ENCOURAGE EMPATHY: Help user think about different types of people who might use their workflow.",
+        "PRACTICAL IMPROVEMENTS: Focus on concrete, actionable changes that clearly improve usability.",
+        "BUILD CONFIDENCE: Celebrate improvements and explain how testing makes workflows better."
       ]
     },
     {
-      "id": "phase-5-deployment",
-      "title": "Phase 5: Finalization & Completion",
-      "prompt": "The workflow has been drafted, validated, and refined. Let's complete the process.\n\n**1. Final Review (Collaborative Task):**\n   - Let's perform a final review of the workflow's `name` and `description` to ensure they are clear and easily discoverable.\n   - Review the overall workflow structure and ensure it meets the original requirements.\n   - Confirm the workflow is appropriate for its intended audience and workflow type.\n\n**2. Final Validation (Agent's Goal):**\n   - Perform one final validation using the `workflow_validate_json` tool to ensure the completed workflow is fully compliant.\n   - Confirm the workflow is ready for use and deployment by the user in their preferred location.",
+      "id": "phase-4-intermediate",
+      "runCondition": {"var": "learningPath", "equals": "intermediate"},
+      "title": "Phase 4: Systematic Testing & Quality Refinement (Intermediate Path)",
+      "prompt": "Your workflow is validated and ready for comprehensive testing! Let's ensure it's robust and professional. 🚀\n\n**PROFESSIONAL TESTING STRATEGY:**\nSystematic evaluation across multiple user scenarios and edge cases.\n\n**STEP 1: Critical Step Selection**\nUser: Identify 1-2 critical steps that are either complex, have high impact, or involve user decision-making.\n\n**STEP 2: Multi-Persona Analysis**\nAgent: Evaluate selected steps through strategic perspectives:\n\n**🎓 Domain Expert Perspective:**\n- Does the step leverage domain knowledge appropriately?\n- Are there implied assumptions that should be explicit?\n- Could an expert efficiently navigate without losing important context?\n\n**⚡ Efficiency-Focused User:**\n- Can the step be completed quickly without sacrificing quality?\n- Are there unnecessary bottlenecks or redundant confirmations?\n- Is the cognitive load appropriate for the task complexity?\n\n**🔍 Quality-Conscious User:**\n- Does the step provide sufficient guidance for high-quality outcomes?\n- Are validation points appropriate and actionable?\n- Does the step prevent common mistakes effectively?\n\n**STEP 3: Strategic Refinements**\nAgent: Based on analysis:\n1. **Prioritize improvements** by impact and feasibility\n2. **Implement targeted enhancements** using `edit_file`\n3. **Validate consistency** with `workflow_validate`\n4. **Document rationale** for key design decisions\n\n**PROFESSIONAL FOCUS:** Balancing efficiency, quality, and usability for real-world deployment.",
       "guidance": [
-        "The `name` and `description` are how others will discover this workflow. Make them descriptive and concise.",
-        "Focus on completing the workflow creation process rather than assuming specific deployment permissions or locations.",
-        "The user will handle deployment to their preferred workflow directory based on their system setup.",
-        "Consider the workflow type when giving final advice - coding workflows need different considerations than process workflows."
+        "STRATEGIC THINKING: Focus on improvements that have the highest impact on workflow effectiveness.",
+        "PROFESSIONAL STANDARDS: Apply industry best practices for user experience and process design.",
+        "BALANCED APPROACH: Consider trade-offs between different user needs and workflow goals.",
+        "SYSTEMATIC PROCESS: Use structured analysis to ensure comprehensive coverage of potential issues.",
+        "PRACTICAL DEPLOYMENT: Focus on refinements that matter for real-world workflow usage."
+      ]
+    },
+    {
+      "id": "phase-4-advanced",
+      "runCondition": {"var": "learningPath", "equals": "advanced"},
+      "title": "Phase 4: Enterprise Testing & Architectural Refinement (Advanced Path)",
+      "prompt": "Execute sophisticated testing with enterprise-grade analysis and optimization! 🏆\n\n**ENTERPRISE TESTING FRAMEWORK:**\nComprehensive evaluation encompassing usability, performance, scalability, and architectural integrity.\n\n**STEP 1: Strategic Component Selection**\nUser: Identify critical workflow components for analysis - focus on high-complexity steps, decision points, or integration touchpoints.\n\n**STEP 2: Advanced Multi-Dimensional Analysis**\nAgent: Execute comprehensive evaluation framework:\n\n**🏗️ Architectural Perspective:**\n- Evaluate step design patterns and consistency\n- Assess scalability implications and resource efficiency\n- Analyze integration points and API compatibility\n- Review error handling and recovery mechanisms\n\n**⚡ Performance & Efficiency Analysis:**\n- Identify potential execution bottlenecks\n- Evaluate context variable usage and lifecycle\n- Assess conditional logic complexity and optimization opportunities\n- Review validation overhead and optimization potential\n\n**🎯 Enterprise User Experience:**\n- Analyze workflows for enterprise deployment scenarios\n- Evaluate multi-user collaboration patterns\n- Assess compliance and audit trail requirements\n- Review customization and configuration flexibility\n\n**🔧 Maintenance & Evolution Considerations:**\n- Evaluate long-term maintainability and extensibility\n- Assess version management and backward compatibility\n- Review documentation and knowledge transfer requirements\n- Analyze monitoring and observability integration\n\n**STEP 3: Strategic Architectural Refinement**\nAgent: Based on comprehensive analysis:\n1. **Architect strategic improvements** addressing systemic opportunities\n2. **Optimize for enterprise deployment** with sophisticated enhancements\n3. **Validate architectural integrity** using `workflow_validate`\n4. **Document architectural decisions** and optimization rationale\n\n**MASTERY OUTCOME:** Enterprise-ready workflow optimized for scalability, maintainability, and sophisticated deployment scenarios.",
+      "guidance": [
+        "ARCHITECTURAL EXCELLENCE: Focus on sophisticated design patterns and enterprise-grade considerations.",
+        "PERFORMANCE OPTIMIZATION: Identify and address efficiency opportunities across all dimensions.",
+        "ENTERPRISE READINESS: Ensure the workflow meets sophisticated organizational deployment requirements.",
+        "STRATEGIC REFINEMENT: Make improvements that enhance long-term value and architectural integrity.",
+        "COMPREHENSIVE ANALYSIS: Apply enterprise-grade evaluation frameworks for thorough assessment."
+      ]
+    },
+    {
+      "id": "phase-5-completion",
+      "title": "Phase 5: Celebration & Growth",
+      "prompt": "🎉 **WORKFLOW CREATION COMPLETE!** 🎉\n\n**STEP 1: Final Review**\nAgent: Review the workflow's `name` and `description`, then run final validation with `workflow_validate_json`.\n\n**STEP 2: Path-Specific Celebration**\n\nAgent: Provide appropriate celebration based on learning path:\n\n**🌱 BASIC PATH:**\nCongratulations! You've created your first workflow with advanced features!\nLearned: Workflow structure, conditional steps, validation, clear guidance.\nNext: Try intermediate path for advanced patterns and sophisticated testing.\n\n**🚀 INTERMEDIATE PATH:**\nExcellent work! You've created a professionally structured workflow!\nMastered: Efficient authoring, strategic features, systematic validation, design patterns.\nNext: Create domain workflows, contribute templates, explore advanced logic.\n\n**🏆 ADVANCED PATH:**\nOutstanding! You've demonstrated workflow architecture mastery!\nAchieved: Sophisticated design, enterprise validation, advanced patterns, expert engineering.\nNext: Lead design, contribute advanced templates, mentor others, explore innovations.\n\n**STEP 3: Completion**\nAgent: Confirm workflow is deployment-ready. For basic/intermediate users, offer level-up opportunities for future workflows.\n\n**UNIVERSAL TRUTH:** Workflow mastery continues with each template. Every workflow is an opportunity to improve!",
+      "guidance": [
+        "ADAPTIVE CELEBRATION: Match the celebration intensity and language to the user's learning path and achievement level.",
+        "GROWTH ORIENTATION: Always provide clear next steps that encourage continued learning and skill development.",
+        "PATH-SPECIFIC GUIDANCE: Tailor advice to the user's demonstrated skill level and learning journey.",
+        "LEVEL-UP OPPORTUNITIES: For basic and intermediate users, gently suggest trying higher complexity paths for future workflows.",
+        "UNIVERSAL PRINCIPLES: End with shared wisdom that applies to all workflow creators regardless of skill level."
       ],
       "validationCriteria": [
         {
@@ -110,6 +250,18 @@
           "pattern": "\"steps\":\\s*\\[[^\\]]+\\]",
           "message": "Final workflow must have at least one complete step"
         }
+      ]
+    },
+    {
+      "id": "level-up-opportunity",
+      "runCondition": {"var": "learningPath", "not_equals": "advanced"},
+      "title": "🚀 Ready to Level Up?",
+      "prompt": "**OPTIONAL: Explore the Next Level**\n\nYou've successfully completed your workflow! Would you like to explore what the next learning path offers for your future workflows?\n\n**FOR BASIC PATH GRADUATES:**\nThe **Intermediate Path** offers:\n- More efficient workflow creation process\n- Advanced feature recommendations based on use case\n- Professional design patterns and best practices\n- Systematic validation and testing approaches\n\n**FOR INTERMEDIATE PATH GRADUATES:**\nThe **Advanced Path** offers:\n- Comprehensive feature utilization from the start\n- Enterprise-grade architectural considerations\n- Performance optimization and scalability patterns\n- Sophisticated testing and validation frameworks\n\n**Remember:** You can always return to your comfortable level - this is just an invitation to explore new possibilities when you're ready!\n\n**Agent Guidance:** If the user expresses interest, provide a brief preview of what they would experience in the next path level. If not interested, celebrate their current achievement and encourage them to practice at their current level.",
+      "guidance": [
+        "OPTIONAL EXPLORATION: Make it clear this is purely optional and they've already succeeded.",
+        "NO PRESSURE: Emphasize they can always return to their comfort level.",
+        "PREVIEW VALUE: Show concrete benefits of advancing without making current level seem inadequate.",
+        "RESPECT CHOICE: Whether they advance or stay, celebrate their decision and provide appropriate support."
       ]
     }
   ]
