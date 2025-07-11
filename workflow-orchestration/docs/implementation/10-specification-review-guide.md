@@ -25,7 +25,7 @@ The workflow-orchestration system has several key specifications that need revie
 
 1. **API Specification** (`spec/mcp-api-v1.0.md`)
    - JSON-RPC 2.0 protocol implementation
-   - Four core tools: `workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`
+   - Five core tools: `workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`, `workflow_validate_json`
    - Error handling and response formats
 
 2. **Workflow Schema** (`spec/workflow.schema.json`)
@@ -68,6 +68,7 @@ The workflow-orchestration system has several key specifications that need revie
   - `workflow_get` tool is fully specified
   - `workflow_next` tool is fully specified
   - `workflow_validate` tool is fully specified
+  - `workflow_validate_json` tool is fully specified
 
 - [ ] **Error Handling**
   - Standard JSON-RPC error codes are used

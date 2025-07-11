@@ -52,7 +52,7 @@ Cross-cutting concerns (logging, DI) live at the root.
 ### RPC Server (Infrastructure)
 * File: `src/infrastructure/rpc/server.ts`
 * Exposes JSON-RPC 2.0 over **stdin/stdout**.
-* Delegates each method (`workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`) to the corresponding **use-case**.
+* Delegates each method (`workflow_list`, `workflow_get`, `workflow_next`, `workflow_validate`, `workflow_validate_json`) to the corresponding **use-case**.
 * Applies request-schema validation middleware and maps thrown domain errors to JSON-RPC error objects.
 
 ### Use-Cases (Application)
@@ -60,6 +60,7 @@ Cross-cutting concerns (logging, DI) live at the root.
 * Pure functions with no side-effects.
 * Injected with an `IWorkflowStorage` implementation and executed by the server.
 * **Current**: `get-next-step` accepts optional context parameter for conditional step evaluation.
+* **Current**: `validate-workflow-json` provides direct JSON validation without external tool dependencies.
 
 ### ValidationEngine (Application)
 * **File**: `src/application/services/validation-engine.ts`
@@ -123,9 +124,20 @@ ValidationComposition {
 #### Integration Patterns
 
 * **WorkflowService Integration**: Seamless step output validation via `validateStepOutput()`
+* **Workflow JSON Validation**: Direct JSON validation via `validateWorkflowJson()` use case
 * **Backward Compatibility**: Legacy string-based validation rules still supported
 * **Dependency Injection**: Clean separation from storage and transport concerns
 * **Testing Support**: Extensive test coverage (72 tests) demonstrating all validation patterns
+
+#### JSON Validation Use Case
+
+The `validate-workflow-json` use case provides comprehensive workflow JSON validation:
+
+* **JSON Syntax Validation**: Parses and validates JSON syntax with detailed error messages
+* **Schema Compliance**: Validates against the workflow schema using the same ValidationEngine
+* **Error Enhancement**: Provides actionable suggestions for LLM consumption
+* **Standalone Operation**: No external dependencies or storage requirements
+* **Integration**: Leverages existing validation infrastructure without code duplication
 
 ### Storage Adapters (Infrastructure)
 * Folder: `src/infrastructure/storage/`
@@ -147,7 +159,7 @@ ValidationComposition {
 1. **Request** – Agent sends JSON-RPC over stdin.
 2. **RPC Layer** parses & validates parameters (Ajv).
 3. **Use-Case** executes core logic, querying storage via injected adapter.
-4. **ValidationEngine** – For `workflow_validate` calls, applies advanced validation rules to step output.
+4. **ValidationEngine** – For `workflow_validate` calls, applies advanced validation rules to step output. For `workflow_validate_json` calls, validates JSON syntax and schema compliance.
 5. **Domain Error**? → mapped to JSON-RPC error.
 6. **Response** emitted on stdout.
 

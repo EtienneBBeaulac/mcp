@@ -245,12 +245,33 @@ Use `runCondition` when:
 
 ### Step 1: Validate Against Schema
 
+#### CLI Validation
 Use the JSON schema to validate your workflow:
 
 ```bash
 # Example validation (when tools are available)
 npm run validate-workflow your-workflow.json
 ```
+
+#### MCP Tool Validation
+You can also validate workflow JSON directly through the MCP protocol:
+
+```bash
+# Example: Validate workflow JSON via MCP tool
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"workflow_validate_json","arguments":{"workflowJson":"{\"id\":\"my-workflow\",\"name\":\"My Workflow\",\"description\":\"A test workflow\",\"steps\":[{\"id\":\"step1\",\"title\":\"First Step\",\"prompt\":\"Do something\"}]}"}}}' | node dist/mcp-server.js
+```
+
+**When to use `workflow_validate_json`:**
+- Building workflow editors or management tools
+- Integrating validation into automated workflows
+- Providing real-time validation feedback
+- Validating programmatically generated workflows
+
+**Benefits:**
+- Comprehensive JSON syntax validation
+- Schema compliance checking
+- Actionable error messages with suggestions
+- No external dependencies required
 
 ### Step 2: Basic Testing Checklist
 

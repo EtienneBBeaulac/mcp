@@ -64,6 +64,7 @@ Target distribution: **60% unit / 30% integration / 10% E2E**.
 - **Integration Tests**: 22 tests covering server functionality and RPC layer
 - **Contract Tests**: 12 tests ensuring API compliance
 - **Performance Tests**: 7 tests (optimization in progress)
+- **Workflow Validation Tests**: 27 tests covering JSON validation use case and MCP tool integration
 
 `npm test` executes all Jest suites in <15 s locally.
 
@@ -76,6 +77,14 @@ Target distribution: **60% unit / 30% integration / 10% E2E**.
 * Domain error classes & mapping.
 * Validation schemas (positive & negative cases).
 * CLI command validation and error handling.
+* Workflow JSON validation use case (syntax, schema, error messages).
+
+### Workflow Validation Testing Patterns
+* **JSON Syntax Validation**: Malformed JSON, missing quotes, trailing commas
+* **Schema Compliance**: Required fields, type validation, constraint checking
+* **Error Message Quality**: Actionable suggestions, clear problem descriptions
+* **Edge Cases**: Empty JSON, null values, extremely large workflows
+* **Integration**: MCP tool parameter validation and response format
 
 ### Integration
 * RPC server end-to-end through use-cases.

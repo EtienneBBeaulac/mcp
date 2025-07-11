@@ -22,7 +22,7 @@
 
 | Area | Status |
 |------|--------|
-| JSON-RPC API (`workflow_list`, `get`, `next`, `validate`) | **Done** |
+| JSON-RPC API (`workflow_list`, `get`, `next`, `validate`, `validate_json`) | **Done** |
 | Clean Architecture refactor (Domain / Application / Infrastructure) | **Done** |
 | Async storage adapters (file, in-memory, cache, schema-validating) | **Done** |
 | Centralised request & workflow validation (Ajv) | **Done** |
@@ -66,9 +66,24 @@ npx ts-node src/cli.ts start  # listens on stdin/stdout
 ```
 
 ### Workflow Validation
+
+#### CLI Validation
 ```bash
 npx ts-node src/cli.ts validate <workflow-file.json>  # validate workflow files
 ```
+
+#### MCP Tool Validation
+The server also provides direct JSON validation through the MCP protocol:
+```bash
+# Example: Validate workflow JSON directly via MCP tool
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"workflow_validate_json","arguments":{"workflowJson":"{\"id\":\"test\",\"name\":\"Test Workflow\",\"steps\":[]}"}}}' | node dist/mcp-server.js
+```
+
+Use `workflow_validate_json` when:
+- Creating workflows programmatically
+- Building workflow editors or management tools
+- Integrating validation into CI/CD pipelines
+- Providing real-time validation feedback
 
 ### Production
 ```bash

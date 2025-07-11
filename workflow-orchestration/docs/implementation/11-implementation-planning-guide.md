@@ -22,10 +22,11 @@
 ### Specification Completeness
 
 - [ ] **API Specification is Complete**
-  - All four core tools are fully specified
+  - All five core tools are fully specified
   - JSON-RPC 2.0 protocol is documented
   - Error handling is comprehensive
   - Examples are provided and tested
+  - Workflow JSON validation tool is documented
 
 - [ ] **Workflow Schema is Valid**
   - JSON Schema Draft 7 compliance
@@ -52,6 +53,8 @@
   - Workflow storage strategy
   - State management design
   - Validation system architecture
+  - Workflow JSON validation integration
+  - Error message enhancement for LLM consumption
 
 - [ ] **Dependencies are Identified**
   - Node.js/TypeScript requirements
@@ -129,9 +132,10 @@
 
 **Phase 1: Foundation (4-6 weeks)**
 - Basic MCP server implementation
-- Core API tools (list, get, next, validate)
+- Core API tools (list, get, next, validate, validate_json)
 - Workflow storage system
 - Basic validation
+- JSON validation use case implementation
 
 **Phase 2: Enhancement (4-6 weeks)**
 - Advanced validation features
