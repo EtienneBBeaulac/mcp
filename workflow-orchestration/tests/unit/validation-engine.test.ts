@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { ValidationEngine, ValidationRule } from '../../src/application/services/validation-engine';
 import { ValidationError } from '../../src/core/error-handler';
+import { ConditionContext } from '../../src/utils/condition-evaluator';
 
 describe('ValidationEngine', () => {
   let engine: ValidationEngine;
@@ -459,6 +460,307 @@ describe('ValidationEngine', () => {
       ];
       const booleanResult = await engine.validate('true', booleanRules);
       expect(booleanResult.valid).toBe(true);
+    });
+  });
+
+  describe('context-aware validation', () => {
+    it('should apply rule when condition is met', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation',
+        userRole: 'admin'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'tickets',
+          condition: { var: 'taskType', equals: 'ticket-creation' },
+          message: 'Must contain tickets for ticket creation'
+        }
+      ];
+      
+      const validResult = await engine.validate('Created tickets successfully', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should skip rule when condition is not met', async () => {
+      const context: ConditionContext = {
+        taskType: 'documentation',
+        userRole: 'admin'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'tickets',
+          condition: { var: 'taskType', equals: 'ticket-creation' },
+          message: 'Must contain tickets for ticket creation'
+        }
+      ];
+      
+      // Should pass because the rule is skipped due to condition not being met
+      const result = await engine.validate('Created documentation successfully', rules, context);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle multiple conditional rules', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation',
+        outputLevel: 'verbose',
+        userRole: 'admin'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'tickets',
+          condition: { var: 'taskType', equals: 'ticket-creation' },
+          message: 'Must contain tickets for ticket creation'
+        },
+        {
+          type: 'length',
+          min: 50,
+          condition: { var: 'outputLevel', equals: 'verbose' },
+          message: 'Verbose output must be at least 50 characters'
+        }
+      ];
+      
+      const validResult = await engine.validate('Created tickets successfully with detailed information about the process', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should handle complex conditional logic with AND operator', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation',
+        userRole: 'admin',
+        priority: 'high'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'urgent',
+          condition: {
+            and: [
+              { var: 'taskType', equals: 'ticket-creation' },
+              { var: 'priority', equals: 'high' }
+            ]
+          },
+          message: 'High priority ticket creation must mention urgency'
+        }
+      ];
+      
+      const validResult = await engine.validate('Created urgent tickets for high priority issues', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should handle complex conditional logic with OR operator', async () => {
+      const context: ConditionContext = {
+        taskType: 'bug-fix',
+        userRole: 'developer',
+        priority: 'medium'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'fix',
+          condition: {
+            or: [
+              { var: 'taskType', equals: 'bug-fix' },
+              { var: 'taskType', equals: 'hotfix' }
+            ]
+          },
+          message: 'Bug fixes must mention fix in output'
+        }
+      ];
+      
+      const validResult = await engine.validate('Applied fix for the reported bug', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should handle NOT operator in conditions', async () => {
+      const context: ConditionContext = {
+        taskType: 'documentation',
+        userRole: 'writer'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'written',
+          condition: {
+            not: { var: 'taskType', equals: 'ticket-creation' }
+          },
+          message: 'Non-ticket tasks should mention written work'
+        }
+      ];
+      
+      const validResult = await engine.validate('Documentation has been written successfully', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should handle numeric comparison conditions', async () => {
+      const context: ConditionContext = {
+        taskComplexity: 8,
+        timeSpent: 45
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'length',
+          min: 100,
+          condition: { var: 'taskComplexity', gt: 7 },
+          message: 'Complex tasks require detailed output'
+        }
+      ];
+      
+      const validResult = await engine.validate('This is a very detailed output for a complex task that requires extensive documentation and explanation of the implementation approach and methodology used', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should handle schema validation with context conditions', async () => {
+      const context: ConditionContext = {
+        outputFormat: 'json',
+        includeMetadata: true
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'schema',
+          schema: {
+            type: 'object',
+            properties: {
+              tickets: { type: 'array' },
+              metadata: { type: 'object' }
+            },
+            required: ['tickets', 'metadata']
+          },
+          condition: {
+            and: [
+              { var: 'outputFormat', equals: 'json' },
+              { var: 'includeMetadata', equals: true }
+            ]
+          },
+          message: 'JSON output with metadata flag must include metadata'
+        }
+      ];
+      
+      const validJson = '{"tickets": [{"id": 1, "title": "Test"}], "metadata": {"created": "2023-01-01"}}';
+      const validResult = await engine.validate(validJson, rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should handle missing context variables gracefully', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation'
+        // Missing userRole
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'admin',
+          condition: { var: 'userRole', equals: 'admin' },
+          message: 'Admin users must mention admin in output'
+        }
+      ];
+      
+      // Should pass because condition evaluates to false (userRole is undefined)
+      const result = await engine.validate('Created tickets successfully', rules, context);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should handle empty context gracefully', async () => {
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'test',
+          condition: { var: 'taskType', equals: 'testing' },
+          message: 'Testing tasks must mention test'
+        }
+      ];
+      
+      // Should pass because condition evaluates to false (no context)
+      const result = await engine.validate('Some output without test', rules);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('should apply rules without conditions normally', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'success',
+          message: 'Output must contain success'
+        },
+        {
+          type: 'contains',
+          value: 'tickets',
+          condition: { var: 'taskType', equals: 'ticket-creation' },
+          message: 'Must contain tickets for ticket creation'
+        }
+      ];
+      
+      const validResult = await engine.validate('Created tickets successfully', rules, context);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.issues).toHaveLength(0);
+    });
+
+    it('should fail validation when conditional rule fails', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation',
+        priority: 'high'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'urgent',
+          condition: { var: 'priority', equals: 'high' },
+          message: 'High priority tasks must mention urgency'
+        }
+      ];
+      
+      const result = await engine.validate('Created tickets successfully', rules, context);
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('High priority tasks must mention urgency');
+    });
+
+    it('should handle condition evaluation errors gracefully', async () => {
+      const context: ConditionContext = {
+        taskType: 'ticket-creation'
+      };
+      
+      const rules: ValidationRule[] = [
+        {
+          type: 'contains',
+          value: 'tickets',
+          condition: { 
+            // Invalid condition structure - should be caught by condition evaluator
+            invalidOperator: 'test'
+          } as any,
+          message: 'Must contain tickets'
+        }
+      ];
+      
+      // Should pass because invalid condition evaluates to false (rule is skipped)
+      const result = await engine.validate('Created something successfully', rules, context);
+      expect(result.valid).toBe(true);
+      expect(result.issues).toHaveLength(0);
     });
   });
 

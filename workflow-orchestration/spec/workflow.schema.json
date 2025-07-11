@@ -182,6 +182,57 @@
                   "type": "object",
                   "description": "JSON Schema object for 'schema' type validation",
                   "additionalProperties": true
+                },
+                "condition": {
+                  "type": "object",
+                  "description": "Optional condition that determines if this validation rule should be applied. Uses same format as step runCondition.",
+                  "properties": {
+                    "var": {
+                      "type": "string",
+                      "description": "Variable name from execution context"
+                    },
+                    "equals": {
+                      "description": "Check if variable equals this value"
+                    },
+                    "not_equals": {
+                      "description": "Check if variable does not equal this value"
+                    },
+                    "gt": {
+                      "type": "number",
+                      "description": "Check if variable is greater than this number"
+                    },
+                    "gte": {
+                      "type": "number",
+                      "description": "Check if variable is greater than or equal to this number"
+                    },
+                    "lt": {
+                      "type": "number",
+                      "description": "Check if variable is less than this number"
+                    },
+                    "lte": {
+                      "type": "number",
+                      "description": "Check if variable is less than or equal to this number"
+                    },
+                    "and": {
+                      "type": "array",
+                      "description": "Logical AND of multiple conditions",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "or": {
+                      "type": "array",
+                      "description": "Logical OR of multiple conditions",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "not": {
+                      "type": "object",
+                      "description": "Logical NOT of a condition"
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "required": ["type", "message"],

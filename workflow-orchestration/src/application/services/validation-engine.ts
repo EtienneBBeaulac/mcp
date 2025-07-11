@@ -1,4 +1,5 @@
 import { ValidationError } from '../../core/error-handler';
+import { evaluateCondition, Condition, ConditionContext } from '../../utils/condition-evaluator';
 import Ajv from 'ajv';
 
 export interface ValidationRule {
@@ -10,6 +11,7 @@ export interface ValidationRule {
   min?: number;        // for 'length' type
   max?: number;        // for 'length' type
   schema?: Record<string, any>; // for 'schema' type
+  condition?: Condition; // for context-aware validation
 }
 
 export interface ValidationResult {
@@ -58,13 +60,13 @@ export class ValidationEngine {
    * 
    * @param output - The step output to validate
    * @param criteria - Array of validation rules to apply
-   * @param _context - Optional context for future context-aware validation
+   * @param context - Optional context for context-aware validation
    * @returns ValidationResult with validation status and any issues
    */
   async validate(
     output: string,
     criteria: ValidationRule[],
-    _context?: Record<string, any>
+    context?: ConditionContext
   ): Promise<ValidationResult> {
     const issues: string[] = [];
 
@@ -84,6 +86,12 @@ export class ValidationEngine {
     // Process each validation rule
     for (const rule of criteria) {
       try {
+        // Check if rule condition is met (if condition exists)
+        if (rule.condition && !evaluateCondition(rule.condition, context || {})) {
+          // Skip this rule if condition is not met
+          continue;
+        }
+        
         this.evaluateRule(output, rule, issues);
       } catch (error) {
         if (error instanceof ValidationError) {
