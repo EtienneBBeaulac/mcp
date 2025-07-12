@@ -1,0 +1,83 @@
+{
+  "id": "example-agent-role-workflow",
+  "name": "Example Agent Role Workflow",
+  "description": "Demonstrates agentRole functionality with a practical code review workflow",
+  "version": "1.0.0",
+  "preconditions": [
+    "Code changes are ready for review",
+    "All tests are passing"
+  ],
+  "clarificationPrompts": [
+    "What type of code review is needed? (security, performance, style, functionality)",
+    "Are there specific areas of concern?"
+  ],
+  "steps": [
+    {
+      "id": "initial-analysis",
+      "title": "Initial Code Analysis",
+      "prompt": "Please provide the code you'd like reviewed. Include any specific areas of concern or the type of review needed.",
+      "agentRole": "You are an expert code reviewer with 10+ years of experience. Focus on identifying potential issues, security vulnerabilities, and opportunities for improvement. Be thorough but constructive in your feedback.",
+      "guidance": [
+        "Ask for the code to be reviewed",
+        "Clarify the type of review needed",
+        "Note any specific concerns mentioned"
+      ],
+      "askForFiles": true,
+      "requireConfirmation": false
+    },
+    {
+      "id": "security-review",
+      "title": "Security Analysis",
+      "prompt": "Based on the code provided, perform a comprehensive security review.",
+      "agentRole": "You are a cybersecurity expert specializing in code security. Look for common vulnerabilities like SQL injection, XSS, authentication bypasses, data exposure, and insecure dependencies. Provide specific remediation steps for any issues found.",
+      "guidance": [
+        "Check for common security vulnerabilities",
+        "Review authentication and authorization logic",
+        "Examine data handling and validation",
+        "Look for potential injection attacks"
+      ]
+    },
+    {
+      "id": "performance-review",
+      "title": "Performance Analysis",
+      "prompt": "Analyze the code for performance issues and optimization opportunities.",
+      "agentRole": "You are a performance optimization specialist. Focus on algorithmic complexity, memory usage, database queries, caching opportunities, and scalability concerns. Suggest specific optimizations with measurable impact.",
+      "guidance": [
+        "Analyze algorithmic complexity",
+        "Review database query efficiency",
+        "Check for memory leaks or excessive allocations",
+        "Identify caching opportunities"
+      ]
+    },
+    {
+      "id": "code-quality-review",
+      "title": "Code Quality & Style Review",
+      "prompt": "Review the code for quality, maintainability, and adherence to best practices.",
+      "agentRole": "You are a senior software architect focused on code quality and maintainability. Evaluate code structure, naming conventions, documentation, error handling, and adherence to SOLID principles. Suggest improvements that enhance readability and maintainability.",
+      "guidance": [
+        "Check naming conventions and clarity",
+        "Review code structure and organization",
+        "Evaluate error handling patterns",
+        "Assess documentation quality"
+      ]
+    },
+    {
+      "id": "final-recommendations",
+      "title": "Final Recommendations",
+      "prompt": "Provide a summary of findings and prioritized recommendations for improvement.",
+      "agentRole": "You are a technical lead providing final recommendations. Synthesize all previous findings into actionable priorities. Categorize issues by severity (critical, high, medium, low) and provide a clear action plan with estimated effort for each recommendation.",
+      "guidance": [
+        "Summarize all findings from previous steps",
+        "Prioritize issues by severity and impact",
+        "Provide clear action items",
+        "Estimate effort for each recommendation"
+      ],
+      "requireConfirmation": true
+    }
+  ],
+  "metaGuidance": [
+    "This workflow demonstrates how agentRole separates behavioral instructions from user-facing prompts",
+    "Each step has specific agent expertise while maintaining clear user communication",
+    "The agentRole field guides the AI's approach without cluttering the user interface"
+  ]
+} 
