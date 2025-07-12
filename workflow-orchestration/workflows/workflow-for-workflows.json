@@ -29,17 +29,26 @@
   ],
   "steps": [
     {
-      "id": "phase-1-assessment",
-      "title": "Phase 1: Personalized Learning Path Assessment",
-      "prompt": "Welcome! This workflow will guide you through creating a high-quality workflow template with a personalized approach based on your experience level.\n\n**STEP 1: Choose Your Learning Path**\n\nPlease select your experience level with workflow creation:\n\n🌱 **Basic Path - \"Learn by Doing with Explanation\"**\n   - New to workflows or want thorough understanding\n   - Step-by-step guidance with detailed explanations\n   - Progressive introduction of advanced features with context\n   - Focus: Understanding concepts and building confidence\n\n🚀 **Intermediate Path - \"Balanced Guidance with Examples\"**\n   - Some experience with automation or process design\n   - Structured approach with practical examples\n   - Feature recommendations based on your use case\n   - Focus: Efficient workflow creation with best practices\n\n🏆 **Advanced Path - \"Full Features with Expert Context\"**\n   - Experienced with workflow/automation tools\n   - Comprehensive feature access from the start\n   - Architectural guidance and performance considerations\n   - Focus: Sophisticated workflow engineering\n\n**STEP 2: Set Learning Path Context**\n\nAgent: Based on the user's selection, set the `learningPath` context variable to 'basic', 'intermediate', or 'advanced'.\n\n**STEP 3: Discovery & Ideation (Path-Adaptive)**\n\nNow let's define your workflow requirements:\n\n- State your initial hypothesis for the problem this workflow should solve\n- Specify the workflow type (coding, analysis, content creation, process management, etc.)\n- Describe your intended audience and any specific constraints\n\nAgent: Adapt your guidance depth based on the selected learning path. Use `workflow_list` and `workflow_get` to find suitable templates. Provide path-appropriate explanations of template selection strategies.",
+      "id": "phase-0-discovery",
+      "title": "Phase 0: Comprehensive Discovery & Requirements Analysis",
+      "prompt": "Before we build, let's understand the 'why'. This phase ensures your new workflow solves the right problem for the right people.\n\n**STEP 1: Define the Core Problem & Goal**\n\n- **Problem Statement**: Describe the specific, recurring task or problem this new workflow will solve.\n- **Primary Objective**: What is the single most important outcome or key message of completing this workflow?\n- **Critical Failure Mode**: What is the most critical error or negative outcome this workflow is designed to prevent?\n\n**STEP 2: Understand the Users & Context**\n\n- **Target Audience**: Who is this workflow for? Describe their role, expertise level, and what they need to succeed.\n- **Usage Context**: In what situation will this workflow be used? (e.g., during code review, content planning, incident response, customer onboarding).\n\n**STEP 3: Gather Materials & Define Success**\n\n- **Supporting Materials**: What supporting documents, data, or examples are available that could inform the design?\n- **Constraints & Requirements**: Are there any specific constraints, required tools, or other requirements to consider?\n- **Success Metrics**: How will you measure if this workflow is successful? What does a high-quality result look like?\n\n**Agent Guidance**: Synthesize this information and confirm your understanding before proceeding. Use `workflow_list` and `workflow_get` to find suitable templates based on the problem *structure*, not necessarily the domain.",
       "guidance": [
-        "ADAPTIVE GUIDANCE: Tailor your explanation depth to the selected learning path. Basic users need detailed explanations, Advanced users need concise expert context.",
-        "QUALITY FOCUS: All paths should result in high-quality workflows. The difference is in teaching approach, not final capability.",
-        "PATH EXPLANATION: Clearly explain what each learning path offers so users can make an informed choice.",
-        "TEMPLATE STRATEGY: Focus on structural similarity rather than domain similarity when recommending templates.",
-        "PROGRESSIVE TEACHING: Even in basic path, introduce advanced features when the use case demands them - just with more explanation."
+        "BE SPECIFIC: Vague goals lead to vague workflows. The more precise you are here, the better the final product.",
+        "THINK ABOUT THE USER: A workflow for an expert looks very different from one for a novice. Empathize with your audience.",
+        "PROVIDE EXAMPLES: If you have examples of the problem or desired outcome, share them now.",
+        "TEMPLATE STRATEGY: Focus on structural similarity, not domain similarity, when recommending templates. A good 'bug investigation' workflow might be a great template for a 'customer complaint' workflow."
       ],
       "askForFiles": true,
+      "requireConfirmation": true
+    },
+    {
+      "id": "phase-1-assessment",
+      "title": "Phase 1: Personalized Learning Path Selection",
+      "prompt": "Excellent! With a clear understanding of your goals, let's choose the best way to build your workflow.\n\nPlease select your experience level with workflow creation to get a personalized-path:\n\n🌱 **Basic Path - \"Learn by Doing with Explanation\"**\n   - New to workflows or want thorough understanding\n   - Step-by-step guidance with detailed explanations\n   - Progressive introduction of advanced features with context\n   - Focus: Understanding concepts and building confidence\n\n🚀 **Intermediate Path - \"Balanced Guidance with Examples\"**\n   - Some experience with automation or process design\n   - Structured approach with practical examples\n   - Feature recommendations based on your use case\n   - Focus: Efficient workflow creation with best practices\n\n🏆 **Advanced Path - \"Full Features with Expert Context\"**\n   - Experienced with workflow/automation tools\n   - Comprehensive feature access from the start\n   - Architectural guidance and performance considerations\n   - Focus: Sophisticated workflow engineering\n\n**Agent Guidance**: Based on the user's selection, set the `learningPath` context variable to 'basic', 'intermediate', or 'advanced'.",
+      "guidance": [
+        "PATH EXPLANATION: Clearly explain what each learning path offers so users can make an informed choice based on the discovery from Phase 0.",
+        "QUALITY FOCUS: All paths should result in high-quality workflows. The difference is in teaching approach, not final capability."
+      ],
       "requireConfirmation": true
     },
     {
