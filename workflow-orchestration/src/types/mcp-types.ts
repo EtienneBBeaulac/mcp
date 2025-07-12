@@ -161,6 +161,7 @@ export interface WorkflowStep {
   id: string;
   title: string;
   prompt: string;
+  agentRole?: string;
   guidance?: string[];
   askForFiles?: boolean;
   requireConfirmation?: boolean;
