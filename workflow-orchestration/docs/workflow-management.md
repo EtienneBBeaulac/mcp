@@ -128,9 +128,12 @@ Workflows must be valid JSON files that conform to the workflow schema:
   "steps": [
     {
       "id": "step-1",
-      "name": "Step Name",
-      "description": "Step description",
-      "guidance": "Instructions for this step",
+      "title": "Step Name",
+      "prompt": "User-facing instructions for this step",
+      "agentRole": "Optional: AI agent behavioral guidance (e.g., 'You are a security expert...')",
+      "guidance": ["Optional guidance items"],
+      "askForFiles": true,
+      "requireConfirmation": false,
       "runCondition": {
         "var": "some_variable",
         "equals": "expected_value"
@@ -139,6 +142,17 @@ Workflows must be valid JSON files that conform to the workflow schema:
   ]
 }
 ```
+
+### Step Field Reference
+
+- **`id`**: Unique step identifier (required)
+- **`title`**: Human-readable step name (required)
+- **`prompt`**: User-facing instructions (required)
+- **`agentRole`**: AI agent behavioral guidance (optional, 10-1024 characters)
+- **`guidance`**: Array of guidance strings (optional)
+- **`askForFiles`**: Whether to request file context (optional, default: false)
+- **`requireConfirmation`**: Whether to pause for user confirmation (optional, default: false)
+- **`runCondition`**: Conditional execution logic (optional)
 
 ## Validation
 

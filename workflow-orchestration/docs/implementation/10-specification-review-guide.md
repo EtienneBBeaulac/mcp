@@ -95,9 +95,10 @@ The workflow-orchestration system has several key specifications that need revie
   - Optional fields are properly marked
 
 - [ ] **Step Structure**
-  - Required step fields are defined
-  - Optional step fields are documented
+  - Required step fields are defined (id, title, prompt)
+  - Optional step fields are documented (agentRole, guidance, askForFiles, requireConfirmation, runCondition)
   - Field types and constraints are correct
+  - agentRole field has proper length constraints (10-1024 characters)
   - runCondition property is properly defined (if present)
   - Conditional step logic is validated
 

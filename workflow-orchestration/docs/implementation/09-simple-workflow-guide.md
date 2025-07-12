@@ -70,6 +70,7 @@ Let's look at the authentication workflow example:
 
 **Available in current release:**
 - **`runCondition`**: Optional condition on steps for "choose your own adventure" workflows
+- **`agentRole`**: Optional agent behavioral instructions (separate from user-facing prompts)
 
 ---
 
@@ -97,6 +98,7 @@ Copy the authentication example and modify it for your needs:
       "id": "step-1",
       "title": "First Step",
       "prompt": "What to do in this step",
+      "agentRole": "Optional: specific behavioral guidance for the AI agent",
       "requireConfirmation": true
     }
   ],
@@ -216,6 +218,31 @@ Use `runCondition` when:
 - `equals`, `not_equals`: Value comparison
 - `gt`, `gte`, `lt`, `lte`: Numeric comparison
 - `and`, `or`, `not`: Logical operations
+
+### When to Use `agentRole`
+
+Use `agentRole` when:
+- You want to provide specific behavioral guidance to the AI agent
+- The agent needs role-specific expertise (security expert, code reviewer, etc.)
+- You want to separate agent instructions from user-facing content
+- Different steps require different agent personas or expertise
+
+**Example:**
+```json
+{
+  "id": "security-review",
+  "title": "Security Code Review",
+  "prompt": "Please review the provided code for security issues.",
+  "agentRole": "You are a cybersecurity expert specializing in code security. Focus on identifying vulnerabilities like SQL injection, XSS, authentication bypasses, and data exposure. Provide specific remediation steps for any issues found.",
+  "askForFiles": true
+}
+```
+
+**Best Practices for agentRole:**
+- Be specific about the agent's expertise and focus areas
+- Include what the agent should look for or prioritize
+- Mention the expected output format or approach
+- Keep it separate from user-facing instructions in the prompt
 
 ### Writing Good Prompts
 

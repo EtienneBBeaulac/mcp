@@ -235,6 +235,8 @@ Gets the next step guidance based on workflow state.
       "id": "string",
       "title": "string",
       "prompt": "string",
+      "agentRole": "string",
+      "guidance": ["string"],
       "askForFiles": boolean,
       "requireConfirmation": boolean,
       "runCondition": object
@@ -253,6 +255,13 @@ Gets the next step guidance based on workflow state.
 #### Field Descriptions
 
 - `step`: The next step to execute (null if workflow is complete)
+    - `id`: Unique step identifier
+    - `title`: Human-readable step name
+    - `prompt`: User-facing instructions for the step
+    - `agentRole`: Optional AI agent behavioral guidance (10-1024 characters)
+    - `guidance`: Optional array of guidance strings
+    - `askForFiles`: Whether to request file context
+    - `requireConfirmation`: Whether user confirmation is needed
     - `runCondition`: Optional condition object that determines if this step should execute
 - `guidance`: Additional orchestration guidance
     - `prompt`: Enhanced prompt with context

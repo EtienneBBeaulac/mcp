@@ -159,9 +159,30 @@ The `validate-workflow-json` use case provides comprehensive workflow JSON valid
 1. **Request** – Agent sends JSON-RPC over stdin.
 2. **RPC Layer** parses & validates parameters (Ajv).
 3. **Use-Case** executes core logic, querying storage via injected adapter.
-4. **ValidationEngine** – For `workflow_validate` calls, applies advanced validation rules to step output. For `workflow_validate_json` calls, validates JSON syntax and schema compliance.
-5. **Domain Error**? → mapped to JSON-RPC error.
-6. **Response** emitted on stdout.
+4. **WorkflowService** processes step data, including agentRole field handling for agent behavioral guidance.
+5. **ValidationEngine** – For `workflow_validate` calls, applies advanced validation rules to step output. For `workflow_validate_json` calls, validates JSON syntax and schema compliance.
+6. **Domain Error**? → mapped to JSON-RPC error.
+7. **Response** emitted on stdout.
+
+### AgentRole Processing Flow
+
+```
+WorkflowStep → WorkflowService.getNextStep() → {
+  Step Selection → Find next eligible step
+  ↓
+  Guidance Construction → {
+    AgentRole Present? → Add "## Agent Role Instructions" header + agentRole content
+    Guidance Present? → Add "## Step Guidance" section
+    Combine with user-facing prompt
+  }
+  ↓
+  Response Assembly → {
+    step: Original step data (includes agentRole field)
+    guidance: { prompt: Enhanced prompt with agent instructions }
+    isComplete: Workflow completion status
+  }
+}
+```
 
 ### Validation Flow Detail
 
@@ -196,6 +217,7 @@ Step Output → ValidationEngine.validate() → {
 * **Schema Compilation Caching** – Map-based validator caching prevents repeated AJV compilation overhead during high-frequency validation operations.
 * **Context-Aware Validation** – Dynamic rule application based on execution context enables task-specific, user-role-based, and environment-dependent validation patterns.
 * **Backward-Compatible Validation** – Support for both legacy array-based rules and modern composition syntax ensures smooth migration paths.
+* **AgentRole Field Architecture** – Clean separation of agent behavioral instructions from user-facing prompts, processed at the WorkflowService layer with backward compatibility.
 * **Async I/O Only** – storage interface returns `Promise` to support remote stores later.
 * **Thin Adapters** – server & storage wrappers are intentionally small; majority of logic resides in use-cases.
 * **Conditional Step Execution** – Safe expression evaluation enables dynamic workflows that adapt based on context variables like task scope and user expertise.
