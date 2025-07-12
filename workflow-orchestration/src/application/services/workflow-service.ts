@@ -98,7 +98,16 @@ export class DefaultWorkflowService implements WorkflowService {
         const guidanceList = nextStep.guidance.map((g: string) => `- ${g}`).join('\n');
         stepGuidance = `${guidanceHeader}\n${guidanceList}\n\n`;
       }
+      
+      // Build user-facing prompt (unchanged for backward compatibility)
       finalPrompt = `${stepGuidance}${nextStep.prompt}`;
+      
+      // If agentRole exists, include it in the guidance for agent processing
+      if (nextStep.agentRole) {
+        // Add agentRole instructions to the guidance prompt for agent consumption
+        // This maintains the existing API while providing agent-specific instructions
+        finalPrompt = `## Agent Role Instructions\n${nextStep.agentRole}\n\n${finalPrompt}`;
+      }
     }
 
     return {
