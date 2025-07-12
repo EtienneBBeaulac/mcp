@@ -18,6 +18,8 @@ const workflowStepSchema = z.object({
   id: z.string().regex(idRegex),
   title: z.string(),
   prompt: z.string(),
+  agentRole: z.string().optional(),
+  guidance: z.array(z.string()).optional(),
   askForFiles: z.boolean().optional(),
   requireConfirmation: z.boolean().optional(),
   runCondition: z.object({}).optional()
