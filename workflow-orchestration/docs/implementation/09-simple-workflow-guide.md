@@ -1,4 +1,4 @@
-# Simple Workflow Guide
+# Simple Workflow Creation Guide
 
 > 🚀 **How to Create and Understand Workflows for the Workflow Orchestration System**
 
@@ -698,6 +698,45 @@ Combine multiple validation rules with logical operators:
 ```
 
 ---
+
+## Enhanced Example Workflows
+
+The following example workflows in `spec/examples/` now demonstrate agentRole best practices:
+
+### 1. Simple Authentication Implementation (`valid-workflow.json`)
+
+This example showcases how to use agentRole for different security-focused roles:
+
+- **Security-focused systems analyst** for authentication assessment
+- **Senior backend engineer** for secure middleware development  
+- **API development specialist** for authentication endpoints
+- **Quality assurance engineer** for security testing
+
+Each step demonstrates how agentRole provides specialized behavioral guidance while keeping user-facing prompts clear and focused.
+
+### 2. Adaptive Development Workflow (`conditional-workflow-example.json`)
+
+This advanced example demonstrates agentRole usage with conditional logic:
+
+- **Project setup specialist** for environment configuration
+- **Senior business analyst** for complex requirement analysis (large/complex tasks only)
+- **Efficient developer** for simple implementations
+- **Patient mentor** for novice users
+- **Senior software engineer** for expert implementations
+- **Performance engineering specialist** for optimization (complex tasks only)
+
+The agentRole fields automatically adapt based on:
+- User expertise level (`novice`, `intermediate`, `expert`)
+- Task scope (`small`, `medium`, `large`) 
+- Task complexity (0.1 to 1.0 scale)
+
+### AgentRole Best Practices Demonstrated
+
+1. **Role Specificity**: Each agentRole provides specific expertise and behavioral guidance
+2. **Separation of Concerns**: Agent instructions are separate from user-facing prompts
+3. **Conditional Adaptation**: Agent roles can change based on workflow conditions
+4. **Professional Personas**: Each role represents a realistic professional with specific expertise
+5. **Behavioral Guidance**: Roles guide approach, methodology, and focus areas
 
 ## Next Steps
 

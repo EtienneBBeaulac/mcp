@@ -1,7 +1,7 @@
 {
   "id": "mr-review-workflow",
   "name": "Adaptive MR Review Workflow",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "An adaptive workflow to guide an AI agent in performing a comprehensive code review. It adjusts its rigor based on MR complexity and includes checkpoints for architectural and self-critique to provide deep, actionable feedback.",
   "preconditions": [
     "User has the full code diff accessible (e.g., as text in a file).",
@@ -20,6 +20,7 @@
       "id": "phase-0-triage",
       "title": "Phase 0: Triage & Review Focus",
       "prompt": "To begin the Merge Request review, please provide the full context below and classify the MR's complexity. This will tailor the depth of the review.\n\n**1. MR Context:**\n* **MR Title/Purpose:** [User provides the title and a brief description of its purpose.]\n* **Related Ticket(s):** [User provides ticket numbers or links.]\n* **Key Requirements/Acceptance Criteria:** [User lists key requirements from the ticket(s).]\n\n**2. Code Diff:**\n[User pastes the full `git diff` output or provides a path to a file containing the diff.]\n\n**3. Complexity Classification & Focus:**\n* **Classification:** Please choose one: **[Trivial]**, **[Standard]**, or **[High-Risk]**.\n* **Areas of Focus (Optional):** Are there specific areas you want me to pay close attention to? (e.g., 'performance implications', 'API design', 'data integrity').",
+      "agentRole": "You are a code review coordinator and triage specialist with expertise in assessing merge request complexity and risk. Your role is to efficiently classify reviews and establish appropriate focus areas to ensure the right level of scrutiny for each change.",
       "guidance": [
         "**[Trivial]:** For minor fixes (typos, docs). This will run a condensed, single-phase review.",
         "**[Standard]:** For typical features or bug fixes. This uses the full, multi-phase review process.",
@@ -30,6 +31,7 @@
       "id": "phase-1-context",
       "title": "Phase 1: Contextual Understanding & Confirmation",
       "prompt": "My goal is to ensure I fully understand the MR before the deep analysis. Based on the context you provided, I will perform the following tasks:\n\n1.  **Summarize Goal:** Briefly summarize what I understand to be the primary goal and scope of this MR.\n2.  **File Overview:** List all changed files (added, modified, deleted) and provide a one-sentence summary of the changes for each.\n3.  **Initial Questions:** Formulate any immediate questions I have about the MR's purpose or requirements.\n4.  **Confirmation Gate:** Does my summary accurately reflect the MR's goal? Please confirm before I proceed.",
+      "agentRole": "You are a thorough code review analyst specializing in requirement comprehension and change impact assessment. Your strength is quickly understanding the intent and scope of code changes while identifying potential gaps in understanding early in the review process.",
       "guidance": [
         "This is a critical sanity check. If the agent's summary is incorrect, correct it now to prevent a flawed review. This step is skipped for 'Trivial' reviews."
       ],
@@ -39,6 +41,7 @@
       "id": "phase-2-detailed-analysis",
       "title": "Phase 2: In-Depth Line-by-Line Analysis",
       "prompt": "My goal is to perform a detailed, line-by-line analysis of the code diff, guided by the checklist below and focusing on any specific areas you requested. I will provide specific examples and line numbers for my findings.\n\n**Detailed Analysis Checklist:**\n1.  **Functionality & Correctness:** Does the code implement the requirements? Are there logical flaws or unhandled edge cases?\n2.  **Readability & Maintainability:** How is the clarity, naming, and complexity? Are comments sufficient and accurate?\n3.  **Design & Architecture:** Does the code align with existing patterns? Does it introduce risky dependencies or side effects?\n4.  **Best Practices & Conventions:** Does the code follow language-specific best practices and avoid anti-patterns?\n5.  **Error Handling:** Is error handling robust and appropriate?\n6.  **Performance:** Are there any obvious performance bottlenecks?\n7.  **Code Duplication:** Is there significant duplicated code?\n8.  **Security:** Are there any potential security vulnerabilities introduced (e.g., injection, improper handling of sensitive data)?\n9.  **Debug Statements:** Are there leftover debugging statements (`print`, `console.log`)?",
+      "agentRole": "You are a meticulous senior engineer specializing in detailed code quality analysis. Your expertise lies in systematically examining code for correctness, maintainability, security, and performance issues. You excel at providing specific, actionable feedback with clear examples and line references.",
       "guidance": [
         "The agent will now perform the most time-consuming part of the review. The thoroughness of this checklist helps catch a wide variety of issues."
       ]
@@ -47,6 +50,7 @@
       "id": "phase-2b-holistic-review",
       "title": "Phase 2b: Holistic Architectural Review",
       "prompt": "Now, I will step back from the line-by-line details to assess the bigger picture.\n\nMy goal is to answer the following high-level questions:\n1.  **Simplicity & Approach:** Is this the simplest and most effective approach to solving the problem? Could the same outcome have been achieved more cleanly or with less new code?\n2.  **Precedent:** Does this change set a good or bad precedent for future development in this codebase?\n3.  **Strategic Alignment:** Does this change feel aligned with the overall architecture, or does it feel like a temporary 'hack' or a one-off solution?",
+      "agentRole": "You are a principal software architect with expertise in system design and long-term codebase evolution. Your role is to evaluate changes from a strategic perspective, considering architectural alignment, precedent setting, and the broader impact on system maintainability and scalability.",
       "guidance": [
         "This step prevents 'checklist tunnel vision' and encourages the agent to provide strategic, architectural feedback, which is often the most valuable."
       ]
@@ -55,6 +59,7 @@
       "id": "phase-3-impact-analysis",
       "title": "Phase 3: Testing, Documentation & Impact Analysis",
       "prompt": "My goal is to assess the secondary impacts of this change.\n\n1.  **Testing:** Based on the code changes, what tests would be expected (unit, integration, etc.)? Are new tests included? Are existing tests updated? Are there obvious gaps in test coverage for the new logic?\n2.  **Documentation:** Is new or complex logic adequately commented? Could any external documentation (e.g., READMEs) be affected by this change?\n3.  **Breaking Changes:** Are there any changes that could break backward compatibility for APIs or other parts of the codebase?",
+      "agentRole": "You are a software quality engineer specializing in testing strategy and impact analysis. Your expertise includes identifying testing gaps, documentation requirements, and potential breaking changes that could affect system stability or user experience.",
       "guidance": [
         "Assessing test coverage is critical. A lack of tests for new logic is often a 'Major' or 'Critical' concern."
       ]
@@ -63,6 +68,7 @@
       "id": "phase-4-summary",
       "title": "Phase 4: Final Summary & Structured Feedback",
       "prompt": "My goal is to consolidate all findings into a final, actionable report.\n\nFirst, I will perform a **Devil's Advocate Self-Critique:** I will briefly review my own findings. Are any of my 'Major' concerns actually minor preferences? Conversely, is there a pattern among my 'Minor' suggestions that points to a larger, unstated problem? I will state if this check changed my perspective.\n\nNext, I will provide the final report in this structure:\n1.  **Overall MR Assessment:** A 2-3 sentence qualitative summary of the MR.\n2.  **Key Positive Aspects:** 2-3 highlights of what was done well.\n3.  **Main Areas of Concern (Categorized):**\n    * **Critical (Blocking issues, potential bugs):**\n    * **Major (Important design flaws, missing core tests):**\n    * **Minor/Suggestions (Readability, best practices):**\n4.  **Questions for the Author:** A list of specific, clarifying questions.\n5.  **Actionable Recommendations:** Concrete suggestions for the most important issues.",
+      "agentRole": "You are an experienced code review facilitator and technical communicator specializing in synthesizing complex technical analysis into clear, actionable feedback. Your strength is balancing critical assessment with constructive guidance, ensuring feedback is both thorough and helpful to developers.",
       "guidance": [
         "The final, categorized summary is designed to be copied directly into a GitHub, GitLab, or other code review tool to provide clear and structured feedback to the MR author."
       ]
@@ -71,6 +77,7 @@
       "id": "phase-5-trivial-review-summary",
       "title": "Phase 5: Trivial Review Summary",
       "prompt": "Based on the trivial nature of this MR, I have performed a quick check for obvious errors. The change appears to correctly address the stated purpose without any clear side effects. I recommend approval.",
+      "agentRole": "You are an efficient code reviewer specializing in rapid assessment of low-risk changes. Your role is to quickly validate that trivial changes are safe and appropriate while avoiding over-analysis of simple modifications.",
       "guidance": [
         "This is the condensed summary for 'Trivial' reviews. The agent skips all other analytical steps and provides a simple confirmation for straightforward changes."
       ]

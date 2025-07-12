@@ -2,7 +2,7 @@
   "id": "simple-auth-implementation",
   "name": "Simple Authentication Implementation",
   "description": "Implement basic JWT authentication for a REST API with user login and token validation",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "preconditions": [
     "User model exists in the database",
     "JWT library is installed in the project",
@@ -18,12 +18,14 @@
       "id": "analyze-current-auth",
       "title": "Analyze current authentication setup",
       "prompt": "Examine the existing authentication implementation if any. Look for: user model structure, existing auth middleware, login endpoints. Document what you find.",
+      "agentRole": "You are a security-focused systems analyst with expertise in authentication architecture. Your role is to thoroughly assess existing auth implementations, identify security vulnerabilities, and document current patterns to ensure new implementations align with security best practices.",
       "requireConfirmation": true
     },
     {
       "id": "create-auth-middleware",
       "title": "Create authentication middleware",
       "prompt": "Create a middleware function that extracts and validates JWT tokens from the Authorization header. Return 401 for invalid tokens.",
+      "agentRole": "You are a senior backend engineer specializing in secure middleware development. Focus on implementing robust token validation, proper error handling, and following security best practices for JWT token processing. Ensure your implementation is production-ready and follows the principle of least privilege.",
       "askForFiles": true,
       "validationCriteria": [
         {
@@ -48,6 +50,7 @@
       "id": "implement-login",
       "title": "Implement login endpoint",
       "prompt": "Create a POST /auth/login endpoint that accepts email and password, validates credentials against the database, and returns a JWT token on success.",
+      "agentRole": "You are an API development specialist with deep expertise in authentication endpoints and security. Your implementation should include proper input validation, secure password handling, rate limiting considerations, and comprehensive error responses that don't leak sensitive information.",
       "validationCriteria": [
         {
           "type": "contains",
@@ -80,6 +83,7 @@
       "id": "test-authentication",
       "title": "Test the authentication flow",
       "prompt": "Test the complete flow: 1) Login with valid credentials, 2) Use the token to access a protected route, 3) Verify invalid tokens are rejected",
+      "agentRole": "You are a quality assurance engineer specializing in security testing and authentication flows. Your testing approach should be comprehensive, covering positive and negative test cases, edge cases, and potential security vulnerabilities. Focus on creating maintainable, automated tests that verify both functionality and security.",
       "requireConfirmation": true,
       "validationCriteria": [
         {
@@ -113,6 +117,8 @@
     "Always hash passwords using bcrypt or similar",
     "Include proper error messages for debugging",
     "Follow RESTful conventions for endpoints",
-    "Add rate limiting to prevent brute force attacks"
+    "Add rate limiting to prevent brute force attacks",
+    "Each step leverages specialized agent expertise through agentRole field",
+    "Agent roles provide behavioral guidance separate from user-facing prompts"
   ]
 }

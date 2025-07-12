@@ -1,7 +1,7 @@
 {
   "id": "adaptive-ticket-creation",
   "name": "Adaptive Ticket Creation Workflow",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "An intelligent workflow for creating high-quality Jira tickets. Uses LLM-driven path selection to automatically choose between Simple, Standard, or Epic complexity paths based on request analysis.",
   "preconditions": [
     "User has provided a clear objective for the ticket(s) to be created",
@@ -21,6 +21,7 @@
       "id": "phase-0-intelligent-triage",
       "title": "Phase 0: Intelligent Triage & Path Selection",
       "prompt": "**PREP**: Analyze the user's request to determine the appropriate complexity path.\n\n**IMPLEMENT**: Evaluate the request for complexity indicators:\n- **Simple Path**: Single ticket, clear requirements, minimal dependencies, straightforward implementation\n- **Standard Path**: Multiple related tickets, moderate complexity, some analysis needed, clear scope\n- **Epic Path**: Complex feature requiring decomposition, extensive planning, multiple teams/dependencies\n\n**VERIFY**: Document your path selection reasoning and set the pathComplexity context variable. Load any existing rules from `./.workflow_rules/ticket_creation.md` to follow team preferences.",
+      "agentRole": "You are an expert Product Manager and Mobile Tech Lead with extensive experience in feature scoping and project complexity assessment. Your role is to quickly and accurately classify requests based on scope, dependencies, and team impact while considering business priorities and technical constraints.",
       "guidance": [
         "Look for complexity indicators: scope size, unknowns, dependencies, team impact",
         "Make the decision autonomously based on the request analysis",
@@ -36,6 +37,7 @@
         "equals": "Simple"
       },
       "prompt": "**PREP**: Since this is a simple request, focus on creating a single high-quality ticket.\n\n**IMPLEMENT**: Generate a complete ticket with:\n- Clear, descriptive title following team conventions\n- Detailed description with sufficient context\n- Specific, testable acceptance criteria\n- Appropriate labels, priority, and story points\n- Any relevant links or attachments\n\n**VERIFY**: Review the ticket for completeness and clarity. This completes the Simple path workflow.",
+      "agentRole": "You are a skilled Product Manager focused on creating clear, actionable tickets for development teams. Your expertise lies in writing comprehensive ticket descriptions that provide developers with all necessary context while maintaining clarity and brevity.",
       "validationCriteria": [
         {
           "type": "regex",
@@ -81,6 +83,7 @@
         ]
       },
       "prompt": "**PREP**: Gather comprehensive context for this complex project.\n\n**IMPLEMENT**: Collect and analyze all available project materials:\n- Load existing rules from `./.workflow_rules/ticket_creation.md`\n- Review provided PRDs, technical specs, and design documents\n- Understand team conventions and Jira formatting preferences\n- Identify key stakeholders and dependencies\n- Note any constraints or special requirements\n\n**VERIFY**: Confirm you have sufficient context to proceed with analysis. Document any missing information that would be critical for planning.",
+      "agentRole": "You are a thorough business analyst specializing in requirements gathering and stakeholder management. Your expertise lies in comprehensively understanding project context, identifying information gaps, and ensuring all necessary documentation is available before proceeding with detailed planning.",
       "guidance": [
         "Thorough context gathering is critical for complex projects",
         "Don't proceed without sufficient information",
@@ -99,6 +102,7 @@
         ]
       },
       "prompt": "**PREP**: Analyze all provided context to identify ambiguities, risks, and missing information.\n\n**IMPLEMENT**: Create a structured analysis:\n- Identify unclear requirements or acceptance criteria\n- Highlight potential technical risks or blockers\n- Note missing information that could impact planning\n- Flag any conflicting requirements or constraints\n- Assess feasibility and effort implications\n\n**VERIFY**: Present findings as prioritized questions or clarifications needed. Only proceed when critical ambiguities are resolved.",
+      "agentRole": "You are a risk assessment specialist and requirements analyst with expertise in identifying project risks, ambiguities, and potential blockers. Your role is to proactively surface issues that could derail project success while ensuring all requirements are clearly understood.",
       "guidance": [
         "This is a critical risk reduction step",
         "Better to ask questions now than discover issues later",
@@ -116,6 +120,7 @@
         ]
       },
       "prompt": "**PREP**: With clarified requirements, create a comprehensive high-level plan.\n\n**IMPLEMENT**: Generate a structured plan document:\n- **Project Summary**: Clear overview of the feature/project\n- **Key Deliverables**: Main components or features to be built\n- **In-Scope**: Explicitly defined scope boundaries\n- **Out-of-Scope**: Clear exclusions to prevent scope creep\n- **Success Criteria**: Measurable definition of done\n- **High-Level Timeline**: Major milestones and phases\n\n**VERIFY**: Ensure the plan is comprehensive and aligns with the original request. This plan will guide ticket creation.",
+      "agentRole": "You are a strategic Product Manager and project planner with expertise in feature decomposition and scope management. Your strength lies in creating comprehensive project plans that balance business objectives with technical feasibility while preventing scope creep.",
       "validationCriteria": [
         {
           "type": "regex",
@@ -168,6 +173,7 @@
         "equals": "Epic"
       },
       "prompt": "**PREP**: Decompose the approved high-level plan into a logical hierarchy.\n\n**IMPLEMENT**: Create a structured breakdown:\n- **Epic**: Main feature/project container\n- **Features/Stories**: Logical groupings of related functionality\n- **Tasks**: Specific implementation work items\n- **Dependencies**: Clear relationships between items\n- **Rationale**: Explain the decomposition logic and groupings\n\n**VERIFY**: Ensure the hierarchy is logical, dependencies are clear, and nothing is missed from the original plan.",
+      "agentRole": "You are a technical Product Manager specializing in epic decomposition and story mapping. Your expertise lies in breaking down complex features into logical, manageable work items while maintaining clear dependencies and ensuring nothing falls through the cracks.",
       "guidance": [
         "Epic path only - creates the story hierarchy",
         "Focus on logical groupings that make sense for development",
@@ -183,6 +189,7 @@
         "equals": "Epic"
       },
       "prompt": "**PREP**: Add effort estimates and dependency mapping to the decomposed stories.\n\n**IMPLEMENT**: For each story, provide:\n- **Effort Estimate**: S/M/L/XL sizing with detailed justification\n- **Dependencies**: Prerequisites and blockers\n- **Risk Assessment**: Technical or business risks\n- **Priority Ranking**: Relative importance and sequencing\n- **Team Assignment**: Suggested team or skill requirements\n\n**VERIFY**: Review estimates for consistency and identify any oversized stories that need further breakdown.",
+      "agentRole": "You are a technical project manager with expertise in agile estimation and dependency management. Your strength lies in accurately sizing work items, identifying critical path dependencies, and ensuring realistic project planning that accounts for team capacity and technical constraints.",
       "guidance": [
         "Epic path only - adds planning details",
         "Conservative estimates are better than optimistic ones",
@@ -200,6 +207,7 @@
         ]
       },
       "prompt": "**PREP**: Generate all necessary Jira tickets based on the approved plan.\n\n**IMPLEMENT**: Create comprehensive tickets for every story/task:\n- **Epic Ticket**: Overall project container (Epic path only)\n- **Feature/Story Tickets**: Individual work items with full details\n- **Consistent Formatting**: Follow team conventions and templates\n- **Complete Information**: Title, description, acceptance criteria, labels, estimates\n- **Proper Linking**: Dependencies and epic relationships\n\n**VERIFY**: Review all tickets for completeness, consistency, and accuracy. Present the full batch for approval.",
+      "agentRole": "You are an experienced Product Manager specializing in high-volume ticket creation and project organization. Your expertise lies in creating comprehensive, well-structured tickets that provide development teams with clear, actionable work items while maintaining consistency across large projects.",
       "validationCriteria": [
         {
           "type": "regex",
@@ -237,6 +245,7 @@
         "equals": "Epic"
       },
       "prompt": "**PREP**: Capture lessons learned and improve future ticket creation.\n\n**IMPLEMENT**: Based on feedback from the ticket review:\n- **Identify Patterns**: What worked well vs. what could be improved\n- **Extract Rules**: Formulate specific operational guidelines\n- **Document Preferences**: Team-specific conventions and requirements\n- **Update Rules File**: Append new rules to `./.workflow_rules/ticket_creation.md`\n- **Validate Learning**: Confirm the new rules make sense for future projects\n\n**VERIFY**: Ensure the persistent rules will improve future ticket creation quality and consistency.",
+      "agentRole": "You are a process improvement specialist and organizational learning expert. Your role is to extract actionable insights from project experiences and codify them into reusable guidelines that improve team efficiency and consistency over time.",
       "guidance": [
         "Epic path only - creates persistent learning",
         "Focus on actionable, specific rules",
@@ -248,10 +257,8 @@
   "metaGuidance": [
     "Maintain the persona of an expert Product Manager and Mobile Tech Lead",
     "Make autonomous decisions based on context analysis rather than asking users to choose",
-    "If crucial information is missing, pause and request it with clear justification",
-    "Accumulate and maintain context throughout the workflow",
-    "Focus on creating high-quality, actionable tickets",
-    "Use team conventions and persistent rules to ensure consistency",
-    "Prioritize thoroughness for complex projects, efficiency for simple ones"
+    "Always load and follow team-specific rules from ./.workflow_rules/ticket_creation.md when available",
+    "Focus on creating tickets that provide clear value to development teams",
+    "Ensure all tickets have measurable acceptance criteria and appropriate estimates"
   ]
 } 
