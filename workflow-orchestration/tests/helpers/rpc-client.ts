@@ -2,6 +2,8 @@
 
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import readline from 'readline';
+import path from 'path';
+import fs from 'fs';
 import { trackResource, untrackResource } from '../setup';
 
 type Pending = {
@@ -27,9 +29,16 @@ export class RpcClient {
   constructor(scriptPath: string, options: RpcClientOptions = {}) {
     this.globalTrackingEnabled = !options.disableGlobalTracking;
     
-    const runner = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    // Convert TypeScript source path to compiled JavaScript path
+    const compiledScriptPath = this.resolveCompiledScript(scriptPath);
+    
+    // Verify compiled script exists
+    if (!fs.existsSync(compiledScriptPath)) {
+      throw new Error(`Compiled script not found: ${compiledScriptPath}. Run 'npm run build' first.`);
+    }
 
-    this.proc = spawn(runner, ['ts-node', '--transpile-only', scriptPath], {
+    // Use node directly with compiled JavaScript
+    this.proc = spawn('node', [compiledScriptPath], {
       stdio: ['pipe', 'pipe', 'pipe'], // all piped to satisfy typings; stderr will pipe to main process stderr implicitly
       env: {
         ...process.env,
@@ -173,5 +182,31 @@ export class RpcClient {
         untrackResource(this.cleanupFn);
       }
     });
+  }
+
+  /**
+   * Convert TypeScript source path to compiled JavaScript path
+   */
+  private resolveCompiledScript(scriptPath: string): string {
+    // Handle absolute paths and relative paths
+    const absolutePath = path.isAbsolute(scriptPath) ? scriptPath : path.resolve(scriptPath);
+    
+    // Convert src/index.ts -> dist/index.js
+    if (absolutePath.includes('/src/') && absolutePath.endsWith('.ts')) {
+      return absolutePath.replace('/src/', '/dist/').replace('.ts', '.js');
+    }
+    
+    // If it's already a .js file, assume it's correct
+    if (absolutePath.endsWith('.js')) {
+      return absolutePath;
+    }
+    
+    // Fallback: assume it's in src and needs to go to dist
+    const relativePath = path.relative(process.cwd(), absolutePath);
+    if (relativePath.startsWith('src/')) {
+      return path.join(process.cwd(), 'dist', relativePath.substring(4).replace('.ts', '.js'));
+    }
+    
+    throw new Error(`Unable to resolve compiled script path for: ${scriptPath}`);
   }
 } 
