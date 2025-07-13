@@ -36,6 +36,29 @@ const workflowSchema = z.object({
   metaGuidance: z.array(z.string()).optional()
 });
 
+// Mode parameter response schemas
+const workflowMetadataSchema = z.object({
+  id: z.string().regex(idRegex),
+  name: z.string(),
+  description: z.string(),
+  version: z.string(),
+  preconditions: z.array(z.string()).optional(),
+  clarificationPrompts: z.array(z.string()).optional(),
+  metaGuidance: z.array(z.string()).optional(),
+  totalSteps: z.number()
+});
+
+const workflowPreviewSchema = workflowMetadataSchema.extend({
+  firstStep: workflowStepSchema.nullable()
+});
+
+// Union schema for workflow_get that handles all three response types
+const workflowGetResponseSchema = z.union([
+  workflowSchema,        // Full workflow (for undefined mode or backward compatibility)
+  workflowMetadataSchema, // Metadata mode response
+  workflowPreviewSchema   // Preview mode response
+]);
+
 // ---------------------------------------------------------------------------
 // Method result schemas
 // ---------------------------------------------------------------------------
@@ -45,8 +68,8 @@ export const methodResultSchemas: Record<string, ZodTypeAny> = {
     workflows: z.array(workflowSummarySchema)
   }),
 
-  // workflow_get → Workflow object
-  workflow_get: workflowSchema,
+  // workflow_get → Workflow | WorkflowMetadata | WorkflowPreview (union based on mode parameter)
+  workflow_get: workflowGetResponseSchema,
 
   // workflow_next → { step, guidance, isComplete }
   workflow_next: z.object({
