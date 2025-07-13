@@ -100,7 +100,7 @@ export function buildWorkflowApplication(
   });
 
   app.register(METHOD_NAMES.WORKFLOW_GET, async (params: any) => {
-    return getWorkflowUseCase(params.id);
+    return getWorkflowUseCase(params.id, params.mode);
   });
 
   app.register(METHOD_NAMES.WORKFLOW_NEXT, async (params: any) => {

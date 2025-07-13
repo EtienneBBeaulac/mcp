@@ -11,7 +11,13 @@ export const methodParamSchemas: Record<string, any> = {
   workflow_get: {
     type: 'object',
     properties: {
-      id: { type: 'string', pattern: '^[A-Za-z0-9_-]+$' }
+      id: { type: 'string', pattern: '^[A-Za-z0-9_-]+$' },
+      mode: { 
+        type: 'string', 
+        enum: ['metadata', 'preview'],
+        description: 'The level of detail to return: metadata (workflow info only) or preview (metadata + first step)',
+        default: 'preview'
+      }
     },
     required: ['id'],
     additionalProperties: false

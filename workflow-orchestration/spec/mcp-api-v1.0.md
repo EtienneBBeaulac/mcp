@@ -144,7 +144,7 @@ Lists all available workflows.
 
 ### workflow_get
 
-Retrieves a specific workflow by ID.
+Retrieves workflow information with configurable detail level. Supports progressive disclosure to prevent "workflow spoiling" while providing necessary context for workflow selection and initiation.
 
 #### Request
 
@@ -154,7 +154,8 @@ Retrieves a specific workflow by ID.
   "id": 2,
   "method": "workflow_get",
   "params": {
-    "id": "string"
+    "id": "string",
+    "mode": "preview"
   }
 }
 ```
@@ -162,35 +163,55 @@ Retrieves a specific workflow by ID.
 #### Parameters
 
 - `id` (required): The workflow ID to retrieve
+- `mode` (optional): The level of detail to return
+  - `"metadata"`: Returns workflow info without steps
+  - `"preview"`: Returns metadata plus the first eligible step (default)
 
-#### Response
+#### Response Examples
 
+**Preview Mode (default):**
 ```json
 {
   "jsonrpc": "2.0",
   "id": 2,
   "result": {
-    "id": "string",
-    "name": "string",
-    "description": "string",
-    "preconditions": ["string"],
-    "clarificationPrompts": ["string"],
-    "steps": [
-      {
-        "id": "string",
-        "title": "string",
-        "prompt": "string",
-        "askForFiles": boolean,
-        "requireConfirmation": boolean,
-        "runCondition": object
-      }
-    ],
-    "metaGuidance": ["string"]
+    "id": "coding-task-workflow",
+    "name": "Excellent Adaptive Coding Workflow",
+    "description": "A comprehensive workflow for AI-assisted coding",
+    "version": "0.1.0",
+    "preconditions": ["User has a clear task description"],
+    "clarificationPrompts": ["What is the complexity level?"],
+    "metaGuidance": ["Follow PREP -> IMPLEMENT -> VERIFY pattern"],
+    "totalSteps": 8,
+    "firstStep": {
+      "id": "phase-0-intelligent-triage",
+      "title": "Phase 0: Intelligent Task Triage & Complexity Analysis",
+      "prompt": "**ANALYZE**: Evaluate the provided task for complexity indicators...",
+      "agentRole": "You are a technical assessment specialist...",
+      "guidance": ["Be thorough in your analysis"],
+      "requireConfirmation": true
+    }
   }
 }
 ```
 
-The returned workflow object must validate against the `workflow.schema.json` specification.
+**Metadata Mode:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "id": "coding-task-workflow",
+    "name": "Excellent Adaptive Coding Workflow",
+    "description": "A comprehensive workflow for AI-assisted coding",
+    "version": "0.1.0",
+    "preconditions": ["User has a clear task description"],
+    "clarificationPrompts": ["What is the complexity level?"],
+    "metaGuidance": ["Follow PREP -> IMPLEMENT -> VERIFY pattern"],
+    "totalSteps": 8
+  }
+}
+```
 
 #### Error Cases
 

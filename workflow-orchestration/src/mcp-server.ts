@@ -69,8 +69,8 @@ class WorkflowOrchestrationServer {
     return this.callWorkflowMethod('workflow_list', {});
   }
 
-  public async getWorkflow(workflowId: string): Promise<CallToolResult> {
-    return this.callWorkflowMethod('workflow_get', { id: workflowId });
+  public async getWorkflow(workflowId: string, mode?: string): Promise<CallToolResult> {
+    return this.callWorkflowMethod('workflow_get', { id: workflowId, mode });
   }
 
   public async getNextStep(workflowId: string, completedSteps: string[] = [], context?: any): Promise<CallToolResult> {
@@ -132,7 +132,7 @@ const WORKFLOW_LIST_TOOL: Tool = {
 
 const WORKFLOW_GET_TOOL: Tool = {
   name: "workflow_get",
-  description: `Starts a specific workflow and retrieves its first step. Call this tool AFTER you have used \`workflow_list\` and the user has confirmed which workflow to start.`,
+  description: `Retrieves workflow information with configurable detail level. Supports progressive disclosure to prevent "workflow spoiling" while providing necessary context for workflow selection and initiation.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -140,6 +140,12 @@ const WORKFLOW_GET_TOOL: Tool = {
         type: "string",
         description: "The unique identifier of the workflow to retrieve",
         pattern: "^[A-Za-z0-9_-]+$"
+      },
+      mode: {
+        type: "string",
+        enum: ["metadata", "preview"],
+        description: "The level of detail to return: 'metadata' returns workflow info without steps, 'preview' (default) returns metadata plus the first eligible step",
+        default: "preview"
       }
     },
     required: ["workflowId"],
@@ -274,7 +280,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
           isError: true
         };
       }
-      return await workflowServer.getWorkflow(args['workflowId'] as string);
+      return await workflowServer.getWorkflow(args['workflowId'] as string, args['mode'] as string);
       
     case "workflow_next":
       if (!args?.['workflowId']) {
