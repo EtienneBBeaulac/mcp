@@ -30,7 +30,10 @@ class WorkflowOrchestrationServer {
           result = { workflows };
           break;
         case 'workflow_get':
-          result = await workflowService.getWorkflowById(params.id);
+          // Import and use the get workflow use case to handle mode parameter
+          const { createGetWorkflow } = await import('./application/use-cases/get-workflow.js');
+          const getWorkflowUseCase = createGetWorkflow(workflowService);
+          result = await getWorkflowUseCase(params.id, params.mode);
           break;
         case 'workflow_next':
           result = await workflowService.getNextStep(params.workflowId, params.completedSteps || [], params.context);
@@ -136,7 +139,7 @@ const WORKFLOW_GET_TOOL: Tool = {
   inputSchema: {
     type: "object",
     properties: {
-      workflowId: {
+      id: {
         type: "string",
         description: "The unique identifier of the workflow to retrieve",
         pattern: "^[A-Za-z0-9_-]+$"
@@ -148,7 +151,7 @@ const WORKFLOW_GET_TOOL: Tool = {
         default: "preview"
       }
     },
-    required: ["workflowId"],
+    required: ["id"],
     additionalProperties: false
   }
 };
@@ -274,13 +277,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
       return await workflowServer.listWorkflows();
       
     case "workflow_get":
-      if (!args?.['workflowId']) {
+      if (!args?.['id']) {
         return {
-          content: [{ type: "text", text: "Error: workflowId parameter is required" }],
+          content: [{ type: "text", text: "Error: id parameter is required" }],
           isError: true
         };
       }
-      return await workflowServer.getWorkflow(args['workflowId'] as string, args['mode'] as string);
+      return await workflowServer.getWorkflow(args['id'] as string, args['mode'] as string);
       
     case "workflow_next":
       if (!args?.['workflowId']) {

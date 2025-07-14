@@ -6,7 +6,7 @@ import { generatePerformanceReport } from '../utils/statistics';
 
 describe('workflow_get Performance Tests', () => {
   const SERVER_PATH = path.resolve(__dirname, '../../../src/index.ts');
-  const SAMPLE_WORKFLOW_ID = 'simple-auth-implementation';
+  const SAMPLE_WORKFLOW_ID = 'coding-task-workflow';
   const PERFORMANCE_TARGETS = {
     p50: 100,    // Increased from 30ms - more realistic for file I/O and parsing
     p95: 300,    // Increased from 80ms - allows for occasional slower responses  

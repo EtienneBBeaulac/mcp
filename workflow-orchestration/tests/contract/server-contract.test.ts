@@ -7,7 +7,7 @@ jest.setTimeout(10000);
 
 describe('MCP Server JSON-RPC contract', () => {
   const SERVER_PATH = path.resolve(__dirname, '../../src/index.ts');
-  const SAMPLE_ID = 'simple-auth-implementation';
+  const SAMPLE_ID = 'coding-task-workflow';
 
   let client: RpcClient;
 
@@ -29,6 +29,7 @@ describe('MCP Server JSON-RPC contract', () => {
 
   it('returns a workflow with workflow_get', async () => {
     const res = await client.send('workflow_get', { id: SAMPLE_ID });
+    expect(res.result).toBeDefined();
     expect(res.result.id).toBe(SAMPLE_ID);
     responseValidator.validate('workflow_get', res.result);
   });
