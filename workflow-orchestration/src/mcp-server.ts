@@ -114,6 +114,68 @@ class WorkflowOrchestrationServer {
       };
     }
   }
+
+  public async getWorkflowSchema(): Promise<CallToolResult> {
+    try {
+      // Import fs and path for schema loading
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Load the workflow schema
+      const schemaPath = path.resolve(__dirname, '../spec/workflow.schema.json');
+      const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      
+      // Add helpful metadata
+      const result = {
+        schema,
+        metadata: {
+          version: '1.0.0',
+          description: 'Complete JSON schema for workflow files',
+          usage: 'This schema defines the structure, required fields, and validation rules for workflow JSON files',
+          lastUpdated: new Date().toISOString(),
+          schemaPath: 'spec/workflow.schema.json'
+        },
+        commonPatterns: {
+          basicWorkflow: {
+            id: 'string (required): Unique identifier using lowercase letters, numbers, and hyphens',
+            name: 'string (required): Human-readable workflow name',
+            description: 'string (required): Detailed description of the workflow purpose',
+            version: 'string (required): Semantic version (e.g., "1.0.0")',
+            steps: 'array (required): List of workflow steps, minimum 1 item'
+          },
+          stepStructure: {
+            id: 'string (required): Unique step identifier',
+            title: 'string (required): Human-readable step title',
+            prompt: 'string (required): Instructions for the step',
+            agentRole: 'string (required): Role description for the agent',
+            validationCriteria: 'array (optional): Validation rules for step output'
+          }
+        }
+      };
+      
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+    } catch (error) {
+      console.error(`Workflow schema retrieval failed:`, error);
+      
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: error instanceof Error ? error.message : String(error),
+            method: 'workflow_get_schema',
+            suggestion: 'Ensure the workflow schema file exists at spec/workflow.schema.json'
+          }, null, 2)
+        }],
+        isError: true
+      };
+    }
+  }
 }
 
 // Define the workflow orchestration tools
@@ -243,6 +305,30 @@ const WORKFLOW_VALIDATE_JSON_TOOL: Tool = {
   }
 };
 
+const WORKFLOW_GET_SCHEMA_TOOL: Tool = {
+  name: "workflow_get_schema",
+  description: `Retrieves the complete workflow JSON schema for reference and development purposes. Use this tool when you need to understand the structure, required fields, and validation rules for workflows.
+
+  This tool provides:
+  - Complete JSON schema definition with all properties and constraints
+  - Field descriptions and validation rules
+  - Examples of valid patterns and formats
+  - Schema version and metadata information
+  - Comprehensive reference for workflow structure
+
+  Example usage:
+  - Understanding workflow structure before creating new workflows
+  - Checking required fields and their types
+  - Verifying validation rules and constraints
+  - Reference during workflow development and debugging
+  - Learning about available workflow features and options`,
+  inputSchema: {
+    type: "object",
+    properties: {},
+    additionalProperties: false
+  }
+};
+
 // Create and configure the MCP server
 const server = new Server(
   {
@@ -265,7 +351,8 @@ server.setRequestHandler(ListToolsRequestSchema, async (): Promise<ListToolsResu
     WORKFLOW_GET_TOOL, 
     WORKFLOW_NEXT_TOOL,
     WORKFLOW_VALIDATE_TOOL,
-    WORKFLOW_VALIDATE_JSON_TOOL
+    WORKFLOW_VALIDATE_JSON_TOOL,
+    WORKFLOW_GET_SCHEMA_TOOL
   ],
 }));
 
@@ -311,6 +398,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
         };
       }
       return await workflowServer.validateWorkflowJson(args['workflowJson'] as string);
+      
+    case "workflow_get_schema":
+      return await workflowServer.getWorkflowSchema();
       
     default:
       return {
