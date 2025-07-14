@@ -172,7 +172,7 @@ describe('Validate Workflow JSON Use Case', () => {
 
       const result = await validateWorkflowJsonUseCase(JSON.stringify(invalidWorkflow));
       expect(result.valid).toBe(false);
-      expect(result.issues.some(issue => issue.includes('must be string'))).toBe(true);
+      expect(result.issues.some(issue => issue.includes('Expected \'string\' but received a different type'))).toBe(true);
     });
 
     it('should detect invalid ID pattern', async () => {
@@ -243,7 +243,7 @@ describe('Validate Workflow JSON Use Case', () => {
       const result = await validateWorkflowJsonUseCase(JSON.stringify(invalidWorkflow));
       expect(result.valid).toBe(false);
       expect(result.issues.some(issue => 
-        issue.includes('Missing required field') && issue.includes('mandatory for all workflows')
+        issue.includes('Missing required field') && issue.includes('This field is mandatory and must be provided')
       )).toBe(true);
     });
 
@@ -264,7 +264,7 @@ describe('Validate Workflow JSON Use Case', () => {
       const result = await validateWorkflowJsonUseCase(JSON.stringify(invalidWorkflow));
       expect(result.valid).toBe(false);
       expect(result.issues.some(issue => 
-        issue.includes('Unexpected property') && issue.includes('Remove this property')
+        issue.includes('Unexpected property') && issue.includes('This property is not defined in the workflow schema')
       )).toBe(true);
     });
   });

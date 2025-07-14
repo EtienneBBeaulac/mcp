@@ -62,10 +62,8 @@ export function createValidateWorkflowJson() {
     const suggestions: string[] = [];
 
     if (!validationResult.valid) {
-      // Process validation errors and provide enhanced error messages
-      validationResult.errors.forEach(error => {
-        issues.push(enhanceErrorMessage(error));
-      });
+      // Validation errors are already enhanced by the EnhancedErrorService
+      issues.push(...validationResult.errors);
 
       // Add general suggestions based on common validation errors
       suggestions.push(...generateSuggestions(validationResult.errors));
@@ -79,54 +77,7 @@ export function createValidateWorkflowJson() {
   };
 }
 
-/**
- * Enhance error messages to be more user-friendly for LLM consumption
- */
-function enhanceErrorMessage(error: string): string {
-  // Handle common AJV error patterns and make them more descriptive
-  if (error.includes('must have required property')) {
-    const match = error.match(/must have required property '(.+)'/);
-    if (match) {
-      const property = match[1];
-      return `Missing required field '${property}'. This field is mandatory for all workflows.`;
-    }
-  }
 
-  if (error.includes('must be string')) {
-    return `${error} - Expected a text value enclosed in quotes.`;
-  }
-
-  if (error.includes('must be array')) {
-    return `${error} - Expected a list of items enclosed in square brackets [].`;
-  }
-
-  if (error.includes('must be object')) {
-    return `${error} - Expected a JSON object enclosed in curly braces {}.`;
-  }
-
-  if (error.includes('must match pattern')) {
-    return `${error} - The value does not match the required format or pattern.`;
-  }
-
-  if (error.includes('must NOT have additional properties')) {
-    return `Unexpected property found. Remove this property or check for typos.`;
-  }
-
-  if (error.includes('additionalProperties')) {
-    return `${error} - Remove any unexpected properties or check for typos.`;
-  }
-
-  if (error.includes('must be >= 1')) {
-    return `${error} - Value must be at least 1.`;
-  }
-
-  if (error.includes('must be <= ')) {
-    return `${error} - Value exceeds the maximum allowed length.`;
-  }
-
-  // Return original error if no specific enhancement is available
-  return error;
-}
 
 /**
  * Generate actionable suggestions based on validation errors
