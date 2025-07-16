@@ -7,8 +7,7 @@ import {
   sanitizeId, 
   assertWithinBase, 
   validateFileSize,
-  validateSecurityOptions,
-  StorageSecurityOptions 
+  validateSecurityOptions
 } from '../../utils/storage-security';
 import { StorageError, InvalidWorkflowError, SecurityError } from '../../core/error-handler';
 

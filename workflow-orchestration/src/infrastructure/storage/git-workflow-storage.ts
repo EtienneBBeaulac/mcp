@@ -9,8 +9,7 @@ import {
   sanitizeId, 
   assertWithinBase, 
   validateFileSize,
-  validateSecurityOptions,
-  StorageSecurityOptions 
+  validateSecurityOptions
 } from '../../utils/storage-security';
 import { StorageError, InvalidWorkflowError, SecurityError } from '../../core/error-handler';
 
@@ -151,6 +150,7 @@ export class GitWorkflowStorage implements IWorkflowStorage {
            const expectedFilename = `${sanitizeId(workflow.id)}.json`;
            if (file !== expectedFilename) {
              throw new InvalidWorkflowError(
+               workflow.id,
                `Workflow ID '${workflow.id}' doesn't match filename '${file}'`
              );
            }
@@ -195,7 +195,7 @@ export class GitWorkflowStorage implements IWorkflowStorage {
       // Validate workflow ID
       const sanitizedId = sanitizeId(workflow.id);
       if (workflow.id !== sanitizedId) {
-        throw new InvalidWorkflowError(`Invalid workflow ID: ${workflow.id}`);
+        throw new InvalidWorkflowError(workflow.id, `Invalid workflow ID: ${workflow.id}`);
       }
 
       await this.ensureRepository();
