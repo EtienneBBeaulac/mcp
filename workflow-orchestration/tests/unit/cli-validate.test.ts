@@ -248,17 +248,17 @@ describe('CLI Validate Command', () => {
       const result = runCliCommand(['validate', '--help']);
       
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain('Usage: workflow-lookup validate');
+      expect(result.output).toContain('Usage: workrail validate');
       expect(result.output).toContain('Validate a workflow file against the schema');
-      expect(result.output).toContain('Arguments:');
-      expect(result.output).toContain('file');
+      expect(result.output).toContain('Options:');
+      expect(result.output).toContain('-h, --help');
     });
 
     it('should display help with -h flag', () => {
       const result = runCliCommand(['validate', '-h']);
       
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain('Usage: workflow-lookup validate');
+      expect(result.output).toContain('Usage: workrail validate');
     });
   });
 

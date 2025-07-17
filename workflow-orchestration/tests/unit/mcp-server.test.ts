@@ -99,12 +99,12 @@ describe('MCP Server Core Functionality', () => {
       expect(mcpServerContent).toContain('Unknown tool:');
     });
 
-    it('should return ListToolsResult with all 5 tools', () => {
+    it('should return ListToolsResult with all 6 tools', () => {
       const mcpServerContent = require('fs').readFileSync(require('path').join(__dirname, '../../src/mcp-server.ts'), 'utf8');
       
       // Count the tool constant definitions (not references)
       const toolConstMatches = mcpServerContent.match(/const WORKFLOW_\w+_TOOL: Tool =/g) || [];
-      expect(toolConstMatches.length).toBe(5);
+      expect(toolConstMatches.length).toBe(6);
     });
   });
 

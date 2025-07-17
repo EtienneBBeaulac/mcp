@@ -6,7 +6,7 @@ import { generatePerformanceReport } from '../utils/statistics';
 
 describe('workflow_next Performance Tests', () => {
   const SERVER_PATH = path.resolve(__dirname, '../../../src/index.ts');
-  const SAMPLE_WORKFLOW_ID = 'simple-auth-implementation';
+  const SAMPLE_WORKFLOW_ID = 'coding-task-workflow';
   const PERFORMANCE_TARGETS = {
     p50: 150,    // Increased from 100ms - workflow logic involves more computation
     p95: 350,    // Increased from 200ms - seen 242ms in test failures, so allow buffer

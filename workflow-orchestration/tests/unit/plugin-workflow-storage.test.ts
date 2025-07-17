@@ -2,8 +2,22 @@ import { PluginWorkflowStorage, PLUGIN_WORKFLOW_CONFIGS } from '../../src/infras
 import { StorageError, InvalidWorkflowError, SecurityError } from '../../src/core/error-handler';
 import { Workflow } from '../../src/types/mcp-types';
 import fs from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, Dirent, PathLike } from 'fs';
 import path from 'path';
+
+// Helper function to create mock Dirent objects
+function createMockDirent(name: string, isDirectory = true): any {
+  return {
+    name,
+    isFile: () => !isDirectory,
+    isDirectory: () => isDirectory,
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false
+  };
+}
 
 // Mock dependencies
 jest.mock('fs/promises');
@@ -98,10 +112,10 @@ describe('PluginWorkflowStorage', () => {
     it('should prevent scanning too many plugins', async () => {
       mockExistsSync.mockReturnValue(true);
       mockFs.readdir.mockResolvedValue([
-        'workrail-workflows-plugin1',
-        'workrail-workflows-plugin2', 
-        'workrail-workflows-plugin3',
-        'workrail-workflows-plugin4' // exceeds limit of 3
+        createMockDirent('workrail-workflows-plugin1'),
+        createMockDirent('workrail-workflows-plugin2'), 
+        createMockDirent('workrail-workflows-plugin3'),
+        createMockDirent('workrail-workflows-plugin4') // exceeds limit of 3
       ]);
 
       // Mock plugin loading to simulate finding valid plugins
@@ -112,12 +126,13 @@ describe('PluginWorkflowStorage', () => {
       };
       
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation(((filePath: any) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
         return Promise.resolve('[]');
-      });
+      }) as any);
 
       await expect(storage.loadAllWorkflows()).rejects.toThrow(StorageError);
       await expect(storage.loadAllWorkflows()).rejects.toThrow(/Too many plugins found/);
@@ -125,15 +140,16 @@ describe('PluginWorkflowStorage', () => {
 
     it('should validate file sizes during scanning', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation(((dirPath: any) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
-        if ((dirPath as string).endsWith('workflows')) {
+        if (pathStr.endsWith('workflows')) {
           return Promise.resolve(['test-workflow.json']);
         }
         return Promise.resolve([]);
-      });
+      }) as any);
 
       const mockPackageJson = {
         name: 'test-plugin',
@@ -141,20 +157,22 @@ describe('PluginWorkflowStorage', () => {
         workrail: { workflows: true }
       };
 
-      mockFs.stat.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.stat.mockImplementation(((filePath: any) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve({ size: 1000 } as any);
         }
         // Oversized workflow file
         return Promise.resolve({ size: 2 * 1024 * 1024 } as any); // 2MB, exceeds 1MB limit
-      });
+      }) as any);
 
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation(((filePath: any) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
         return Promise.resolve('{"id": "test", "name": "Test"}');
-      });
+      }) as any);
 
       await expect(storage.loadAllWorkflows()).rejects.toThrow(SecurityError);
       await expect(storage.loadAllWorkflows()).rejects.toThrow(/exceeds size limit/);
@@ -162,11 +180,12 @@ describe('PluginWorkflowStorage', () => {
 
     it('should validate workflow file counts', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation(((dirPath: any) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
-        if ((dirPath as string).endsWith('workflows')) {
+        if (pathStr.endsWith('workflows')) {
           // Return more files than the limit of 5
           return Promise.resolve([
             'workflow1.json', 'workflow2.json', 'workflow3.json',
@@ -174,7 +193,7 @@ describe('PluginWorkflowStorage', () => {
           ]);
         }
         return Promise.resolve([]);
-      });
+      }) as any);
 
       const mockPackageJson = {
         name: 'test-plugin',
@@ -183,12 +202,13 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation(((filePath: any) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
         return Promise.resolve('{"id": "test", "name": "Test"}');
-      });
+      }) as any);
 
       await expect(storage.loadAllWorkflows()).rejects.toThrow(StorageError);
       await expect(storage.loadAllWorkflows()).rejects.toThrow(/Too many workflow files/);
@@ -196,15 +216,16 @@ describe('PluginWorkflowStorage', () => {
 
     it('should validate package.json size limits', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockResolvedValue(['workrail-workflows-test']);
+      mockFs.readdir.mockResolvedValue([createMockDirent('workrail-workflows-test')]);
 
       // Oversized package.json (over 64KB limit)
-      mockFs.stat.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.stat.mockImplementation(((filePath: any) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve({ size: 128 * 1024 } as any); // 128KB
         }
         return Promise.resolve({ size: 1000 } as any);
-      });
+      }) as any);
 
       await expect(storage.loadAllWorkflows()).rejects.toThrow(SecurityError);
       await expect(storage.loadAllWorkflows()).rejects.toThrow(/exceeds size limit/);
@@ -218,15 +239,16 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation(((dirPath: any) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
-        if ((dirPath as string).endsWith('workflows')) {
+        if (pathStr.endsWith('workflows')) {
           return Promise.resolve(['malicious.json']);
         }
         return Promise.resolve([]);
-      });
+      }) as any);
 
       const mockPackageJson = {
         name: 'test-plugin',
@@ -235,12 +257,13 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation(((filePath: any) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
         return Promise.resolve(JSON.stringify(maliciousWorkflow));
-      });
+      }) as any);
 
       await expect(storage.loadAllWorkflows()).rejects.toThrow(InvalidWorkflowError);
     });
@@ -257,10 +280,10 @@ describe('PluginWorkflowStorage', () => {
     it('should detect workrail workflow plugins correctly', async () => {
       mockExistsSync.mockReturnValue(true);
       mockFs.readdir.mockResolvedValue([
-        'workrail-workflows-coding', // should be detected
-        '@workrail/workflows-ai', // should be detected
-        'regular-package', // should be ignored
-        'workrail-other-package' // should be ignored
+        createMockDirent('workrail-workflows-coding'), // should be detected
+        createMockDirent('@workrail/workflows-ai'), // should be detected
+        createMockDirent('regular-package'), // should be ignored
+        createMockDirent('workrail-other-package') // should be ignored
       ]);
 
       const mockPackageJson = {
@@ -270,11 +293,12 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).includes('workrail-workflows-coding') && (filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation((filePath: fs.PathLike | fs.FileHandle) => {
+        const pathStr = filePath.toString();
+        if (pathStr.includes('workrail-workflows-coding') && pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
-        if ((filePath as string).includes('@workrail/workflows-ai') && (filePath as string).endsWith('package.json')) {
+        if (pathStr.includes('@workrail/workflows-ai') && pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify({
             ...mockPackageJson,
             name: '@workrail/workflows-ai'
@@ -293,7 +317,7 @@ describe('PluginWorkflowStorage', () => {
 
     it('should handle invalid package.json gracefully', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockResolvedValue(['workrail-workflows-invalid']);
+      mockFs.readdir.mockResolvedValue([createMockDirent('workrail-workflows-invalid')]);
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
       mockFs.readFile.mockResolvedValue('invalid json content');
@@ -310,7 +334,7 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockResolvedValue(['workrail-workflows-test']);
+      mockFs.readdir.mockResolvedValue([createMockDirent('workrail-workflows-test')]);
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockPackageJson));
 
@@ -326,7 +350,7 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockResolvedValue(['workrail-workflows-test']);
+      mockFs.readdir.mockResolvedValue([createMockDirent('workrail-workflows-test')]);
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockPackageJson));
 
@@ -352,11 +376,12 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation((dirPath: fs.PathLike) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
-        if ((dirPath as string).endsWith('workflows')) {
+        if (pathStr.endsWith('workflows')) {
           return Promise.resolve(['test-workflow.json']);
         }
         return Promise.resolve([]);
@@ -371,11 +396,12 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation((filePath: fs.PathLike | fs.FileHandle) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
-        if ((filePath as string).endsWith('test-workflow.json')) {
+        if (pathStr.endsWith('test-workflow.json')) {
           return Promise.resolve(JSON.stringify(mockWorkflow));
         }
         return Promise.resolve('[]');
@@ -405,11 +431,12 @@ describe('PluginWorkflowStorage', () => {
 
       // Setup successful workflow loading
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation((dirPath: fs.PathLike) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
-        if ((dirPath as string).endsWith('workflows')) {
+        if (pathStr.endsWith('workflows')) {
           return Promise.resolve(['test-workflow.json']);
         }
         return Promise.resolve([]);
@@ -422,8 +449,9 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation((filePath: fs.PathLike | fs.FileHandle) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
         return Promise.resolve(JSON.stringify(mockWorkflow));
@@ -438,11 +466,12 @@ describe('PluginWorkflowStorage', () => {
 
     it('should handle invalid workflow JSON gracefully', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation((dirPath: fs.PathLike) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
-        if ((dirPath as string).endsWith('workflows')) {
+        if (pathStr.endsWith('workflows')) {
           return Promise.resolve(['invalid.json']);
         }
         return Promise.resolve([]);
@@ -455,8 +484,9 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockFs.stat.mockResolvedValue({ size: 1000 } as any);
-      mockFs.readFile.mockImplementation((filePath: string) => {
-        if ((filePath as string).endsWith('package.json')) {
+      mockFs.readFile.mockImplementation((filePath: fs.PathLike | fs.FileHandle) => {
+        const pathStr = filePath.toString();
+        if (pathStr.endsWith('package.json')) {
           return Promise.resolve(JSON.stringify(mockPackageJson));
         }
         return Promise.resolve('invalid json content');
@@ -489,8 +519,9 @@ describe('PluginWorkflowStorage', () => {
 
     it('should handle file system errors during loading', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation((dirPath: fs.PathLike) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
         return Promise.resolve([]);
@@ -543,8 +574,9 @@ describe('PluginWorkflowStorage', () => {
       };
 
       mockExistsSync.mockReturnValue(true);
-      mockFs.readdir.mockImplementation((dirPath: string) => {
-        if ((dirPath as string).endsWith('node_modules')) {
+      mockFs.readdir.mockImplementation((dirPath: fs.PathLike) => {
+        const pathStr = dirPath.toString();
+        if (pathStr.endsWith('node_modules')) {
           return Promise.resolve(['workrail-workflows-test']);
         }
         return Promise.resolve([]);
@@ -557,8 +589,8 @@ describe('PluginWorkflowStorage', () => {
       
       const plugins = storage.getLoadedPlugins();
       expect(plugins).toHaveLength(1);
-      expect(plugins[0].name).toBe('test-plugin');
-      expect(plugins[0].metadata?.author).toBe('Test Author');
+      expect(plugins[0]!.name).toBe('test-plugin');
+      expect(plugins[0]!.metadata?.author).toBe('Test Author');
     });
   });
 }); 

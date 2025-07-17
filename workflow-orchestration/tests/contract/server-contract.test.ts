@@ -85,7 +85,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('validates valid step output', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'analyze-current-auth',
+        stepId: 'phase-0-intelligent-triage',
         output: 'I have analyzed the current authentication setup and found no existing authentication implementation.'
       });
       
@@ -105,7 +105,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('validates step output with issues', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'create-auth-middleware',
+        stepId: 'phase-0-intelligent-triage',
         output: 'I created a simple function'
       });
       
@@ -124,7 +124,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('validates comprehensive step output', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'implement-login',
+        stepId: 'phase-0-intelligent-triage',
         output: 'I implemented a POST /auth/login endpoint that accepts email and password, validates credentials using bcrypt, queries the user from the database, and returns a JWT token signed with the secret from environment variables.'
       });
       
@@ -136,7 +136,7 @@ describe('MCP Server JSON-RPC contract', () => {
 
     it('returns INVALID_PARAMS for missing workflowId', async () => {
       const res = await client.send('workflow_validate', {
-        stepId: 'analyze-current-auth',
+        stepId: 'phase-0-intelligent-triage',
         output: 'Some output'
       });
       
@@ -159,7 +159,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('returns INVALID_PARAMS for missing output', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'analyze-current-auth'
+        stepId: 'phase-0-intelligent-triage'
       });
       
       expect(res.error).toBeDefined();
@@ -170,7 +170,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('returns INVALID_PARAMS for invalid workflowId format', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: 'invalid@workflow!id',
-        stepId: 'analyze-current-auth',
+        stepId: 'phase-0-intelligent-triage',
         output: 'Some output'
       });
       
@@ -195,7 +195,7 @@ describe('MCP Server JSON-RPC contract', () => {
       const longOutput = 'a'.repeat(10001); // Exceeds 10000 char limit
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'analyze-current-auth',
+        stepId: 'phase-0-intelligent-triage',
         output: longOutput
       });
       
@@ -235,7 +235,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('handles empty output string', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'analyze-current-auth',
+        stepId: 'phase-0-intelligent-triage',
         output: ''
       });
       
@@ -248,7 +248,7 @@ describe('MCP Server JSON-RPC contract', () => {
     it('handles whitespace-only output', async () => {
       const res = await client.send('workflow_validate', {
         workflowId: SAMPLE_ID,
-        stepId: 'analyze-current-auth',
+        stepId: 'phase-0-intelligent-triage',
         output: '   \n\t  '
       });
       

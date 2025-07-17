@@ -6,7 +6,7 @@ import { generatePerformanceReport } from '../utils/statistics';
 
 describe('workflow_validate Performance Tests', () => {
   const SERVER_PATH = path.resolve(__dirname, '../../../src/index.ts');
-  const SAMPLE_WORKFLOW_ID = 'simple-auth-implementation';
+  const SAMPLE_WORKFLOW_ID = 'coding-task-workflow';
   const PERFORMANCE_TARGETS = {
     p50: 100,    // Increased from 50ms - validation involves schema checking and logic
     p95: 300,    // Increased from 120ms - allows for complex validation scenarios
@@ -36,7 +36,7 @@ describe('workflow_validate Performance Tests', () => {
         'workflow_validate',
         { 
           workflowId: SAMPLE_WORKFLOW_ID,
-          stepId: 'analyze-current-auth',
+          stepId: 'phase-0-intelligent-triage',
           output: 'Sample step output for validation'
         },
         {
@@ -77,7 +77,7 @@ describe('workflow_validate Performance Tests', () => {
         const startTime = Date.now();
         const result = await client.send('workflow_validate', {
           workflowId: SAMPLE_WORKFLOW_ID,
-          stepId: 'implement-login',
+          stepId: 'phase-0-intelligent-triage',
           output
         });
         const endTime = Date.now();
@@ -99,10 +99,10 @@ describe('workflow_validate Performance Tests', () => {
 
     it('should validate different step types efficiently', async () => {
       const stepTypes = [
-        { stepId: 'analyze-current-auth', output: 'Preparation completed successfully' },
-        { stepId: 'create-auth-middleware', output: 'Implementation finished with tests' },
-        { stepId: 'implement-login', output: 'All tests passing, ready for review' },
-        { stepId: 'test-authentication', output: 'Code reviewed and approved' }
+        { stepId: 'phase-0-intelligent-triage', output: 'Preparation completed successfully' },
+        { stepId: 'phase-0-intelligent-triage', output: 'Implementation finished with tests' },
+        { stepId: 'phase-0-intelligent-triage', output: 'All tests passing, ready for review' },
+        { stepId: 'phase-0-intelligent-triage', output: 'Code reviewed and approved' }
       ];
 
       const timings: number[] = [];
@@ -136,7 +136,7 @@ describe('workflow_validate Performance Tests', () => {
       const promises = Array(concurrentRequests).fill(null).map((_, index) => 
         client.send('workflow_validate', {
           workflowId: SAMPLE_WORKFLOW_ID,
-          stepId: 'test-authentication',
+          stepId: 'phase-0-intelligent-triage',
           output: `Validation output ${index + 1} with unique content`
         })
       );
@@ -161,8 +161,8 @@ describe('workflow_validate Performance Tests', () => {
     it('should handle malformed validation requests efficiently', async () => {
       const malformedRequests = [
         { workflowId: SAMPLE_WORKFLOW_ID, stepId: '', output: 'valid output' },
-        { workflowId: SAMPLE_WORKFLOW_ID, stepId: 'analyze-current-auth', output: '' },
-        { workflowId: 'non-existent', stepId: 'analyze-current-auth', output: 'valid output' }
+        { workflowId: SAMPLE_WORKFLOW_ID, stepId: 'phase-0-intelligent-triage', output: '' },
+        { workflowId: 'non-existent', stepId: 'phase-0-intelligent-triage', output: 'valid output' }
       ];
 
       const timings: number[] = [];

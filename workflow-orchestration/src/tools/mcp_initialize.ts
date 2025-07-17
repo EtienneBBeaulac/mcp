@@ -62,7 +62,7 @@ export async function initializeHandler(
       },
       serverInfo: {
         name: 'workflow-lookup',
-        version: '0.0.1',
+        version: '1.0.0',
         description: 'MCP server for workflow orchestration and guidance'
       }
     }
