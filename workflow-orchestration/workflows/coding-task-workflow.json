@@ -1,8 +1,8 @@
 {
     "id": "coding-task-workflow",
     "name": "Excellent Adaptive Coding Workflow with Devil's Advocate Review",
-    "version": "0.5.0",
-    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks with dynamic re-triage, performs early codebase analysis to inform planning, includes intelligent requirements clarification, executes a critical self-review of its own plans, provides efficiency options with automation levels, enforces closed-loop validation with failure bounds, and defines a robust protocol for handling failures.",
+    "version": "0.6.0",
+    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks with dynamic re-triage, performs early codebase analysis to inform planning, includes intelligent requirements clarification, executes a critical self-review of its own plans, provides efficiency options with automation levels, enforces closed-loop validation with failure bounds, maintains comprehensive context documentation for seamless handoffs, and defines a robust protocol for handling failures.",
     "preconditions": [
         "User has a clear task description (e.g., from Jira, a dev doc, or a BRD).",
         "The agent has access to necessary tools like `grep`, file readers/editors, and a terminal for commands.",
@@ -14,6 +14,7 @@
         "Dynamic re-triage allows complexity upgrades based on new insights from analysis and clarifications.",
         "Automation levels (Low/Medium/High) control confirmation requirements to balance autonomy with safety.",
         "Failure bounds prevent resource waste: word limits (1500), step tracking (>20), and escalation protocols.",
+        "Context documentation is maintained throughout to enable seamless handoffs between chat sessions.",
         "Human approval is required after the Devil's Advocate review and before final completion.",
         "Each implementation step should be a small, logical, and committable chunk of work.",
         "The agent should never guess or assume. Always ask for clarification or use tools to find missing information.",
@@ -136,6 +137,22 @@
             "requireConfirmation": false
         },
         {
+            "id": "phase-3b-create-context-doc",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 3b: Create Context Documentation",
+            "prompt": "Create a comprehensive context documentation file (`CONTEXT.md`) that captures all critical information from the workflow so far. This document is essential for enabling seamless handoffs between chat sessions when context limits are reached.\n\n**Your `CONTEXT.md` must include:**\n\n## 1. ORIGINAL TASK CONTEXT\n- Original task description and requirements\n- Complexity classification (Small/Medium/Large) and reasoning\n- Any re-triage decisions made and why\n- Automation level selected and its implications\n\n## 2. CODEBASE ANALYSIS SUMMARY\n- Key architectural patterns and conventions found\n- Relevant components, modules, and their locations\n- Testing strategies and patterns in use\n- Critical dependencies and integration points\n- Any complexity indicators discovered\n\n## 3. CLARIFICATIONS AND DECISIONS\n- Questions asked and answers received\n- Ambiguities resolved and how\n- Scope boundaries clearly defined\n- Technical approach decisions made\n\n## 4. SPECIFICATION SUMMARY\n- Core objectives and success criteria\n- Key constraints and requirements\n- Design principles to follow\n- Integration requirements\n\n## 5. WORKFLOW PROGRESS TRACKING\n- ✅ Completed phases (0, 1, 2, 2b, 3, 3b)\n- 🔄 Current phase: Architecture Design (Phase 4)\n- ⏳ Remaining phases: 4, 5, 5b, 5c, 5d, 5e, 6, 7\n- 📋 Context variables set (taskComplexity, automationLevel, etc.)\n\n## 6. HANDOFF INSTRUCTIONS\n- Files to attach when resuming\n- Key context to provide to new chat session\n- Critical decisions that must not be forgotten\n\n**Format this as a clear, scannable document that a new agent could quickly read to understand the full project context.**",
+            "agentRole": "You are a meticulous technical documentation specialist with expertise in creating comprehensive project handoff documents. Your role is to capture all critical context in a way that enables seamless continuity across different team members or chat sessions. You excel at synthesizing complex technical information into clear, actionable documentation.",
+            "guidance": [
+                "This step is automatically skipped for Small tasks",
+                "Create a document that would allow a completely new agent to pick up the work seamlessly",
+                "Include specific file paths, component names, and technical details discovered",
+                "Reference all key decisions made in previous phases",
+                "Make the progress tracking section very clear for workflow continuation",
+                "Consider this document as critical as the specification itself"
+            ],
+            "requireConfirmation": false
+        },
+        {
             "id": "phase-4-architectural-design",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 4: Architectural Design",
@@ -222,27 +239,46 @@
             "requireConfirmation": false
         },
         {
+            "id": "phase-5e-update-context-doc",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 5e: Update Context Documentation with Final Plans",
+            "prompt": "Update the `CONTEXT.md` file with all the planning work completed in Phases 4-5. This ensures the context document remains current and comprehensive for potential handoffs.\n\n**Add/Update these sections in `CONTEXT.md`:**\n\n## 4. ARCHITECTURAL DESIGN SUMMARY\n- High-level approach and rationale\n- Key components being added/modified\n- Integration points with existing systems\n- Design decisions and alternatives considered\n\n## 5. IMPLEMENTATION PLAN OVERVIEW\n- Goal clarification and success criteria\n- Implementation strategy overview\n- Key risks identified and mitigation strategies\n- Testing approach and patterns to follow\n- Failure handling protocols\n\n## 6. DEVILS ADVOCATE REVIEW INSIGHTS\n- Key concerns raised and how they were addressed\n- Plan improvements made based on the review\n- Confidence score and reasoning\n- Out-of-scope items identified for future work\n\n## 7. UPDATED WORKFLOW PROGRESS\n- ✅ Completed phases (0, 1, 2, 2b, 3, 3b, 4, 5, 5b, 5c, 5d, 5e)\n- 🔄 Current phase: Implementation (Phase 6)\n- ⏳ Remaining phases: 6, 7\n- 📁 Key files created: spec.md, design.md, implementation_plan.md, CONTEXT.md\n\n## 8. IMPLEMENTATION READINESS\n- Plan sanity check results\n- Files and dependencies verified\n- Ready-to-execute implementation steps\n- Potential handoff points during implementation\n\n**Ensure the document remains scannable and maintains all previous sections while adding the new planning context.**",
+            "agentRole": "You are a meticulous technical documentation specialist focused on maintaining comprehensive project context. Your expertise lies in synthesizing complex planning work into clear, actionable documentation that enables seamless workflow continuation.",
+            "guidance": [
+                "This step is automatically skipped for Small tasks",
+                "Maintain the scannable structure while adding substantial new planning context",
+                "Ensure all critical planning decisions are captured for potential handoffs",
+                "Update progress tracking to reflect the current state accurately",
+                "Consider this update as crucial as the original context document creation"
+            ],
+            "requireConfirmation": false
+        },
+        {
             "id": "phase-6-iterative-implementation",
             "title": "Phase 6: Iterative Implementation (PREP -> IMPLEMENT -> VERIFY)",
-            "prompt": "The implementation phase has now begun. You will now execute the approved `implementation_plan.md` step-by-step. Announce which step you are starting.\n\n**STEP TRACKING:** Track total steps executed. If >20 steps without completion, pause and summarize progress for user intervention.\n\nYou will execute each step using the PREP -> IMPLEMENT -> VERIFY cycle defined in the guidance below. This process will repeat until all steps in the plan are complete.",
-            "agentRole": "You are a meticulous senior software engineer focused on high-quality implementation. Your approach emphasizes careful preparation, precise execution, and thorough verification. You excel at following plans while adapting to unexpected discoveries during implementation.",
+            "prompt": "The implementation phase has now begun. You will now execute the approved `implementation_plan.md` step-by-step. Announce which step you are starting.\n\n**STEP TRACKING:** Track total steps executed. If >20 steps without completion, pause and summarize progress for user intervention.\n\n**CONTEXT DOCUMENTATION:** Update `CONTEXT.md` after every 3-5 implementation steps with:\n- Progress summary (steps completed vs total)\n- Current implementation status\n- Issues encountered and resolutions\n- Files modified so far\n- Remaining work overview\n- Any changes to the original plan\n\nYou will execute each step using the PREP -> IMPLEMENT -> VERIFY cycle defined in the guidance below. This process will repeat until all steps in the plan are complete.",
+            "agentRole": "You are a meticulous senior software engineer focused on high-quality implementation. Your approach emphasizes careful preparation, precise execution, and thorough verification. You excel at following plans while adapting to unexpected discoveries during implementation, and you maintain excellent documentation for project continuity.",
             "guidance": [
                 "**IMPORTANT**: Do not proceed to the next workflow phase (Final Review) until all steps in the `implementation_plan.md` are marked as complete and verified.",
                 "**STEP BOUNDS**: Track total steps executed. If >20 steps without completion, pause and ask user for guidance.",
+                "**CONTEXT UPDATES**: Update CONTEXT.md regularly with implementation progress",
                 "**Efficiency Tip:** For high-confidence plans, you may provide multiple step instructions at once. I will execute them sequentially, performing the P->I->V cycle for each, and will only pause to ask for input if I encounter a verification failure or ambiguity.",
                 "**PREP:** Before implementing each step, you must first PREPARE. Re-read the step's description, confirm the previous step was completed correctly, verify the plan for this step is still valid in the current codebase, and list all required inputs or files. Do not proceed if anything is unclear.",
                 "**IMPLEMENT:** After preparation is confirmed, you will IMPLEMENT the step. Focus only on this single step. Use your tools to make the necessary code changes, adhering to all quality standards. Provide a commit message upon completion.",
-                "**VERIFY:** Immediately after implementation, you must VERIFY your work. Your verification for this step **is not complete until you have**:\n1.  **Written necessary unit/integration tests** for the new logic (as per the testing strategy).\n2.  **Run the full test suite** to ensure no regressions were introduced.\n3.  **Performed a critical self-review** of the changes against the plan, checking for code quality, side effects, and architectural alignment.\n\n**ENHANCED FAILURE PROTOCOL:** If a verification failure cannot be resolved after two attempts:\n1. **Do not try a third time**\n2. **If test failures occur:** Ask the user to run tests manually and provide output\n3. **If tool failures occur:** Ask the user to execute the failing command and share results\n4. **For critical failures:** Consider escalating by reverting changes using git reset\n5. **Present a summary** of the problem, detail your failed attempts, and recommend a course of action to the user (e.g., 'revert this step and re-plan', 'request more information', 'proceed with known issue')"
+                "**VERIFY:** Immediately after implementation, you must VERIFY your work. Your verification for this step **is not complete until you have**:\n1.  **Written necessary unit/integration tests** for the new logic (as per the testing strategy).\n2.  **Run the full test suite** to ensure no regressions were introduced.\n3.  **Performed a critical self-review** of the changes against the plan, checking for code quality, side effects, and architectural alignment.\n\n**ENHANCED FAILURE PROTOCOL:** If a verification failure cannot be resolved after two attempts:\n1. **Do not try a third time**\n2. **If test failures occur:** Ask the user to run tests manually and provide output\n3. **If tool failures occur:** Ask the user to execute the failing command and share results\n4. **For critical failures:** Consider escalating by reverting changes using git reset\n5. **Update CONTEXT.md** with the failure details and current status\n6. **Present a summary** of the problem, detail your failed attempts, and recommend a course of action to the user (e.g., 'revert this step and re-plan', 'request more information', 'proceed with known issue')"
             ],
             "requireConfirmation": false
         },
         {
             "id": "phase-7-final-review",
             "title": "Phase 7: Final Review & Completion",
-            "prompt": "All planned steps have been implemented and verified. Your final goal is to perform a holistic review by validating the work against the **'Final Review Checklist'** from the `implementation_plan.md`.\n\nFor each item on that checklist, provide a confirmation and evidence that it has been met. Conclude with a summary of any potential follow-ups or new dependencies to note.",
-            "agentRole": "You are a quality assurance specialist and technical lead responsible for final project validation. Your expertise lies in comprehensive system testing, requirement verification, and ensuring deliverables meet all specified criteria. Approach this with the thoroughness of a senior engineer conducting a final release review.",
+            "prompt": "All planned steps have been implemented and verified. Your final goal is to perform a holistic review by validating the work against the **'Final Review Checklist'** from the `implementation_plan.md`.\n\nFor each item on that checklist, provide a confirmation and evidence that it has been met. \n\n**Additionally, create a comprehensive handoff document by updating `CONTEXT.md` with a final section:**\n\n## 9. FINAL COMPLETION STATUS\n- ✅ All implementation steps completed\n- ✅ All tests passing\n- ✅ Final review checklist validated\n- 📁 Files created/modified (complete list with descriptions)\n- 🧪 Testing completed (unit, integration, manual)\n- 📋 Known issues or limitations (if any)\n- 🔄 Deployment/next steps (if applicable)\n\n## 10. HANDOFF SUMMARY\n- What was accomplished vs original requirements\n- Key architectural decisions made and why\n- Important implementation details for future maintainers\n- Recommended follow-up work or improvements\n- Contact points or documentation for questions\n\nConclude with a summary of any potential follow-ups or new dependencies to note.",
+            "agentRole": "You are a quality assurance specialist and technical lead responsible for final project validation and comprehensive handoff documentation. Your expertise lies in comprehensive system testing, requirement verification, and ensuring deliverables meet all specified criteria while creating documentation that enables seamless future maintenance.",
             "guidance": [
-                "This is the final quality check. Ensure the agent's summary and checklist validation align with your understanding of the completed work."
+                "This is the final quality check. Ensure the agent's summary and checklist validation align with your understanding of the completed work.",
+                "The final CONTEXT.md update should serve as a complete project archive",
+                "Include specific details that would help future developers understand and maintain the work",
+                "Ensure all promised deliverables have been completed and documented"
             ],
             "requireConfirmation": true
         }
