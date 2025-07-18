@@ -1,229 +1,268 @@
 {
-  "id": "adaptive-development-workflow",
-  "name": "Adaptive Development Workflow",
-  "description": "A dynamic workflow that adapts steps based on task complexity, user expertise, and project scope. Demonstrates agentRole usage with conditional logic.",
-  "version": "0.1.0",
-  "preconditions": [
-    "Development environment is set up",
-    "Task requirements are understood",
-    "User has provided scope and expertise level"
-  ],
-  "clarificationPrompts": [
-    "What is the scope of this task? (small/medium/large)",
-    "What is your expertise level? (novice/intermediate/expert)",
-    "How complex is this task on a scale of 0.1 to 1.0?",
-    "Do you prefer detailed guidance or minimal steps?",
-    "Are there specific constraints or requirements?"
-  ],
-  "steps": [
-    {
-      "id": "basic-setup",
-      "title": "Basic Project Setup",
-      "prompt": "**PREP**: Review the project structure and requirements.\n\n**IMPLEMENT**: Set up the basic project structure, dependencies, and configuration files.\n\n**VERIFY**: Confirm all basic setup is complete and ready for development.",
-      "agentRole": "You are a project setup specialist with expertise in development environment configuration. Focus on creating a solid foundation with proper dependency management, consistent project structure, and necessary configuration files. Ensure the setup follows industry best practices and team conventions.",
-      "requireConfirmation": true
-    },
-    {
-      "id": "detailed-analysis",
-      "title": "Detailed Requirements Analysis",
-      "prompt": "**PREP**: Gather all available documentation and requirements.\n\n**IMPLEMENT**: Perform comprehensive analysis of requirements, edge cases, and potential challenges.\n\n**VERIFY**: Document findings and confirm understanding with stakeholders.",
-      "agentRole": "You are a senior business analyst and technical architect specializing in complex requirement analysis. Your role is to uncover hidden requirements, identify potential risks and edge cases, and create comprehensive documentation that will guide the entire development process. Be thorough and methodical in your approach.",
-      "runCondition": {
-        "or": [
-          {"var": "taskScope", "equals": "large"},
-          {"var": "complexity", "gte": 0.7}
-        ]
-      },
-      "askForFiles": true,
-      "requireConfirmation": true,
-      "validationCriteria": [
+    "id": "adaptive-development-workflow",
+    "name": "Adaptive Development Workflow",
+    "description": "A dynamic workflow that adapts steps based on task complexity, user expertise, and project scope. Demonstrates agentRole usage with conditional logic.",
+    "version": "0.1.0",
+    "preconditions": [
+        "Development environment is set up",
+        "Task requirements are understood",
+        "User has provided scope and expertise level"
+    ],
+    "clarificationPrompts": [
+        "What is the scope of this task? (small/medium/large)",
+        "What is your expertise level? (novice/intermediate/expert)",
+        "How complex is this task on a scale of 0.1 to 1.0?",
+        "Do you prefer detailed guidance or minimal steps?",
+        "Are there specific constraints or requirements?"
+    ],
+    "steps": [
         {
-          "type": "contains",
-          "value": "requirements",
-          "message": "Should include requirements analysis"
+            "id": "basic-setup",
+            "title": "Basic Project Setup",
+            "prompt": "**PREP**: Review the project structure and requirements.\n\n**IMPLEMENT**: Set up the basic project structure, dependencies, and configuration files.\n\n**VERIFY**: Confirm all basic setup is complete and ready for development.",
+            "agentRole": "You are a project setup specialist with expertise in development environment configuration. Focus on creating a solid foundation with proper dependency management, consistent project structure, and necessary configuration files. Ensure the setup follows industry best practices and team conventions.",
+            "requireConfirmation": true
         },
         {
-          "type": "contains",
-          "value": "edge cases",
-          "condition": {
-            "var": "complexity",
-            "gte": 0.8
-          },
-          "message": "Should analyze edge cases for complex tasks"
+            "id": "detailed-analysis",
+            "title": "Detailed Requirements Analysis",
+            "prompt": "**PREP**: Gather all available documentation and requirements.\n\n**IMPLEMENT**: Perform comprehensive analysis of requirements, edge cases, and potential challenges.\n\n**VERIFY**: Document findings and confirm understanding with stakeholders.",
+            "agentRole": "You are a senior business analyst and technical architect specializing in complex requirement analysis. Your role is to uncover hidden requirements, identify potential risks and edge cases, and create comprehensive documentation that will guide the entire development process. Be thorough and methodical in your approach.",
+            "runCondition": {
+                "or": [
+                    {
+                        "var": "taskScope",
+                        "equals": "large"
+                    },
+                    {
+                        "var": "complexity",
+                        "gte": 0.7
+                    }
+                ]
+            },
+            "askForFiles": true,
+            "requireConfirmation": true,
+            "validationCriteria": [
+                {
+                    "type": "contains",
+                    "value": "requirements",
+                    "message": "Should include requirements analysis"
+                },
+                {
+                    "type": "contains",
+                    "value": "edge cases",
+                    "condition": {
+                        "var": "complexity",
+                        "gte": 0.8
+                    },
+                    "message": "Should analyze edge cases for complex tasks"
+                },
+                {
+                    "type": "length",
+                    "min": 200,
+                    "condition": {
+                        "var": "taskScope",
+                        "equals": "large"
+                    },
+                    "message": "Large tasks require detailed analysis"
+                }
+            ],
+            "hasValidation": true
         },
         {
-          "type": "length",
-          "min": 200,
-          "condition": {
-            "var": "taskScope",
-            "equals": "large"
-          },
-          "message": "Large tasks require detailed analysis"
+            "id": "quick-implementation",
+            "title": "Quick Implementation",
+            "prompt": "**PREP**: Review the straightforward requirements.\n\n**IMPLEMENT**: Implement the feature using standard patterns and best practices.\n\n**VERIFY**: Test the implementation and ensure it meets requirements.",
+            "agentRole": "You are an efficient developer focused on rapid delivery of simple features. Your approach emphasizes clean, straightforward code using established patterns. Prioritize speed and simplicity while maintaining code quality and following team conventions.",
+            "runCondition": {
+                "and": [
+                    {
+                        "var": "taskScope",
+                        "equals": "small"
+                    },
+                    {
+                        "var": "complexity",
+                        "lt": 0.5
+                    }
+                ]
+            }
+        },
+        {
+            "id": "architecture-design",
+            "title": "Architecture Design",
+            "prompt": "**PREP**: Analyze the system architecture and design patterns.\n\n**IMPLEMENT**: Design the architecture for the new feature, considering scalability and maintainability.\n\n**VERIFY**: Review the design for completeness and alignment with system architecture.",
+            "agentRole": "You are a principal software architect with deep expertise in system design and scalable architecture patterns. Your role is to create robust, maintainable designs that align with existing system architecture while considering future scalability and maintainability requirements.",
+            "runCondition": {
+                "and": [
+                    {
+                        "var": "taskScope",
+                        "not_equals": "small"
+                    },
+                    {
+                        "var": "userExpertise",
+                        "not_equals": "novice"
+                    }
+                ]
+            },
+            "askForFiles": true,
+            "requireConfirmation": true
+        },
+        {
+            "id": "novice-guided-implementation",
+            "title": "Step-by-Step Guided Implementation",
+            "prompt": "**PREP**: Break down the implementation into small, manageable steps.\n\n**IMPLEMENT**: Follow the detailed implementation guide with explanations for each step.\n\n**VERIFY**: Confirm each step is completed correctly before proceeding.",
+            "agentRole": "You are a patient and thorough mentor specializing in teaching software development to beginners. Your approach is to break down complex tasks into simple, understandable steps with clear explanations for why each step is necessary. Provide educational context and encourage learning through guided practice.",
+            "runCondition": {
+                "var": "userExpertise",
+                "equals": "novice"
+            },
+            "askForFiles": true,
+            "requireConfirmation": true
+        },
+        {
+            "id": "expert-implementation",
+            "title": "Expert Implementation",
+            "prompt": "**PREP**: Review the requirements and architecture.\n\n**IMPLEMENT**: Implement the feature using advanced patterns and optimizations as appropriate.\n\n**VERIFY**: Ensure implementation follows best practices and is production-ready.",
+            "agentRole": "You are a senior software engineer with expertise in advanced development patterns and optimization techniques. Your implementation should demonstrate mastery of design patterns, performance optimization, and production-ready code. Focus on elegant, efficient solutions that showcase technical excellence.",
+            "runCondition": {
+                "var": "userExpertise",
+                "equals": "expert"
+            },
+            "askForFiles": true,
+            "validationCriteria": [
+                {
+                    "type": "regex",
+                    "pattern": "\\b(pattern|design|architecture)\\b",
+                    "condition": {
+                        "var": "userExpertise",
+                        "equals": "expert"
+                    },
+                    "message": "Expert implementation should use advanced patterns"
+                },
+                {
+                    "type": "contains",
+                    "value": "optimization",
+                    "condition": {
+                        "var": "complexity",
+                        "gte": 0.6
+                    },
+                    "message": "Should include optimizations for complex features"
+                },
+                {
+                    "type": "regex",
+                    "pattern": "(?!.*TODO)",
+                    "message": "Should not contain TODO items"
+                }
+            ],
+            "hasValidation": true
+        },
+        {
+            "id": "comprehensive-testing",
+            "title": "Comprehensive Testing",
+            "prompt": "**PREP**: Identify all test scenarios including edge cases.\n\n**IMPLEMENT**: Create comprehensive test suite covering unit, integration, and end-to-end tests.\n\n**VERIFY**: Run all tests and ensure coverage meets quality standards.",
+            "agentRole": "You are a quality assurance engineer and testing specialist with expertise in comprehensive test strategy design. Your approach includes test-driven development principles, thorough edge case coverage, and automated testing best practices. Focus on creating maintainable, reliable test suites that provide confidence in the implementation.",
+            "runCondition": {
+                "or": [
+                    {
+                        "var": "taskScope",
+                        "equals": "large"
+                    },
+                    {
+                        "var": "userExpertise",
+                        "equals": "expert"
+                    }
+                ]
+            },
+            "requireConfirmation": true,
+            "validationCriteria": [
+                {
+                    "type": "regex",
+                    "pattern": "\\b(unit test|integration test|end-to-end)\\b",
+                    "message": "Should include comprehensive test types"
+                },
+                {
+                    "type": "regex",
+                    "pattern": "\\b(describe|it|test|spec)\\b",
+                    "message": "Should include proper test structure"
+                },
+                {
+                    "type": "contains",
+                    "value": "coverage",
+                    "condition": {
+                        "var": "taskScope",
+                        "equals": "large"
+                    },
+                    "message": "Large tasks should include coverage analysis"
+                }
+            ],
+            "hasValidation": true
+        },
+        {
+            "id": "basic-testing",
+            "title": "Basic Testing",
+            "prompt": "**PREP**: Identify core functionality to test.\n\n**IMPLEMENT**: Create basic tests for the main functionality.\n\n**VERIFY**: Run tests and fix any issues found.",
+            "agentRole": "You are a practical developer focused on essential testing for medium-complexity features. Your approach emphasizes testing the core functionality thoroughly while being efficient with time and resources. Focus on the most important test cases that provide maximum confidence in the implementation.",
+            "runCondition": {
+                "and": [
+                    {
+                        "var": "taskScope",
+                        "not_equals": "large"
+                    },
+                    {
+                        "var": "userExpertise",
+                        "not_equals": "expert"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "performance-optimization",
+            "title": "Performance Optimization",
+            "prompt": "**PREP**: Profile the implementation and identify bottlenecks.\n\n**IMPLEMENT**: Optimize performance using appropriate techniques and patterns.\n\n**VERIFY**: Measure performance improvements and ensure they meet requirements.",
+            "agentRole": "You are a performance engineering specialist with deep expertise in profiling, optimization techniques, and scalable system design. Your approach combines data-driven analysis with proven optimization strategies to achieve measurable performance improvements while maintaining code quality and maintainability.",
+            "runCondition": {
+                "and": [
+                    {
+                        "var": "taskScope",
+                        "equals": "large"
+                    },
+                    {
+                        "var": "complexity",
+                        "gte": 0.8
+                    }
+                ]
+            },
+            "askForFiles": true,
+            "requireConfirmation": true
+        },
+        {
+            "id": "documentation",
+            "title": "Documentation",
+            "prompt": "**PREP**: Review all implemented features and changes.\n\n**IMPLEMENT**: Create comprehensive documentation for the new feature.\n\n**VERIFY**: Ensure documentation is clear, complete, and helpful for future maintenance.",
+            "agentRole": "You are a technical writer and documentation specialist with expertise in creating clear, comprehensive documentation for software features. Your focus is on creating documentation that serves both current team members and future maintainers, with appropriate detail for the complexity and scope of the implementation.",
+            "runCondition": {
+                "var": "taskScope",
+                "not_equals": "small"
+            }
+        },
+        {
+            "id": "final-review",
+            "title": "Final Review and Cleanup",
+            "prompt": "**PREP**: Review all changes and ensure completeness.\n\n**IMPLEMENT**: Perform final cleanup, code review, and quality checks.\n\n**VERIFY**: Confirm all requirements are met and the implementation is ready for deployment.",
+            "agentRole": "You are a senior technical lead responsible for final quality assurance and deployment readiness. Your review should be comprehensive, covering code quality, security, performance, and compliance with team standards. Ensure the implementation is production-ready and properly documented.",
+            "requireConfirmation": true
         }
-      ]
-    },
-    {
-      "id": "quick-implementation",
-      "title": "Quick Implementation",
-      "prompt": "**PREP**: Review the straightforward requirements.\n\n**IMPLEMENT**: Implement the feature using standard patterns and best practices.\n\n**VERIFY**: Test the implementation and ensure it meets requirements.",
-      "agentRole": "You are an efficient developer focused on rapid delivery of simple features. Your approach emphasizes clean, straightforward code using established patterns. Prioritize speed and simplicity while maintaining code quality and following team conventions.",
-      "runCondition": {
-        "and": [
-          {"var": "taskScope", "equals": "small"},
-          {"var": "complexity", "lt": 0.5}
-        ]
-      }
-    },
-    {
-      "id": "architecture-design",
-      "title": "Architecture Design",
-      "prompt": "**PREP**: Analyze the system architecture and design patterns.\n\n**IMPLEMENT**: Design the architecture for the new feature, considering scalability and maintainability.\n\n**VERIFY**: Review the design for completeness and alignment with system architecture.",
-      "agentRole": "You are a principal software architect with deep expertise in system design and scalable architecture patterns. Your role is to create robust, maintainable designs that align with existing system architecture while considering future scalability and maintainability requirements.",
-      "runCondition": {
-        "and": [
-          {"var": "taskScope", "not_equals": "small"},
-          {"var": "userExpertise", "not_equals": "novice"}
-        ]
-      },
-      "askForFiles": true,
-      "requireConfirmation": true
-    },
-    {
-      "id": "novice-guided-implementation",
-      "title": "Step-by-Step Guided Implementation",
-      "prompt": "**PREP**: Break down the implementation into small, manageable steps.\n\n**IMPLEMENT**: Follow the detailed implementation guide with explanations for each step.\n\n**VERIFY**: Confirm each step is completed correctly before proceeding.",
-      "agentRole": "You are a patient and thorough mentor specializing in teaching software development to beginners. Your approach is to break down complex tasks into simple, understandable steps with clear explanations for why each step is necessary. Provide educational context and encourage learning through guided practice.",
-      "runCondition": {
-        "var": "userExpertise", 
-        "equals": "novice"
-      },
-      "askForFiles": true,
-      "requireConfirmation": true
-    },
-    {
-      "id": "expert-implementation",
-      "title": "Expert Implementation",
-      "prompt": "**PREP**: Review the requirements and architecture.\n\n**IMPLEMENT**: Implement the feature using advanced patterns and optimizations as appropriate.\n\n**VERIFY**: Ensure implementation follows best practices and is production-ready.",
-      "agentRole": "You are a senior software engineer with expertise in advanced development patterns and optimization techniques. Your implementation should demonstrate mastery of design patterns, performance optimization, and production-ready code. Focus on elegant, efficient solutions that showcase technical excellence.",
-      "runCondition": {
-        "var": "userExpertise", 
-        "equals": "expert"
-      },
-      "askForFiles": true,
-      "validationCriteria": [
-        {
-          "type": "regex",
-          "pattern": "\\b(pattern|design|architecture)\\b",
-          "condition": {
-            "var": "userExpertise",
-            "equals": "expert"
-          },
-          "message": "Expert implementation should use advanced patterns"
-        },
-        {
-          "type": "contains",
-          "value": "optimization",
-          "condition": {
-            "var": "complexity",
-            "gte": 0.6
-          },
-          "message": "Should include optimizations for complex features"
-        },
-        {
-          "type": "regex",
-          "pattern": "(?!.*TODO)",
-          "message": "Should not contain TODO items"
-        }
-      ]
-    },
-    {
-      "id": "comprehensive-testing",
-      "title": "Comprehensive Testing",
-      "prompt": "**PREP**: Identify all test scenarios including edge cases.\n\n**IMPLEMENT**: Create comprehensive test suite covering unit, integration, and end-to-end tests.\n\n**VERIFY**: Run all tests and ensure coverage meets quality standards.",
-      "agentRole": "You are a quality assurance engineer and testing specialist with expertise in comprehensive test strategy design. Your approach includes test-driven development principles, thorough edge case coverage, and automated testing best practices. Focus on creating maintainable, reliable test suites that provide confidence in the implementation.",
-      "runCondition": {
-        "or": [
-          {"var": "taskScope", "equals": "large"},
-          {"var": "userExpertise", "equals": "expert"}
-        ]
-      },
-      "requireConfirmation": true,
-      "validationCriteria": [
-        {
-          "type": "regex",
-          "pattern": "\\b(unit test|integration test|end-to-end)\\b",
-          "message": "Should include comprehensive test types"
-        },
-        {
-          "type": "regex",
-          "pattern": "\\b(describe|it|test|spec)\\b",
-          "message": "Should include proper test structure"
-        },
-        {
-          "type": "contains",
-          "value": "coverage",
-          "condition": {
-            "var": "taskScope",
-            "equals": "large"
-          },
-          "message": "Large tasks should include coverage analysis"
-        }
-      ]
-    },
-    {
-      "id": "basic-testing",
-      "title": "Basic Testing",
-      "prompt": "**PREP**: Identify core functionality to test.\n\n**IMPLEMENT**: Create basic tests for the main functionality.\n\n**VERIFY**: Run tests and fix any issues found.",
-      "agentRole": "You are a practical developer focused on essential testing for medium-complexity features. Your approach emphasizes testing the core functionality thoroughly while being efficient with time and resources. Focus on the most important test cases that provide maximum confidence in the implementation.",
-      "runCondition": {
-        "and": [
-          {"var": "taskScope", "not_equals": "large"},
-          {"var": "userExpertise", "not_equals": "expert"}
-        ]
-      }
-    },
-    {
-      "id": "performance-optimization",
-      "title": "Performance Optimization",
-      "prompt": "**PREP**: Profile the implementation and identify bottlenecks.\n\n**IMPLEMENT**: Optimize performance using appropriate techniques and patterns.\n\n**VERIFY**: Measure performance improvements and ensure they meet requirements.",
-      "agentRole": "You are a performance engineering specialist with deep expertise in profiling, optimization techniques, and scalable system design. Your approach combines data-driven analysis with proven optimization strategies to achieve measurable performance improvements while maintaining code quality and maintainability.",
-      "runCondition": {
-        "and": [
-          {"var": "taskScope", "equals": "large"},
-          {"var": "complexity", "gte": 0.8}
-        ]
-      },
-      "askForFiles": true,
-      "requireConfirmation": true
-    },
-    {
-      "id": "documentation",
-      "title": "Documentation",
-      "prompt": "**PREP**: Review all implemented features and changes.\n\n**IMPLEMENT**: Create comprehensive documentation for the new feature.\n\n**VERIFY**: Ensure documentation is clear, complete, and helpful for future maintenance.",
-      "agentRole": "You are a technical writer and documentation specialist with expertise in creating clear, comprehensive documentation for software features. Your focus is on creating documentation that serves both current team members and future maintainers, with appropriate detail for the complexity and scope of the implementation.",
-      "runCondition": {
-        "var": "taskScope", 
-        "not_equals": "small"
-      }
-    },
-    {
-      "id": "final-review",
-      "title": "Final Review and Cleanup",
-      "prompt": "**PREP**: Review all changes and ensure completeness.\n\n**IMPLEMENT**: Perform final cleanup, code review, and quality checks.\n\n**VERIFY**: Confirm all requirements are met and the implementation is ready for deployment.",
-      "agentRole": "You are a senior technical lead responsible for final quality assurance and deployment readiness. Your review should be comprehensive, covering code quality, security, performance, and compliance with team standards. Ensure the implementation is production-ready and properly documented.",
-      "requireConfirmation": true
-    }
-  ],
-  "metaGuidance": [
-    "Always follow the prep/implement/verify pattern for each step",
-    "Adapt the level of detail based on user expertise",
-    "Skip steps that don't apply to the current task scope",
-    "Focus on quality over speed for complex tasks",
-    "Provide more guidance for novice users",
-    "Allow expert users to work with minimal constraints",
-    "Test thoroughly based on the complexity and scope",
-    "Document appropriately for the task size",
-    "Each step uses agentRole to provide specialized expertise based on conditions",
-    "Agent roles adapt to user expertise level and task complexity automatically"
-  ]
-} 
+    ],
+    "metaGuidance": [
+        "Always follow the prep/implement/verify pattern for each step",
+        "Adapt the level of detail based on user expertise",
+        "Skip steps that don't apply to the current task scope",
+        "Focus on quality over speed for complex tasks",
+        "Provide more guidance for novice users",
+        "Allow expert users to work with minimal constraints",
+        "Test thoroughly based on the complexity and scope",
+        "Document appropriately for the task size",
+        "Each step uses agentRole to provide specialized expertise based on conditions",
+        "Agent roles adapt to user expertise level and task complexity automatically"
+    ]
+}

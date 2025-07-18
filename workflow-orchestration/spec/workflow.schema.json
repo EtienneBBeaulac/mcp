@@ -93,6 +93,11 @@
             "description": "Whether the agent should ask for relevant files before executing the step.",
             "default": false
           },
+          "hasValidation": {
+            "type": "boolean",
+            "description": "Whether this step has validation logic that should be called. Set to true for steps with validationCriteria to optimize execution performance.",
+            "default": false
+          },
           "requireConfirmation": {
             "oneOf": [
               {
