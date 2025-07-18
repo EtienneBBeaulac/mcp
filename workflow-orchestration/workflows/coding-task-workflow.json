@@ -2,7 +2,7 @@
     "id": "coding-task-workflow",
     "name": "Excellent Adaptive Coding Workflow with Devil's Advocate Review",
     "version": "0.7.0",
-    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks with bidirectional dynamic re-triage, performs early codebase analysis to inform planning, includes intelligent requirements clarification, executes a critical self-review of its own plans, provides efficiency options with automation levels, enforces closed-loop validation with failure bounds and tool fallbacks, maintains streamlined context documentation for seamless handoffs, and defines a robust protocol for handling failures.",
+    "description": "Comprehensive AI coding workflow with bidirectional re-triage, deep analysis, intelligent clarification, devil's advocate review, automation levels, failure bounds, tool fallbacks, and context documentation for production-ready development.",
     "changelog": [
         "0.7.0: Enabled safe complexity downgrades, standardized conditions, streamlined docs, improved small tasks, enhanced failures, added metrics"
     ],
