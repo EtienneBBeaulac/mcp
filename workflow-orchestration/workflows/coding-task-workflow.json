@@ -1,15 +1,16 @@
 {
     "id": "coding-task-workflow",
     "name": "Excellent Adaptive Coding Workflow with Devil's Advocate Review",
-    "version": "0.2.0",
-    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks, performs a critical self-review of its own plans, provides efficiency options, enforces closed-loop validation, and defines a robust protocol for handling failures.",
+    "version": "0.3.0",
+    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks, performs early codebase analysis to inform planning, executes a critical self-review of its own plans, provides efficiency options, enforces closed-loop validation, and defines a robust protocol for handling failures.",
     "preconditions": [
         "User has a clear task description (e.g., from Jira, a dev doc, or a BRD).",
         "The agent has access to necessary tools like `grep`, file readers/editors, and a terminal for commands.",
         "The agent has access to the relevant codebase files."
     ],
     "metaGuidance": [
-        "This workflow follows the PREP -> IMPLEMENT -> VERIFY pattern for each step in the plan.",
+        "This workflow follows the ANALYZE -> PREP -> IMPLEMENT -> VERIFY pattern for each step in the plan.",
+        "Deep codebase analysis occurs early to inform all subsequent planning phases.",
         "Human approval is required after the Devil's Advocate review and before final completion.",
         "Each implementation step should be a small, logical, and committable chunk of work.",
         "The agent should never guess or assume. Always ask for clarification or use tools to find missing information.",
@@ -30,138 +31,143 @@
             ],
             "requireConfirmation": true
         },
-      {
-        "id": "phase-1-specification",
-        "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
-        "title": "Phase 1: Create Specification",
-        "prompt": "Your first goal is to understand the task and create a specification document. Analyze the request, summarize your understanding, ask clarifying questions, and assess which parts of the codebase are relevant. The output of this step should be a formal specification.\n\n**Task Description:**\n[User inserts detailed task description here]\n\n**Key Objectives & Success Criteria:**\n[User lists specific, measurable success criteria here]\n\n**Scope and Constraints:**\n[User defines boundaries or areas to avoid here]\n\nFinally, based on your analysis, perform a sanity check on the initial complexity sizing. If you believe the classification is incorrect, state your reasoning and ask for confirmation before proceeding. For example: 'You classified this as Medium, but my analysis shows it impacts several core architectural components. I recommend we upgrade to the Large path to perform a Deep Analysis. Do you agree?'",
-        "agentRole": "You are a senior business analyst and technical lead specializing in requirement gathering and scope definition. Your goal is to produce a clear, comprehensive `spec.md` file that will serve as the foundation for design and implementation.",
-        "guidance": [
-          "Provide a complete task description. Vague requests will lead to poor plans and wasted effort.",
-          "The output of this step should be the content for `spec.md`.",
-          "This step is automatically skipped for Small tasks based on the complexity classification"
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-1b-deep-analysis-mandatory",
-        "runCondition": {"var": "taskComplexity", "equals": "Large"},
-        "title": "Phase 1b: Mandatory Deep Codebase Analysis",
-        "prompt": "Your goal is to become an expert on the attached codebase. This deep analysis is mandatory for Large tasks due to their complexity and risk. Your analysis must include:\n1.  **Architecture:** Main modules, layers, and patterns.\n2.  **Key Concepts:** Core models, conventions, and important components.\n3.  **Execution Flow:** Trace major features or entry points.\n4.  **Code Quality Assessment:** Note maintainability, readability, or coupling issues.\n5.  **Testing Strategy:** Describe how the code is tested.\n6.  **Opportunities:** Suggest refactorings or improvements.\n\nProvide summaries and code examples to illustrate your findings. Be exhaustive, as if preparing onboarding documentation for a senior engineer.",
-        "agentRole": "You are an expert codebase analyst with 10+ years of experience in software architecture and legacy system analysis. Your specialty is quickly understanding complex codebases and identifying architectural patterns, risks, and opportunities. Approach this with the thoroughness of a senior engineer conducting a technical due diligence review.",
-        "askForFiles": true,
-        "guidance": [
-          "This step is mandatory for Large tasks due to their complexity and risk",
-          "Ensure all relevant source files are attached or accessible to the agent before running this step",
-          "Be thorough - this analysis will inform the entire implementation strategy"
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-1b-deep-analysis-optional",
-        "runCondition": {
-          "and": [
-            {"var": "taskComplexity", "equals": "Medium"},
-            {"var": "requestDeepAnalysis", "equals": true}
-          ]
+        {
+            "id": "phase-1-deep-analysis-mandatory",
+            "runCondition": {"var": "taskComplexity", "equals": "Large"},
+            "title": "Phase 1: Mandatory Deep Codebase Analysis",
+            "prompt": "Your goal is to become an expert on the attached codebase before any planning begins. This deep analysis is mandatory for Large tasks due to their complexity and risk. Your analysis must include:\n1.  **Architecture:** Main modules, layers, and patterns.\n2.  **Key Concepts:** Core models, conventions, and important components.\n3.  **Execution Flow:** Trace major features or entry points.\n4.  **Code Quality Assessment:** Note maintainability, readability, or coupling issues.\n5.  **Testing Strategy:** Describe how the code is tested.\n6.  **Opportunities:** Suggest refactorings or improvements.\n7.  **Task Relevance:** Identify which parts of the codebase are most relevant to the current task.\n\nProvide summaries and code examples to illustrate your findings. Be exhaustive, as if preparing onboarding documentation for a senior engineer. This analysis will inform all subsequent specification and design work.",
+            "agentRole": "You are an expert codebase analyst with 10+ years of experience in software architecture and legacy system analysis. Your specialty is quickly understanding complex codebases and identifying architectural patterns, risks, and opportunities. Approach this with the thoroughness of a senior engineer conducting a technical due diligence review.",
+            "askForFiles": true,
+            "guidance": [
+                "This step is mandatory for Large tasks due to their complexity and risk",
+                "Ensure all relevant source files are attached or accessible to the agent before running this step",
+                "Be thorough - this analysis will inform the specification, design, and implementation strategy",
+                "Pay special attention to areas of the codebase relevant to the current task"
+            ],
+            "requireConfirmation": false
         },
-        "title": "Phase 1b: Optional Deep Codebase Analysis",
-        "prompt": "You requested optional deep analysis for this Medium task. Your goal is to become an expert on the attached codebase. Your analysis must include:\n1.  **Architecture:** Main modules, layers, and patterns.\n2.  **Key Concepts:** Core models, conventions, and important components.\n3.  **Execution Flow:** Trace major features or entry points.\n4.  **Code Quality Assessment:** Note maintainability, readability, or coupling issues.\n5.  **Testing Strategy:** Describe how the code is tested.\n6.  **Opportunities:** Suggest refactorings or improvements.\n\nProvide summaries and code examples to illustrate your findings. Be exhaustive, as if preparing onboarding documentation for a senior engineer.",
-        "agentRole": "You are a focused codebase analyst specializing in targeted technical analysis for medium-complexity projects. Your approach balances thoroughness with efficiency, focusing on areas most relevant to the current task while maintaining architectural awareness.",
-        "askForFiles": true,
-        "guidance": [
-          "This optional analysis was requested for a Medium task",
-          "Ensure all relevant source files are attached or accessible to the agent before running this step",
-          "Focus on areas most relevant to the current task"
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-1c-architectural-design",
-        "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
-        "title": "Phase 1c: Architectural Design",
-        "prompt": "Using the `spec.md` from the previous step and your codebase analysis, create a high-level architectural design. Your output should be a `design.md` document that includes:\n1. **High-Level Approach:** A summary of the proposed solution.\n2. **Component Breakdown:** Identify new or modified components, classes, or modules.\n3. **Data Models:** Describe any changes to data structures or database schemas.\n4. **API Contracts:** Define any new or changed API endpoints, including request/response formats.\n5. **Key Interactions:** A diagram or description of how the major components will interact.",
-        "agentRole": "You are a software architect specializing in translating business requirements into robust and scalable technical designs. Your task is to create a clear and comprehensive `design.md` that guides the implementation.",
-        "guidance": [
-          "The `design.md` should be detailed enough for an engineer to write an implementation plan from it.",
-          "This step is automatically skipped for Small tasks."
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-2-planning",
-        "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
-        "title": "Phase 2: Create Detailed Implementation Plan",
-        "prompt": "Your goal is to produce a thorough and actionable `implementation_plan.md` based on the `spec.md` and `design.md`. Do not write any code. Your plan must be detailed, broken into committable phases, and justified.\n\nYour plan must include these sections:\n1.  **Goal Clarification:** Your understanding of the goal, assumptions, and success criteria from the spec.\n2.  **Impact Assessment:** Affected codebase parts, dependencies, and risks based on the design.\n3.  **Implementation Strategy:** A list of discrete, actionable steps. Each step must detail the task, its rationale, inputs, and outputs.\n4.  **Testing Strategy:** Describe how the changes will be tested (e.g., unit tests, integration tests, manual QA).\n5.  **Final Review Checklist:** A specific checklist of items that must be verified to consider this entire task complete. This will be used in the final review phase.\n\nPresent this as a formal proposal.",
-        "agentRole": "You are an experienced technical architect and project planner with expertise in breaking down complex development tasks into manageable, logical phases. Your strength is creating detailed, actionable plans that minimize risk while maximizing development efficiency and code quality.",
-        "guidance": [
-          "The agent will now proceed to critique its own plan in the next step. Withhold your final approval until after that critique.",
-          "This step is automatically skipped for Small tasks based on the complexity classification"
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-2b-devil-advocate-review",
-        "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
-        "title": "Phase 2b: Devil's Advocate Plan Review",
-        "prompt": "Your task is to perform a 'devil's advocate' review of the implementation plan you just created in Phase 2. The objective is not to discard the plan, but to rigorously stress-test it and make it stronger. Your critique must be balanced and evidence-based.\n\nAnalyze the plan through the following lenses. For every point you make (positive or negative), you must cite specific evidence from the plan, the codebase, or the initial task description.\n\n1.  **Hidden Assumptions:** What assumptions does this plan make about the codebase, user behavior, or existing data that might be incorrect?\n2.  **Potential Risks & Unintended Side Effects:** What is the biggest risk of this plan? Could it impact performance, security, or another feature in a negative way?\n3.  **Overlooked Complexities or Edge Cases:** What specific edge cases (e.g., empty states, invalid inputs, race conditions) does the plan fail to explicitly address?\n4.  **Alternative Approaches:** Briefly propose at least one alternative technical approach. What are the pros and cons of the alternative versus the current plan?\n5.  **Plan Strengths:** To ensure a balanced review, explicitly state the strongest parts of the plan. What aspects are well-thought-out and likely to succeed?\n\nConclude with a balanced summary. If you found issues, provide concrete suggestions for how to amend the plan. Finally, give a confidence score (1-10) for the plan *if* your suggestions are implemented.",
-        "agentRole": "You are a skeptical but fair senior principal engineer with 15+ years of experience in critical system development. Your role is to identify potential failure points, hidden assumptions, and overlooked complexities in technical plans. You excel at constructive criticism that strengthens plans rather than destroys them. Approach this with the rigor of a senior engineer reviewing a mission-critical system design.",
-        "guidance": [
-          "This is a critical thinking step. The agent's goal is to find weaknesses in its *own* prior work to improve it. This is a sign of a high-functioning process.",
-          "Evaluate the agent's points. Not all 'risks' it identifies may be realistic. Use your judgment to decide which suggestions to incorporate into the plan.",
-          "After this review, you can ask the agent to create a final, amended version of the plan before you give your final approval to proceed with implementation.",
-          "This step is automatically skipped for Small tasks based on the complexity classification"
-        ],
-        "requireConfirmation": true
-      },
-      {
-        "id": "phase-2c-finalize-plan",
-        "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
-        "title": "Phase 2c: Finalize Implementation Plan",
-        "prompt": "Review the initial `implementation_plan.md` from Phase 2 and the Devil's Advocate critique from Phase 2b. Your task is to create a final, consolidated implementation plan that incorporates the valid feedback from the review.\n\nYour output must be the final `implementation_plan.md`.\n\nAdditionally, explicitly list any suggestions from the review that you believe are valuable but out-of-scope for the current task. These should be formatted as potential tickets for future work.",
-        "agentRole": "You are a pragmatic technical project manager. Your goal is to synthesize feedback, make decisive trade-offs, and produce a final, actionable plan that is ready for execution.",
-        "guidance": [
-          "This is the final plan that will be executed. Ensure it is clear, actionable, and reflects the best path forward.",
-          "The list of out-of-scope items helps capture valuable ideas without derailing the current task."
-        ],
-        "requireConfirmation": true
-      },
-      {
-        "id": "phase-2d-plan-sanity-check",
-        "runCondition": { "var": "taskComplexity", "not_equals": "Small" },
-        "title": "Phase 2d: Plan Sanity Check",
-        "prompt": "Before starting implementation, perform a sanity check on the final `implementation_plan.md`. Your goal is to use your tools to quickly verify the plan's core assumptions against the current codebase. This is not a deep analysis, but a quick check for obvious errors.\n\nFor the key files, functions, classes, or APIs mentioned in the plan, perform the following checks:\n1.  **Existence Check:** Use tools like `grep` or `ls` to confirm that the files and primary functions/classes you plan to modify actually exist where you expect them to.\n2.  **Signature/API Check (if applicable):** Briefly check the function signatures or API endpoints you intend to use. Do they match the plan's assumptions? For example, if the plan assumes a function takes two arguments, verify that.\n3.  **Dependency Check:** If the plan relies on a specific library or module being available, quickly verify its presence (e.g., check `package.json`, `requirements.txt`, etc.).\n\n**Report your findings as a simple checklist:**\n- [✅ or ❌] File `src/example.js` exists.\n- [✅ or ❌] Function `calculateTotal()` found in `src/utils.js`.\n- [✅ or ❌] Dependency `moment` is listed in `package.json`.\n\nIf any check fails (❌), briefly explain the discrepancy and ask the user if the plan needs to be revised before proceeding.",
-        "agentRole": "You are a pragmatic QA engineer double-checking a plan before the development team starts work. Your job is to be quick, efficient, and focused on verifying concrete facts using tools. You are not re-evaluating the plan's logic, only its tangible connection to the codebase.",
-        "guidance": [
-          "This is a quick verification step, not a full re-analysis. The goal is to catch glaring errors before implementation begins.",
-          "Use your code-browsing tools (`grep`, `ls`) to validate the plan's assumptions.",
-          "If a check fails, it's crucial to pause and get human confirmation before proceeding with a potentially flawed plan."
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-3-iterative-implementation",
-        "title": "Phase 3: Iterative Implementation (PREP -> IMPLEMENT -> VERIFY)",
-        "prompt": "The implementation phase has now begun. You will now execute the approved `implementation_plan.md` step-by-step. Announce which step you are starting.\n\nYou will execute each step using the PREP -> IMPLEMENT -> VERIFY cycle defined in the guidance below. This process will repeat until all steps in the plan are complete.",
-        "agentRole": "You are a meticulous senior software engineer focused on high-quality implementation. Your approach emphasizes careful preparation, precise execution, and thorough verification. You excel at following plans while adapting to unexpected discoveries during implementation.",
-        "guidance": [
-          "**IMPORTANT**: Do not proceed to the next workflow phase (Final Review) until all steps in the `implementation_plan.md` are marked as complete and verified.",
-          "**Efficiency Tip:** For high-confidence plans, you may provide multiple step instructions at once. I will execute them sequentially, performing the P->I->V cycle for each, and will only pause to ask for input if I encounter a verification failure or ambiguity.",
-          "**PREP:** Before implementing each step, you must first PREPARE. Re-read the step's description, confirm the previous step was completed correctly, verify the plan for this step is still valid in the current codebase, and list all required inputs or files. Do not proceed if anything is unclear.",
-          "**IMPLEMENT:** After preparation is confirmed, you will IMPLEMENT the step. Focus only on this single step. Use your tools to make the necessary code changes, adhering to all quality standards. Provide a commit message upon completion.",
-          "**VERIFY:** Immediately after implementation, you must VERIFY your work. Your verification for this step **is not complete until you have**:\n1.  **Written necessary unit/integration tests** for the new logic (as per the testing strategy).\n2.  **Run the full test suite** to ensure no regressions were introduced.\n3.  **Performed a critical self-review** of the changes against the plan, checking for code quality, side effects, and architectural alignment.\n\n**Failure Protocol:** If a verification failure cannot be resolved after two attempts, you must halt. Do not try a third time. Instead, present a summary of the problem, detail your failed attempts, and recommend a course of action to the user (e.g., 'revert this step and re-plan', 'request more information', 'proceed with a known issue')."
-        ],
-        "requireConfirmation": false
-      },
-      {
-        "id": "phase-4-final-review",
-        "title": "Phase 4: Final Review & Completion",
-        "prompt": "All planned steps have been implemented and verified. Your final goal is to perform a holistic review by validating the work against the **'Final Review Checklist'** from the `implementation_plan.md`.\n\nFor each item on that checklist, provide a confirmation and evidence that it has been met. Conclude with a summary of any potential follow-ups or new dependencies to note.",
-        "agentRole": "You are a quality assurance specialist and technical lead responsible for final project validation. Your expertise lies in comprehensive system testing, requirement verification, and ensuring deliverables meet all specified criteria. Approach this with the thoroughness of a senior engineer conducting a final release review.",
-        "guidance": [
-          "This is the final quality check. Ensure the agent's summary and checklist validation align with your understanding of the completed work."
-        ],
-        "requireConfirmation": true
-      }
+        {
+            "id": "phase-1-deep-analysis-optional",
+            "runCondition": {
+                "and": [
+                    {"var": "taskComplexity", "equals": "Medium"},
+                    {"var": "requestDeepAnalysis", "equals": true}
+                ]
+            },
+            "title": "Phase 1: Optional Deep Codebase Analysis",
+            "prompt": "You requested optional deep analysis for this Medium task. Your goal is to become an expert on the attached codebase before planning begins. Your analysis must include:\n1.  **Architecture:** Main modules, layers, and patterns.\n2.  **Key Concepts:** Core models, conventions, and important components.\n3.  **Execution Flow:** Trace major features or entry points.\n4.  **Code Quality Assessment:** Note maintainability, readability, or coupling issues.\n5.  **Testing Strategy:** Describe how the code is tested.\n6.  **Opportunities:** Suggest refactorings or improvements.\n7.  **Task Relevance:** Identify which parts of the codebase are most relevant to the current task.\n\nProvide summaries and code examples to illustrate your findings. Focus on areas most relevant to the current task while maintaining architectural awareness. This analysis will inform all subsequent specification and design work.",
+            "agentRole": "You are a focused codebase analyst specializing in targeted technical analysis for medium-complexity projects. Your approach balances thoroughness with efficiency, focusing on areas most relevant to the current task while maintaining architectural awareness.",
+            "askForFiles": true,
+            "guidance": [
+                "This optional analysis was requested for a Medium task",
+                "Ensure all relevant source files are attached or accessible to the agent before running this step",
+                "Focus on areas most relevant to the current task while maintaining broader architectural context",
+                "This analysis will inform the specification and design phases"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-2-specification",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 2: Create Specification",
+            "prompt": "Using your codebase analysis from the previous phase, create a specification document that aligns with the existing system. Analyze the request, summarize your understanding, ask clarifying questions, and leverage your knowledge of the codebase architecture and patterns.\n\n**Task Description:**\n[User inserts detailed task description here]\n\n**Key Objectives & Success Criteria:**\n[User lists specific, measurable success criteria here]\n\n**Scope and Constraints:**\n[User defines boundaries or areas to avoid here]\n\n**IMPORTANT**: Your specification must consider:\n- Existing architectural patterns and conventions identified in your codebase analysis\n- How the proposed changes fit within the current system design\n- Potential impacts on existing components and workflows\n- Alignment with current testing strategies and code quality standards\n\nFinally, based on your analysis, perform a sanity check on the initial complexity sizing. If you believe the classification is incorrect given your codebase knowledge, state your reasoning and ask for confirmation before proceeding.",
+            "agentRole": "You are a senior business analyst and technical lead specializing in requirement gathering and scope definition. Your goal is to produce a clear, comprehensive `spec.md` file that leverages your deep understanding of the existing codebase and will serve as the foundation for design and implementation.",
+            "guidance": [
+                "Provide a complete task description. Vague requests will lead to poor plans and wasted effort.",
+                "The output of this step should be the content for `spec.md`.",
+                "This step is automatically skipped for Small tasks based on the complexity classification",
+                "Leverage your codebase analysis to ensure the specification aligns with existing patterns and constraints"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-3-architectural-design",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 3: Architectural Design",
+            "prompt": "Using the `spec.md` from the previous step and your deep codebase analysis, create a high-level architectural design that seamlessly integrates with the existing system. Your output should be a `design.md` document that includes:\n1. **High-Level Approach:** A summary of the proposed solution that builds on existing patterns.\n2. **Component Breakdown:** Identify new or modified components, classes, or modules, showing how they fit within the current architecture.\n3. **Data Models:** Describe any changes to data structures or database schemas, considering existing data patterns.\n4. **API Contracts:** Define any new or changed API endpoints, following existing API conventions and patterns.\n5. **Key Interactions:** A diagram or description of how the major components will interact, both new and existing.\n6. **Integration Points:** Clearly identify how new components will integrate with existing systems and workflows.",
+            "agentRole": "You are a software architect specializing in translating business requirements into robust and scalable technical designs that seamlessly integrate with existing systems. Your task is to create a clear and comprehensive `design.md` that leverages existing architectural patterns while introducing necessary changes.",
+            "guidance": [
+                "The `design.md` should be detailed enough for an engineer to write an implementation plan from it.",
+                "This step is automatically skipped for Small tasks.",
+                "Ensure the design builds upon and aligns with the existing codebase architecture identified in your analysis"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-4-planning",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 4: Create Detailed Implementation Plan",
+            "prompt": "Your goal is to produce a thorough and actionable `implementation_plan.md` based on the `spec.md`, `design.md`, and your deep codebase analysis. Do not write any code. Your plan must be detailed, broken into committable phases, and justified.\n\nYour plan must include these sections:\n1.  **Goal Clarification:** Your understanding of the goal, assumptions, and success criteria from the spec.\n2.  **Impact Assessment:** Affected codebase parts, dependencies, and risks based on the design and your codebase analysis.\n3.  **Implementation Strategy:** A list of discrete, actionable steps. Each step must detail the task, its rationale, inputs, and outputs.\n4.  **Testing Strategy:** Describe how the changes will be tested, building on existing testing patterns identified in your codebase analysis.\n5.  **Final Review Checklist:** A specific checklist of items that must be verified to consider this entire task complete. This will be used in the final review phase.\n\nPresent this as a formal proposal that demonstrates deep understanding of both the requirements and the existing codebase.",
+            "agentRole": "You are an experienced technical architect and project planner with expertise in breaking down complex development tasks into manageable, logical phases. Your strength is creating detailed, actionable plans that minimize risk while maximizing development efficiency and code quality, all while working within existing system constraints.",
+            "guidance": [
+                "The agent will now proceed to critique its own plan in the next step. Withhold your final approval until after that critique.",
+                "This step is automatically skipped for Small tasks based on the complexity classification",
+                "Leverage your codebase analysis to ensure the plan works within existing architectural constraints"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-4b-devil-advocate-review",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 4b: Devil's Advocate Plan Review",
+            "prompt": "Your task is to perform a 'devil's advocate' review of the implementation plan you just created in Phase 4. The objective is not to discard the plan, but to rigorously stress-test it and make it stronger. Your critique must be balanced and evidence-based.\n\nAnalyze the plan through the following lenses. For every point you make (positive or negative), you must cite specific evidence from the plan, the codebase analysis, or the initial task description.\n\n1.  **Hidden Assumptions:** What assumptions does this plan make about the codebase, user behavior, or existing data that might be incorrect?\n2.  **Potential Risks & Unintended Side Effects:** What is the biggest risk of this plan? Could it impact performance, security, or another feature in a negative way?\n3.  **Overlooked Complexities or Edge Cases:** What specific edge cases (e.g., empty states, invalid inputs, race conditions) does the plan fail to explicitly address?\n4.  **Alternative Approaches:** Briefly propose at least one alternative technical approach. What are the pros and cons of the alternative versus the current plan?\n5.  **Plan Strengths:** To ensure a balanced review, explicitly state the strongest parts of the plan. What aspects are well-thought-out and likely to succeed?\n\nConclude with a balanced summary. If you found issues, provide concrete suggestions for how to amend the plan. Finally, give a confidence score (1-10) for the plan *if* your suggestions are implemented.",
+            "agentRole": "You are a skeptical but fair senior principal engineer with 15+ years of experience in critical system development. Your role is to identify potential failure points, hidden assumptions, and overlooked complexities in technical plans. You excel at constructive criticism that strengthens plans rather than destroys them. Approach this with the rigor of a senior engineer reviewing a mission-critical system design.",
+            "guidance": [
+                "This is a critical thinking step. The agent's goal is to find weaknesses in its *own* prior work to improve it. This is a sign of a high-functioning process.",
+                "Evaluate the agent's points. Not all 'risks' it identifies may be realistic. Use your judgment to decide which suggestions to incorporate into the plan.",
+                "After this review, you can ask the agent to create a final, amended version of the plan before you give your final approval to proceed with implementation.",
+                "This step is automatically skipped for Small tasks based on the complexity classification"
+            ],
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-4c-finalize-plan",
+            "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
+            "title": "Phase 4c: Finalize Implementation Plan",
+            "prompt": "Review the initial `implementation_plan.md` from Phase 4 and the Devil's Advocate critique from Phase 4b. Your task is to create a final, consolidated implementation plan that incorporates the valid feedback from the review.\n\nYour output must be the final `implementation_plan.md`.\n\nAdditionally, explicitly list any suggestions from the review that you believe are valuable but out-of-scope for the current task. These should be formatted as potential tickets for future work.",
+            "agentRole": "You are a pragmatic technical project manager. Your goal is to synthesize feedback, make decisive trade-offs, and produce a final, actionable plan that is ready for execution.",
+            "guidance": [
+                "This is the final plan that will be executed. Ensure it is clear, actionable, and reflects the best path forward.",
+                "The list of out-of-scope items helps capture valuable ideas without derailing the current task."
+            ],
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-4d-plan-sanity-check",
+            "runCondition": { "var": "taskComplexity", "not_equals": "Small" },
+            "title": "Phase 4d: Plan Sanity Check",
+            "prompt": "Before starting implementation, perform a sanity check on the final `implementation_plan.md`. Your goal is to use your tools to quickly verify the plan's core assumptions against the current codebase. This is not a deep analysis, but a quick check for obvious errors.\n\nFor the key files, functions, classes, or APIs mentioned in the plan, perform the following checks:\n1.  **Existence Check:** Use tools like `grep` or `ls` to confirm that the files and primary functions/classes you plan to modify actually exist where you expect them to.\n2.  **Signature/API Check (if applicable):** Briefly check the function signatures or API endpoints you intend to use. Do they match the plan's assumptions? For example, if the plan assumes a function takes two arguments, verify that.\n3.  **Dependency Check:** If the plan relies on a specific library or module being available, quickly verify its presence (e.g., check `package.json`, `requirements.txt`, etc.).\n\n**Report your findings as a simple checklist:**\n- [✅ or ❌] File `src/example.js` exists.\n- [✅ or ❌] Function `calculateTotal()` found in `src/utils.js`.\n- [✅ or ❌] Dependency `moment` is listed in `package.json`.\n\nIf any check fails (❌), briefly explain the discrepancy and ask the user if the plan needs to be revised before proceeding.",
+            "agentRole": "You are a pragmatic QA engineer double-checking a plan before the development team starts work. Your job is to be quick, efficient, and focused on verifying concrete facts using tools. You are not re-evaluating the plan's logic, only its tangible connection to the codebase.",
+            "guidance": [
+                "This is a quick verification step, not a full re-analysis. The goal is to catch glaring errors before implementation begins.",
+                "Use your code-browsing tools (`grep`, `ls`) to validate the plan's assumptions.",
+                "If a check fails, it's crucial to pause and get human confirmation before proceeding with a potentially flawed plan."
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-5-iterative-implementation",
+            "title": "Phase 5: Iterative Implementation (PREP -> IMPLEMENT -> VERIFY)",
+            "prompt": "The implementation phase has now begun. You will now execute the approved `implementation_plan.md` step-by-step. Announce which step you are starting.\n\nYou will execute each step using the PREP -> IMPLEMENT -> VERIFY cycle defined in the guidance below. This process will repeat until all steps in the plan are complete.",
+            "agentRole": "You are a meticulous senior software engineer focused on high-quality implementation. Your approach emphasizes careful preparation, precise execution, and thorough verification. You excel at following plans while adapting to unexpected discoveries during implementation.",
+            "guidance": [
+                "**IMPORTANT**: Do not proceed to the next workflow phase (Final Review) until all steps in the `implementation_plan.md` are marked as complete and verified.",
+                "**Efficiency Tip:** For high-confidence plans, you may provide multiple step instructions at once. I will execute them sequentially, performing the P->I->V cycle for each, and will only pause to ask for input if I encounter a verification failure or ambiguity.",
+                "**PREP:** Before implementing each step, you must first PREPARE. Re-read the step's description, confirm the previous step was completed correctly, verify the plan for this step is still valid in the current codebase, and list all required inputs or files. Do not proceed if anything is unclear.",
+                "**IMPLEMENT:** After preparation is confirmed, you will IMPLEMENT the step. Focus only on this single step. Use your tools to make the necessary code changes, adhering to all quality standards. Provide a commit message upon completion.",
+                "**VERIFY:** Immediately after implementation, you must VERIFY your work. Your verification for this step **is not complete until you have**:\n1.  **Written necessary unit/integration tests** for the new logic (as per the testing strategy).\n2.  **Run the full test suite** to ensure no regressions were introduced.\n3.  **Performed a critical self-review** of the changes against the plan, checking for code quality, side effects, and architectural alignment.\n\n**Failure Protocol:** If a verification failure cannot be resolved after two attempts, you must halt. Do not try a third time. Instead, present a summary of the problem, detail your failed attempts, and recommend a course of action to the user (e.g., 'revert this step and re-plan', 'request more information', 'proceed with a known issue')."
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-6-final-review",
+            "title": "Phase 6: Final Review & Completion",
+            "prompt": "All planned steps have been implemented and verified. Your final goal is to perform a holistic review by validating the work against the **'Final Review Checklist'** from the `implementation_plan.md`.\n\nFor each item on that checklist, provide a confirmation and evidence that it has been met. Conclude with a summary of any potential follow-ups or new dependencies to note.",
+            "agentRole": "You are a quality assurance specialist and technical lead responsible for final project validation. Your expertise lies in comprehensive system testing, requirement verification, and ensuring deliverables meet all specified criteria. Approach this with the thoroughness of a senior engineer conducting a final release review.",
+            "guidance": [
+                "This is the final quality check. Ensure the agent's summary and checklist validation align with your understanding of the completed work."
+            ],
+            "requireConfirmation": true
+        }
     ]
 }
