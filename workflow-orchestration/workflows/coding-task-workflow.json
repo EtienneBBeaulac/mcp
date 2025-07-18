@@ -131,7 +131,10 @@
                 "Include questions about potential complexity changes based on your analysis"
             ],
             "requireConfirmation": {
-                "condition": "automationLevel in ['Low', 'Medium']"
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"}
+                ]
             }
         },
         {
@@ -149,7 +152,11 @@
                 "Downgrades must be justified with evidence of reduced risk/scope"
             ],
             "requireConfirmation": {
-                "condition": "automationLevel in ['Low', 'Medium'] or proposedDowngrade == true"
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"},
+                    {"var": "proposedDowngrade", "equals": true}
+                ]
             }
         },
         {
@@ -245,7 +252,14 @@
                 "For automationLevel=High with confidenceScore >8, auto-approve if no critical risks identified"
             ],
             "requireConfirmation": {
-                "condition": "automationLevel in ['Low', 'Medium'] or (automationLevel == 'High' and confidenceScore < 8)"
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"},
+                    {"and": [
+                        {"var": "automationLevel", "equals": "High"},
+                        {"var": "confidenceScore", "lt": 8}
+                    ]}
+                ]
             }
         },
         {
@@ -259,7 +273,10 @@
                 "The list of out-of-scope items helps capture valuable ideas without derailing the current task."
             ],
             "requireConfirmation": {
-                "condition": "automationLevel in ['Low', 'Medium']"
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"}
+                ]
             }
         },
         {
