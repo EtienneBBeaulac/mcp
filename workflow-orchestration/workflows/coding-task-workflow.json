@@ -1,20 +1,58 @@
 {
     "id": "coding-task-workflow",
     "name": "Excellent Adaptive Coding Workflow with Devil's Advocate Review",
-    "version": "0.6.0",
-    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks with dynamic re-triage, performs early codebase analysis to inform planning, includes intelligent requirements clarification, executes a critical self-review of its own plans, provides efficiency options with automation levels, enforces closed-loop validation with failure bounds, maintains comprehensive context documentation for seamless handoffs, and defines a robust protocol for handling failures.",
+    "version": "0.7.0",
+    "description": "A comprehensive and resilient workflow for AI-assisted coding. It adaptively sizes tasks with bidirectional dynamic re-triage, performs early codebase analysis to inform planning, includes intelligent requirements clarification, executes a critical self-review of its own plans, provides efficiency options with automation levels, enforces closed-loop validation with failure bounds and tool fallbacks, maintains streamlined context documentation for seamless handoffs, and defines a robust protocol for handling failures.",
+    "changelog": [
+        "0.7.0: Enabled safe complexity downgrades, standardized conditions, streamlined docs, improved small tasks, enhanced failures, added metrics"
+    ],
+    "variables": {
+        "taskComplexity": {
+            "type": "string",
+            "values": ["Small", "Medium", "Large"],
+            "default": null,
+            "description": "Current task complexity classification"
+        },
+        "automationLevel": {
+            "type": "string", 
+            "values": ["Low", "Medium", "High"],
+            "default": "Medium",
+            "description": "Level of automation for confirmations"
+        },
+        "requestDeepAnalysis": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether optional deep analysis was requested for Medium tasks"
+        },
+        "confidenceScore": {
+            "type": "number",
+            "range": [1, 10],
+            "setIn": "phase-5b-devil-advocate-review",
+            "default": null,
+            "description": "Confidence rating for implementation plan (1-10)"
+        },
+        "proposedDowngrade": {
+            "type": "boolean",
+            "default": false,
+            "description": "Flag when complexity downgrade is proposed in re-triage"
+        }
+    },
     "preconditions": [
         "User has a clear task description (e.g., from Jira, a dev doc, or a BRD).",
         "The agent has access to necessary tools like `grep`, file readers/editors, and a terminal for commands.",
         "The agent has access to the relevant codebase files."
     ],
     "metaGuidance": [
-        "This workflow follows the ANALYZE -> CLARIFY -> PREP -> IMPLEMENT -> VERIFY pattern with dynamic re-triage capabilities.",
+        "This workflow follows the ANALYZE -> CLARIFY -> PREP -> IMPLEMENT -> VERIFY pattern with bidirectional dynamic re-triage capabilities.",
         "Deep codebase analysis occurs early to inform intelligent requirements clarification and all subsequent planning phases.",
-        "Dynamic re-triage allows complexity upgrades based on new insights from analysis and clarifications.",
+        "Dynamic re-triage allows complexity upgrades and safe downgrades based on new insights from analysis and clarifications.",
         "Automation levels (Low/Medium/High) control confirmation requirements to balance autonomy with safety.",
-        "Failure bounds prevent resource waste: word limits (1500), step tracking (>20), and escalation protocols.",
+        "Failure bounds prevent resource waste: word limits (2000), step tracking (>20), and escalation protocols.",
         "Context documentation is maintained throughout to enable seamless handoffs between chat sessions.",
+        "For specialized tasks (e.g., debugging), call sub-workflows via workflow_get tool when available.",
+        "Limit all documentation outputs to 2000 words max; use bullet points for scannability.",
+        "Output markdown content in response; use read_file/edit_file tools to create/update actual files if available, else request user upload.",
+        "Align with custom instructions: Use --quiet flags for commands; output to files; prefer workflows for debugging.",
         "Human approval is required after the Devil's Advocate review and before final completion.",
         "Each implementation step should be a small, logical, and committable chunk of work.",
         "The agent should never guess or assume. Always ask for clarification or use tools to find missing information.",
@@ -93,38 +131,32 @@
                 "Include questions about potential complexity changes based on your analysis"
             ],
             "requireConfirmation": {
-                "or": [
-                    {"var": "automationLevel", "equals": "Low"},
-                    {"var": "automationLevel", "equals": "Medium"}
-                ]
+                "condition": "automationLevel in ['Low', 'Medium']"
             }
         },
         {
             "id": "phase-2b-dynamic-retriage",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 2b: Dynamic Complexity Re-Triage",
-            "prompt": "Based on your codebase analysis and requirements clarification, re-evaluate the initial complexity classification. New insights may have revealed:\n\n- Hidden architectural dependencies\n- Unforeseen integration complexities\n- Risk factors not apparent in the initial description\n- Scope expansion based on clarified requirements\n- Technical constraints that increase difficulty\n\n**EVALUATE:**\n1. Review the original taskComplexity classification\n2. Consider new information from codebase analysis and clarifications\n3. Assess if the complexity should be upgraded (e.g., Medium → Large)\n4. Provide detailed reasoning for any recommended changes\n\n**If you recommend upgrading complexity:**\n- Clearly explain what new insights led to this recommendation\n- Describe the additional risks or complexity discovered\n- Justify why the higher complexity path would be beneficial\n- Ask for user confirmation to change the taskComplexity context variable\n\n**If current classification remains appropriate:**\n- Briefly confirm the classification is still accurate\n- Proceed without requesting changes\n\n**Note:** Complexity can only be upgraded (Small→Medium, Medium→Large), not downgraded, to maintain safety.",
-            "agentRole": "You are a senior technical risk assessor specializing in project complexity evaluation. Your expertise lies in identifying hidden risks and complexity factors that emerge during analysis phases. You excel at making decisive recommendations to ensure projects follow the appropriate rigor level.",
+            "prompt": "Based on your codebase analysis and requirements clarification, re-evaluate the initial complexity classification. New insights may have revealed:\n\n- Hidden architectural dependencies\n- Unforeseen integration complexities\n- Risk factors not apparent in the initial description\n- Scope expansion based on clarified requirements\n- Technical constraints that increase difficulty\n- **OR existing utilities/patterns that simplify the task**\n\n**EVALUATE:**\n1. Review the original taskComplexity classification\n2. Consider new information from codebase analysis and clarifications\n3. Assess if the complexity should be upgraded (e.g., Medium → Large) OR downgraded (e.g., Large → Medium)\n4. Provide detailed reasoning for any recommended changes\n\n**If you recommend upgrading complexity:**\n- Clearly explain what new insights led to this recommendation\n- Describe the additional risks or complexity discovered\n- Justify why the higher complexity path would be beneficial\n- Ask for user confirmation to change the taskComplexity context variable\n\n**If you recommend downgrading complexity:**\n- Set proposedDowngrade context variable to true\n- Clearly explain what existing utilities, patterns, or simplified scope led to this recommendation\n- Provide evidence of reduced risk and scope\n- Require user confirmation and evidence of reduced risk unless automationLevel=High and confidence >9\n- Justify why the lower complexity path is safe and appropriate\n\n**If current classification remains appropriate:**\n- Briefly confirm the classification is still accurate\n- Proceed without requesting changes\n\n**Note:** Both upgrades and downgrades are allowed with proper justification to ensure optimal workflow efficiency.",
+            "agentRole": "You are a senior technical risk assessor specializing in project complexity evaluation. Your expertise lies in identifying hidden risks and complexity factors that emerge during analysis phases, as well as recognizing when tasks are simpler than initially assessed. You excel at making decisive recommendations to ensure projects follow the appropriate rigor level.",
             "guidance": [
-                "This step allows upgrading complexity based on new insights",
-                "Only upgrade complexity if there are clear, justifiable reasons",
-                "Complexity cannot be downgraded to maintain safety",
+                "This step allows both upgrading and downgrading complexity based on new insights",
+                "Only change complexity if there are clear, justifiable reasons",
+                "For downgrades, set proposedDowngrade flag and require explicit user approval unless automationLevel=High and confidence >9",
                 "Be specific about what new information led to the reassessment",
-                "If upgrading, the workflow will continue with the higher complexity path",
-                "For high automation levels, auto-approve upgrades if confidence is very high (>9)"
+                "If changing complexity, the workflow will continue with the new complexity path",
+                "Downgrades must be justified with evidence of reduced risk/scope"
             ],
             "requireConfirmation": {
-                "or": [
-                    {"var": "automationLevel", "equals": "Low"},
-                    {"var": "automationLevel", "equals": "Medium"}
-                ]
+                "condition": "automationLevel in ['Low', 'Medium'] or proposedDowngrade == true"
             }
         },
         {
             "id": "phase-3-specification",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 3: Create Specification",
-            "prompt": "Using your codebase analysis from Phase 1, the clarified requirements from Phase 2, and any complexity re-assessment from Phase 2b, create a specification document that aligns with the existing system and addresses all identified ambiguities. Your specification should be precise, unambiguous, and fully implementable.\n\n**Task Description:**\n[Updated based on clarifications from Phase 2]\n\n**Key Objectives & Success Criteria:**\n[Refined based on codebase understanding and clarifications]\n\n**Scope and Constraints:**\n[Updated to reflect codebase realities and clarified boundaries]\n\n**IMPORTANT**: Your specification must consider:\n- Existing architectural patterns and conventions identified in your codebase analysis\n- How the proposed changes fit within the current system design\n- Potential impacts on existing components and workflows\n- Alignment with current testing strategies and code quality standards\n- All clarifications and decisions made in Phase 2\n- Any complexity insights from the re-triage assessment\n\nFinally, perform a sanity check on the current complexity classification. If you believe further adjustment is needed given your comprehensive understanding, state your reasoning and ask for confirmation before proceeding.",
+            "prompt": "Using your codebase analysis from Phase 1, the clarified requirements from Phase 2, and any complexity re-assessment from Phase 2b, create a specification document that aligns with the existing system and addresses all identified ambiguities. Your specification should be precise, unambiguous, and fully implementable.\n\n**Task Description:**\n[Updated based on clarifications from Phase 2]\n\n**Key Objectives & Success Criteria:**\n[Refined based on codebase understanding and clarifications]\n\n**Scope and Constraints:**\n[Updated to reflect codebase realities and clarified boundaries]\n\n**IMPORTANT**: Your specification must consider:\n- Existing architectural patterns and conventions identified in your codebase analysis\n- How the proposed changes fit within the current system design\n- Potential impacts on existing components and workflows\n- Alignment with current testing strategies and code quality standards\n- All clarifications and decisions made in Phase 2\n- Any complexity insights from the re-triage assessment\n\nOutput markdown content in response; use edit_file tool to create actual spec.md file if available, else request user upload.\n\nFinally, perform a sanity check on the current complexity classification. If you believe further adjustment is needed given your comprehensive understanding, state your reasoning and ask for confirmation before proceeding.",
             "agentRole": "You are a senior business analyst and technical lead specializing in requirement gathering and scope definition. Your goal is to produce a clear, comprehensive `spec.md` file that leverages your deep understanding of the existing codebase and incorporates all clarified requirements to serve as an unambiguous foundation for design and implementation.",
             "guidance": [
                 "Provide a complete task description based on all previous analysis and clarifications",
@@ -140,7 +172,7 @@
             "id": "phase-3b-create-context-doc",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 3b: Create Context Documentation",
-            "prompt": "Create a comprehensive context documentation file (`CONTEXT.md`) that captures all critical information from the workflow so far. This document is essential for enabling seamless handoffs between chat sessions when context limits are reached.\n\n**Your `CONTEXT.md` must include:**\n\n## 1. ORIGINAL TASK CONTEXT\n- Original task description and requirements\n- Complexity classification (Small/Medium/Large) and reasoning\n- Any re-triage decisions made and why\n- Automation level selected and its implications\n\n## 2. CODEBASE ANALYSIS SUMMARY\n- Key architectural patterns and conventions found\n- Relevant components, modules, and their locations\n- Testing strategies and patterns in use\n- Critical dependencies and integration points\n- Any complexity indicators discovered\n\n## 3. CLARIFICATIONS AND DECISIONS\n- Questions asked and answers received\n- Ambiguities resolved and how\n- Scope boundaries clearly defined\n- Technical approach decisions made\n\n## 4. SPECIFICATION SUMMARY\n- Core objectives and success criteria\n- Key constraints and requirements\n- Design principles to follow\n- Integration requirements\n\n## 5. WORKFLOW PROGRESS TRACKING\n- ✅ Completed phases (0, 1, 2, 2b, 3, 3b)\n- 🔄 Current phase: Architecture Design (Phase 4)\n- ⏳ Remaining phases: 4, 5, 5b, 5c, 5d, 5e, 6, 7\n- 📋 Context variables set (taskComplexity, automationLevel, etc.)\n\n## 6. HANDOFF INSTRUCTIONS\n- Files to attach when resuming\n- Key context to provide to new chat session\n- Critical decisions that must not be forgotten\n\n**Format this as a clear, scannable document that a new agent could quickly read to understand the full project context.**",
+            "prompt": "Create a comprehensive context documentation file (`CONTEXT.md`) that captures all critical information from the workflow so far. This document is essential for enabling seamless handoffs between chat sessions when context limits are reached.\n\n**For automationLevel=High, generate a summary-only version (limit 1000 words); otherwise, full update (limit 2000 words).**\n\n**Your `CONTEXT.md` must include:**\n\n## 1. ORIGINAL TASK CONTEXT\n- Original task description and requirements\n- Complexity classification (Small/Medium/Large) and reasoning\n- Any re-triage decisions made and why\n- Automation level selected and its implications\n\n## 2. CODEBASE ANALYSIS SUMMARY\n- Key architectural patterns and conventions found\n- Relevant components, modules, and their locations\n- Testing strategies and patterns in use\n- Critical dependencies and integration points\n- Any complexity indicators discovered\n\n## 3. CLARIFICATIONS AND DECISIONS\n- Questions asked and answers received\n- Ambiguities resolved and how\n- Scope boundaries clearly defined\n- Technical approach decisions made\n\n## 4. SPECIFICATION SUMMARY\n- Core objectives and success criteria\n- Key constraints and requirements\n- Design principles to follow\n- Integration requirements\n\n## 5. WORKFLOW PROGRESS TRACKING\n- ✅ Completed phases (0, 1, 2, 2b, 3, 3b)\n- 🔄 Current phase: Architecture Design (Phase 4)\n- ⏳ Remaining phases: 4, 5, 5b, 5c, 5d, 5e, 6, 7\n- 📋 Context variables set (taskComplexity, automationLevel, etc.)\n\n## 6. HANDOFF INSTRUCTIONS\n- Files to attach when resuming (e.g., spec.md via tool or user upload)\n- Key context to provide to new chat session\n- Critical decisions that must not be forgotten\n\n**Format this as a clear, scannable document using bullet points that a new agent could quickly read to understand the full project context.**",
             "agentRole": "You are a meticulous technical documentation specialist with expertise in creating comprehensive project handoff documents. Your role is to capture all critical context in a way that enables seamless continuity across different team members or chat sessions. You excel at synthesizing complex technical information into clear, actionable documentation.",
             "guidance": [
                 "This step is automatically skipped for Small tasks",
@@ -148,7 +180,8 @@
                 "Include specific file paths, component names, and technical details discovered",
                 "Reference all key decisions made in previous phases",
                 "Make the progress tracking section very clear for workflow continuation",
-                "Consider this document as critical as the specification itself"
+                "Consider this document as critical as the specification itself",
+                "Use bullet points for scannability; limit to word count based on automation level"
             ],
             "requireConfirmation": false
         },
@@ -156,7 +189,7 @@
             "id": "phase-4-architectural-design",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 4: Architectural Design",
-            "prompt": "Using the `spec.md` from the previous step, your deep codebase analysis, and all clarified requirements, create a high-level architectural design that seamlessly integrates with the existing system. Your output should be a `design.md` document that includes:\n1. **High-Level Approach:** A summary of the proposed solution that builds on existing patterns.\n2. **Component Breakdown:** Identify new or modified components, classes, or modules, showing how they fit within the current architecture.\n3. **Data Models:** Describe any changes to data structures or database schemas, considering existing data patterns.\n4. **API Contracts:** Define any new or changed API endpoints, following existing API conventions and patterns.\n5. **Key Interactions:** A diagram or description of how the major components will interact, both new and existing.\n6. **Integration Points:** Clearly identify how new components will integrate with existing systems and workflows.\n7. **Clarification Decisions:** Reference how the clarified requirements from Phase 2 influenced design decisions.\n8. **Complexity Considerations:** Address any complexity factors identified during re-triage.",
+            "prompt": "Using the `spec.md` from the previous step, your deep codebase analysis, and all clarified requirements, create a high-level architectural design that seamlessly integrates with the existing system. Your output should be a `design.md` document that includes:\n1. **High-Level Approach:** A summary of the proposed solution that builds on existing patterns.\n2. **Component Breakdown:** Identify new or modified components, classes, or modules, showing how they fit within the current architecture.\n3. **Data Models:** Describe any changes to data structures or database schemas, considering existing data patterns.\n4. **API Contracts:** Define any new or changed API endpoints, following existing API conventions and patterns.\n5. **Key Interactions:** A diagram or description of how the major components will interact, both new and existing.\n6. **Integration Points:** Clearly identify how new components will integrate with existing systems and workflows.\n7. **Clarification Decisions:** Reference how the clarified requirements from Phase 2 influenced design decisions.\n8. **Complexity Considerations:** Address any complexity factors identified during re-triage.\n\nOutput markdown content in response; use edit_file tool to create actual design.md file if available, else request user upload.",
             "agentRole": "You are a software architect specializing in translating business requirements into robust and scalable technical designs that seamlessly integrate with existing systems. Your task is to create a clear and comprehensive `design.md` that leverages existing architectural patterns while introducing necessary changes and incorporating all clarified requirements.",
             "guidance": [
                 "The `design.md` should be detailed enough for an engineer to write an implementation plan from it.",
@@ -168,17 +201,32 @@
             "requireConfirmation": false
         },
         {
+            "id": "phase-small-prep",
+            "runCondition": {"var": "taskComplexity", "equals": "Small"},
+            "title": "Phase Small: Preparation and Simplified Execution",
+            "prompt": "For this Small task, perform quick preparation before implementation:\n\n**QUICK PREP:**\n1. **Verify Assumptions:** Use tools (e.g., list_dir, grep_search) to confirm:\n   - Target files exist where expected\n   - Functions/components mentioned are present\n   - Dependencies are available\n\n2. **Complexity Check:** If you discover:\n   - Unexpected dependencies or architectural complexity\n   - Multiple integration points\n   - Significant testing requirements\n   **ESCALATE:** Recommend upgrading via re-triage (set proposedUpgrade=true) and pause for user confirmation.\n\n3. **Simple Plan:** Otherwise, create a brief plan with 2-5 discrete steps:\n   - What will be changed\n   - How it will be tested\n   - Expected outcomes\n\n**ESCAPE HATCH:** If complexities arise during this prep, recommend upgrading to Medium/Large via phase-2b re-triage rather than proceeding with insufficient analysis.\n\n**Report your findings as a simple checklist:**\nChecklist example:\n- [✅] File `src/utils.js` exists (verified via list_dir)\n- [✅] Function `calculateTotal()` found (verified via grep_search)\n- [✅] Dependencies confirmed in package.json\n- [✅] Simple 3-step plan created\n\nProceed to implementation if all checks pass, otherwise recommend re-triage.",
+            "agentRole": "You are an efficient task executor specializing in low-complexity work. Your strength is quickly validating assumptions and creating lightweight plans while maintaining awareness of when tasks exceed their initial scope. You excel at recognizing when to escalate rather than proceeding with insufficient analysis.",
+            "guidance": [
+                "This is a mini-version of PREP->IMPLEMENT->VERIFY for Small tasks",
+                "Use available tools to verify basic assumptions quickly",
+                "Escape to phase-2b re-triage if complexities are discovered",
+                "Keep the plan simple but actionable",
+                "Better to escalate than to proceed with insufficient preparation"
+            ],
+            "requireConfirmation": false
+        },
+        {
             "id": "phase-5-planning",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 5: Create Detailed Implementation Plan",
-            "prompt": "Your goal is to produce a thorough and actionable `implementation_plan.md` based on the `spec.md`, `design.md`, your deep codebase analysis, and all clarified requirements. Do not write any code. Your plan must be detailed, broken into committable phases, and justified.\n\nYour plan must include these sections:\n1.  **Goal Clarification:** Your understanding of the goal, assumptions, and success criteria from the spec and clarifications.\n2.  **Impact Assessment:** Affected codebase parts, dependencies, and risks based on the design, codebase analysis, and clarified requirements.\n3.  **Implementation Strategy:** A list of discrete, actionable steps. Each step must detail the task, its rationale, inputs, and outputs.\n4.  **Testing Strategy:** Describe how the changes will be tested, building on existing testing patterns identified in your codebase analysis.\n5.  **Failure Handling:** Define what to do if tests fail, tools don't work, or unexpected issues arise.\n6.  **Final Review Checklist:** A specific checklist of items that must be verified to consider this entire task complete. This will be used in the final review phase.\n\nPresent this as a formal proposal that demonstrates deep understanding of the requirements, clarifications, and the existing codebase.",
+            "prompt": "Your goal is to produce a thorough and actionable `implementation_plan.md` based on the `spec.md`, `design.md`, your deep codebase analysis, and all clarified requirements. Do not write any code. Your plan must be detailed, broken into committable phases, and justified.\n\nYour plan must include these sections:\n1.  **Goal Clarification:** Your understanding of the goal, assumptions, and success criteria from the spec and clarifications.\n2.  **Impact Assessment:** Affected codebase parts, dependencies, and risks based on the design, codebase analysis, and clarified requirements.\n3.  **Implementation Strategy:** A list of discrete, actionable steps. Each step must detail the task, its rationale, inputs, and outputs.\n4.  **Testing Strategy:** Describe how the changes will be tested, building on existing testing patterns identified in your codebase analysis. Mandate achieving >80% test coverage where applicable.\n5.  **Failure Handling:** Define what to do if tests fail, tools don't work, or unexpected issues arise.\n6.  **Final Review Checklist:** A specific checklist of items that must be verified to consider this entire task complete. This will be used in the final review phase.\n\nOutput markdown content in response; use edit_file tool to create actual implementation_plan.md file if available, else request user upload.\n\nPresent this as a formal proposal that demonstrates deep understanding of the requirements, clarifications, and the existing codebase.",
             "agentRole": "You are an experienced technical architect and project planner with expertise in breaking down complex development tasks into manageable, logical phases. Your strength is creating detailed, actionable plans that minimize risk while maximizing development efficiency and code quality, all while working within existing system constraints and incorporating all clarified requirements.",
             "guidance": [
                 "The agent will now proceed to critique its own plan in the next step. Withhold your final approval until after that critique.",
                 "This step is automatically skipped for Small tasks based on the complexity classification",
                 "Leverage your codebase analysis and clarified requirements to ensure the plan works within existing architectural constraints",
                 "Reference how clarified requirements influenced the planning decisions",
-                "Include explicit failure handling protocols"
+                "Include explicit failure handling protocols and quantitative metrics where applicable"
             ],
             "requireConfirmation": false
         },
@@ -186,54 +234,44 @@
             "id": "phase-5b-devil-advocate-review",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 5b: Devil's Advocate Plan Review",
-            "prompt": "Your task is to perform a 'devil's advocate' review of the implementation plan you just created in Phase 5. The objective is not to discard the plan, but to rigorously stress-test it and make it stronger. Your critique must be balanced and evidence-based.\n\nAnalyze the plan through the following lenses. For every point you make (positive or negative), you must cite specific evidence from the plan, the codebase analysis, clarified requirements, or the initial task description.\n\n1.  **Hidden Assumptions:** What assumptions does this plan make about the codebase, user behavior, or existing data that might be incorrect?\n2.  **Potential Risks & Unintended Side Effects:** What is the biggest risk of this plan? Could it impact performance, security, or another feature in a negative way?\n3.  **Overlooked Complexities or Edge Cases:** What specific edge cases (e.g., empty states, invalid inputs, race conditions) does the plan fail to explicitly address?\n4.  **Alternative Approaches:** Briefly propose at least one alternative technical approach. What are the pros and cons of the alternative versus the current plan?\n5.  **Plan Strengths:** To ensure a balanced review, explicitly state the strongest parts of the plan. What aspects are well-thought-out and likely to succeed?\n\nConclude with a balanced summary. If you found issues, provide concrete suggestions for how to amend the plan. Finally, give a confidence score (1-10) for the plan *if* your suggestions are implemented.",
+            "prompt": "Your task is to perform a 'devil's advocate' review of the implementation plan you just created in Phase 5. The objective is not to discard the plan, but to rigorously stress-test it and make it stronger. Your critique must be balanced and evidence-based.\n\nAnalyze the plan through the following lenses. For every point you make (positive or negative), you must cite specific evidence from the plan, the codebase analysis, clarified requirements, or the initial task description.\n\n1.  **Hidden Assumptions:** What assumptions does this plan make about the codebase, user behavior, or existing data that might be incorrect?\n2.  **Potential Risks & Unintended Side Effects:** What is the biggest risk of this plan? Could it impact performance, security, or another feature in a negative way?\n3.  **Overlooked Complexities or Edge Cases:** What specific edge cases (e.g., empty states, invalid inputs, race conditions) does the plan fail to explicitly address?\n4.  **Alternative Approaches:** Briefly propose at least one alternative technical approach. What are the pros and cons of the alternative versus the current plan?\n5.  **Plan Strengths:** To ensure a balanced review, explicitly state the strongest parts of the plan. What aspects are well-thought-out and likely to succeed?\n\nConclude with a balanced summary. If you found issues, provide concrete suggestions for how to amend the plan. Finally, **set the confidenceScore variable to your 1-10 rating** for the plan *if* your suggestions are implemented.",
             "agentRole": "You are a skeptical but fair senior principal engineer with 15+ years of experience in critical system development. Your role is to identify potential failure points, hidden assumptions, and overlooked complexities in technical plans. You excel at constructive criticism that strengthens plans rather than destroys them. Approach this with the rigor of a senior engineer reviewing a mission-critical system design.",
             "guidance": [
                 "This is a critical thinking step. The agent's goal is to find weaknesses in its *own* prior work to improve it. This is a sign of a high-functioning process.",
                 "Evaluate the agent's points. Not all 'risks' it identifies may be realistic. Use your judgment to decide which suggestions to incorporate into the plan.",
                 "After this review, you can ask the agent to create a final, amended version of the plan before you give your final approval to proceed with implementation.",
                 "This step is automatically skipped for Small tasks based on the complexity classification",
-                "For high automation levels with confidence >8, auto-approve if no critical risks are identified"
+                "CRITICAL: Set confidenceScore variable (1-10) in your response",
+                "For automationLevel=High with confidenceScore >8, auto-approve if no critical risks identified"
             ],
             "requireConfirmation": {
-                "or": [
-                    {"var": "automationLevel", "equals": "Low"},
-                    {"and": [
-                        {"var": "automationLevel", "equals": "Medium"}
-                    ]},
-                    {"and": [
-                        {"var": "automationLevel", "equals": "High"},
-                        {"var": "confidenceScore", "lt": 8}
-                    ]}
-                ]
+                "condition": "automationLevel in ['Low', 'Medium'] or (automationLevel == 'High' and confidenceScore < 8)"
             }
         },
         {
             "id": "phase-5c-finalize-plan",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 5c: Finalize Implementation Plan",
-            "prompt": "Review the initial `implementation_plan.md` from Phase 5 and the Devil's Advocate critique from Phase 5b. Your task is to create a final, consolidated implementation plan that incorporates the valid feedback from the review.\n\nYour output must be the final `implementation_plan.md`.\n\nAdditionally, explicitly list any suggestions from the review that you believe are valuable but out-of-scope for the current task. These should be formatted as potential tickets for future work.",
+            "prompt": "Review the initial `implementation_plan.md` from Phase 5 and the Devil's Advocate critique from Phase 5b. Your task is to create a final, consolidated implementation plan that incorporates the valid feedback from the review.\n\nYour output must be the final `implementation_plan.md`.\n\nAdditionally, explicitly list any suggestions from the review that you believe are valuable but out-of-scope for the current task. These should be formatted as potential tickets for future work.\n\nOutput updated markdown content in response; use edit_file tool to update actual implementation_plan.md file if available, else request user upload.",
             "agentRole": "You are a pragmatic technical project manager. Your goal is to synthesize feedback, make decisive trade-offs, and produce a final, actionable plan that is ready for execution.",
             "guidance": [
                 "This is the final plan that will be executed. Ensure it is clear, actionable, and reflects the best path forward.",
                 "The list of out-of-scope items helps capture valuable ideas without derailing the current task."
             ],
             "requireConfirmation": {
-                "or": [
-                    {"var": "automationLevel", "equals": "Low"},
-                    {"var": "automationLevel", "equals": "Medium"}
-                ]
+                "condition": "automationLevel in ['Low', 'Medium']"
             }
         },
         {
             "id": "phase-5d-plan-sanity-check",
             "runCondition": { "var": "taskComplexity", "not_equals": "Small" },
             "title": "Phase 5d: Plan Sanity Check",
-            "prompt": "Before starting implementation, perform a sanity check on the final `implementation_plan.md`. Your goal is to use your tools to quickly verify the plan's core assumptions against the current codebase. This is not a deep analysis, but a quick check for obvious errors.\n\nFor the key files, functions, classes, or APIs mentioned in the plan, perform the following checks:\n1.  **Existence Check:** Use tools like `grep` or `ls` to confirm that the files and primary functions/classes you plan to modify actually exist where you expect them to.\n2.  **Signature/API Check (if applicable):** Briefly check the function signatures or API endpoints you intend to use. Do they match the plan's assumptions? For example, if the plan assumes a function takes two arguments, verify that.\n3.  **Dependency Check:** If the plan relies on a specific library or module being available, quickly verify its presence (e.g., check `package.json`, `requirements.txt`, etc.).\n\n**Report your findings as a simple checklist:**\n- [✅ or ❌] File `src/example.js` exists.\n- [✅ or ❌] Function `calculateTotal()` found in `src/utils.js`.\n- [✅ or ❌] Dependency `moment` is listed in `package.json`.\n\nIf any check fails (❌), briefly explain the discrepancy and ask the user if the plan needs to be revised before proceeding.",
+            "prompt": "Before starting implementation, perform a sanity check on the final `implementation_plan.md`. Your goal is to use your tools to quickly verify the plan's core assumptions against the current codebase. This is not a deep analysis, but a quick check for obvious errors.\n\nFor the key files, functions, classes, or APIs mentioned in the plan, perform the following checks:\n1.  **Existence Check:** Use tools like `grep_search` or `list_dir` to confirm that the files and primary functions/classes you plan to modify actually exist where you expect them to.\n2.  **Signature/API Check (if applicable):** Briefly check the function signatures or API endpoints you intend to use. Do they match the plan's assumptions? For example, if the plan assumes a function takes two arguments, verify that.\n3.  **Dependency Check:** If the plan relies on a specific library or module being available, quickly verify its presence (e.g., check `package.json`, `requirements.txt`, etc.).\n\n**If tools are unavailable, note fallback and proceed with manual verification request.**\n\n**Report your findings as a simple checklist:**\nChecklist example:\n- [✅] File `src/example.js` exists (verified via list_dir)\n- [✅] Function `calculateTotal()` found in `src/utils.js` (verified via grep_search)\n- [✅] Dependency `moment` is listed in `package.json`\n\nIf any check fails (❌), briefly explain the discrepancy and ask the user if the plan needs to be revised before proceeding.",
             "agentRole": "You are a pragmatic QA engineer double-checking a plan before the development team starts work. Your job is to be quick, efficient, and focused on verifying concrete facts using tools. You are not re-evaluating the plan's logic, only its tangible connection to the codebase.",
             "guidance": [
                 "This is a quick verification step, not a full re-analysis. The goal is to catch glaring errors before implementation begins.",
-                "Use your code-browsing tools (`grep`, `ls`) to validate the plan's assumptions.",
+                "Use your code-browsing tools (grep_search, list_dir) to validate the plan's assumptions.",
+                "If tools fail, fall back to alternatives like file_search or request manual verification",
                 "If a check fails, it's crucial to pause and get human confirmation before proceeding with a potentially flawed plan."
             ],
             "requireConfirmation": false
@@ -242,43 +280,45 @@
             "id": "phase-5e-update-context-doc",
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "title": "Phase 5e: Update Context Documentation with Final Plans",
-            "prompt": "Update the `CONTEXT.md` file with all the planning work completed in Phases 4-5. This ensures the context document remains current and comprehensive for potential handoffs.\n\n**Add/Update these sections in `CONTEXT.md`:**\n\n## 4. ARCHITECTURAL DESIGN SUMMARY\n- High-level approach and rationale\n- Key components being added/modified\n- Integration points with existing systems\n- Design decisions and alternatives considered\n\n## 5. IMPLEMENTATION PLAN OVERVIEW\n- Goal clarification and success criteria\n- Implementation strategy overview\n- Key risks identified and mitigation strategies\n- Testing approach and patterns to follow\n- Failure handling protocols\n\n## 6. DEVILS ADVOCATE REVIEW INSIGHTS\n- Key concerns raised and how they were addressed\n- Plan improvements made based on the review\n- Confidence score and reasoning\n- Out-of-scope items identified for future work\n\n## 7. UPDATED WORKFLOW PROGRESS\n- ✅ Completed phases (0, 1, 2, 2b, 3, 3b, 4, 5, 5b, 5c, 5d, 5e)\n- 🔄 Current phase: Implementation (Phase 6)\n- ⏳ Remaining phases: 6, 7\n- 📁 Key files created: spec.md, design.md, implementation_plan.md, CONTEXT.md\n\n## 8. IMPLEMENTATION READINESS\n- Plan sanity check results\n- Files and dependencies verified\n- Ready-to-execute implementation steps\n- Potential handoff points during implementation\n\n**Ensure the document remains scannable and maintains all previous sections while adding the new planning context.**",
+            "prompt": "Update the `CONTEXT.md` file with all the planning work completed in Phases 4-5. This ensures the context document remains current and comprehensive for potential handoffs.\n\n**For automationLevel=High, generate a summary-only version (limit 500 words); otherwise, full update.**\n\n**Add/Update these sections in `CONTEXT.md`:**\n\n## 4. ARCHITECTURAL DESIGN SUMMARY\n- High-level approach and rationale\n- Key components being added/modified\n- Integration points with existing systems\n- Design decisions and alternatives considered\n\n## 5. IMPLEMENTATION PLAN OVERVIEW\n- Goal clarification and success criteria\n- Implementation strategy overview\n- Key risks identified and mitigation strategies\n- Testing approach and patterns to follow\n- Failure handling protocols\n\n## 6. DEVILS ADVOCATE REVIEW INSIGHTS\n- Key concerns raised and how they were addressed\n- Plan improvements made based on the review\n- Confidence score and reasoning\n- Out-of-scope items identified for future work\n\n## 7. UPDATED WORKFLOW PROGRESS\n- ✅ Completed phases (0, 1, 2, 2b, 3, 3b, 4, 5, 5b, 5c, 5d, 5e)\n- 🔄 Current phase: Implementation (Phase 6)\n- ⏳ Remaining phases: 6, 7\n- 📁 Key files created: spec.md, design.md, implementation_plan.md, CONTEXT.md\n\n## 8. IMPLEMENTATION READINESS\n- Plan sanity check results\n- Files and dependencies verified\n- Ready-to-execute implementation steps\n- Potential handoff points during implementation\n\n**Use bullet points for scannability and maintain all previous sections while adding the new planning context.**",
             "agentRole": "You are a meticulous technical documentation specialist focused on maintaining comprehensive project context. Your expertise lies in synthesizing complex planning work into clear, actionable documentation that enables seamless workflow continuation.",
             "guidance": [
                 "This step is automatically skipped for Small tasks",
                 "Maintain the scannable structure while adding substantial new planning context",
                 "Ensure all critical planning decisions are captured for potential handoffs",
                 "Update progress tracking to reflect the current state accurately",
-                "Consider this update as crucial as the original context document creation"
+                "Consider this update as crucial as the original context document creation",
+                "Limit output based on automation level; use bullet points for readability"
             ],
             "requireConfirmation": false
         },
         {
             "id": "phase-6-iterative-implementation",
             "title": "Phase 6: Iterative Implementation (PREP -> IMPLEMENT -> VERIFY)",
-            "prompt": "The implementation phase has now begun. You will now execute the approved `implementation_plan.md` step-by-step. Announce which step you are starting.\n\n**STEP TRACKING:** Track total steps executed. If >20 steps without completion, pause and summarize progress for user intervention.\n\n**CONTEXT DOCUMENTATION:** Update `CONTEXT.md` after every 3-5 implementation steps with:\n- Progress summary (steps completed vs total)\n- Current implementation status\n- Issues encountered and resolutions\n- Files modified so far\n- Remaining work overview\n- Any changes to the original plan\n\nYou will execute each step using the PREP -> IMPLEMENT -> VERIFY cycle defined in the guidance below. This process will repeat until all steps in the plan are complete.",
+            "prompt": "The implementation phase has now begun. You will now execute the approved `implementation_plan.md` step-by-step. Announce which step you are starting.\n\n**STEP TRACKING:** Track total steps executed. If >20 steps without completion, pause and summarize progress for user intervention.\n\n**CONTEXT DOCUMENTATION:** Update `CONTEXT.md` after every 5 implementation steps (or on failures) with:\n- Progress summary (steps completed vs total)\n- Current implementation status\n- Issues encountered and resolutions\n- Files modified so far\n- Remaining work overview\n- Any changes to the original plan\n\nYou will execute each step using the PREP -> IMPLEMENT -> VERIFY cycle defined in the guidance below. This process will repeat until all steps in the plan are complete.",
             "agentRole": "You are a meticulous senior software engineer focused on high-quality implementation. Your approach emphasizes careful preparation, precise execution, and thorough verification. You excel at following plans while adapting to unexpected discoveries during implementation, and you maintain excellent documentation for project continuity.",
             "guidance": [
                 "**IMPORTANT**: Do not proceed to the next workflow phase (Final Review) until all steps in the `implementation_plan.md` are marked as complete and verified.",
                 "**STEP BOUNDS**: Track total steps executed. If >20 steps without completion, pause and ask user for guidance.",
-                "**CONTEXT UPDATES**: Update CONTEXT.md regularly with implementation progress",
+                "**CONTEXT UPDATES**: Update CONTEXT.md after every 5 steps or on failures",
                 "**Efficiency Tip:** For high-confidence plans, you may provide multiple step instructions at once. I will execute them sequentially, performing the P->I->V cycle for each, and will only pause to ask for input if I encounter a verification failure or ambiguity.",
                 "**PREP:** Before implementing each step, you must first PREPARE. Re-read the step's description, confirm the previous step was completed correctly, verify the plan for this step is still valid in the current codebase, and list all required inputs or files. Do not proceed if anything is unclear.",
                 "**IMPLEMENT:** After preparation is confirmed, you will IMPLEMENT the step. Focus only on this single step. Use your tools to make the necessary code changes, adhering to all quality standards. Provide a commit message upon completion.",
-                "**VERIFY:** Immediately after implementation, you must VERIFY your work. Your verification for this step **is not complete until you have**:\n1.  **Written necessary unit/integration tests** for the new logic (as per the testing strategy).\n2.  **Run the full test suite** to ensure no regressions were introduced.\n3.  **Performed a critical self-review** of the changes against the plan, checking for code quality, side effects, and architectural alignment.\n\n**ENHANCED FAILURE PROTOCOL:** If a verification failure cannot be resolved after two attempts:\n1. **Do not try a third time**\n2. **If test failures occur:** Ask the user to run tests manually and provide output\n3. **If tool failures occur:** Ask the user to execute the failing command and share results\n4. **For critical failures:** Consider escalating by reverting changes using git reset\n5. **Update CONTEXT.md** with the failure details and current status\n6. **Present a summary** of the problem, detail your failed attempts, and recommend a course of action to the user (e.g., 'revert this step and re-plan', 'request more information', 'proceed with known issue')"
+                "**VERIFY:** Immediately after implementation, you must VERIFY your work. Your verification for this step **is not complete until you have**:\n1.  **Written necessary unit/integration tests** for the new logic (as per the testing strategy). Report metrics: Achieve >80% test coverage (use tools to measure); 0 regressions expected.\n2.  **Run the full test suite** to ensure no regressions were introduced. Use --quiet flags and output to files per custom instructions.\n3.  **Performed a critical self-review** of the changes against the plan, checking for code quality, side effects, and architectural alignment.\n\n**ENHANCED FAILURE PROTOCOL:** If a verification failure cannot be resolved after two attempts:\n1. **Do not try a third time**\n2. **For tool failures (e.g., grep):** Fall back to alternatives like `file_search` or `web_search`\n3. **If test failures occur:** Output command for user (e.g., './gradlew test --quiet --warning-mode=none --info > test_output.txt') and request manual execution per custom instructions\n4. **For critical failures:** Consider escalating by reverting changes using git reset\n5. **Update CONTEXT.md** with the failure details and current status\n6. **Present a summary** of the problem, detail your failed attempts, and recommend a course of action to the user (e.g., 'revert this step and re-plan', 'request more information', 'proceed with known issue')"
             ],
             "requireConfirmation": false
         },
         {
             "id": "phase-7-final-review",
             "title": "Phase 7: Final Review & Completion",
-            "prompt": "All planned steps have been implemented and verified. Your final goal is to perform a holistic review by validating the work against the **'Final Review Checklist'** from the `implementation_plan.md`.\n\nFor each item on that checklist, provide a confirmation and evidence that it has been met. \n\n**Additionally, create a comprehensive handoff document by updating `CONTEXT.md` with a final section:**\n\n## 9. FINAL COMPLETION STATUS\n- ✅ All implementation steps completed\n- ✅ All tests passing\n- ✅ Final review checklist validated\n- 📁 Files created/modified (complete list with descriptions)\n- 🧪 Testing completed (unit, integration, manual)\n- 📋 Known issues or limitations (if any)\n- 🔄 Deployment/next steps (if applicable)\n\n## 10. HANDOFF SUMMARY\n- What was accomplished vs original requirements\n- Key architectural decisions made and why\n- Important implementation details for future maintainers\n- Recommended follow-up work or improvements\n- Contact points or documentation for questions\n\nConclude with a summary of any potential follow-ups or new dependencies to note.",
+            "prompt": "All planned steps have been implemented and verified. Your final goal is to perform a holistic review by validating the work against the **'Final Review Checklist'** from the `implementation_plan.md`.\n\nFor each item on that checklist, provide a confirmation and evidence that it has been met. Validate metrics against checklist (e.g., coverage percentage, test results).\n\n**Additionally, create a comprehensive handoff document by updating `CONTEXT.md` with a final section:**\n\n## 9. FINAL COMPLETION STATUS\n- ✅ All implementation steps completed\n- ✅ All tests passing (include metrics: coverage %, test count)\n- ✅ Final review checklist validated\n- 📁 Files created/modified (complete list with descriptions)\n- 🧪 Testing completed (unit, integration, manual)\n- 📋 Known issues or limitations (if any)\n- 🔄 Deployment/next steps (if applicable)\n\n## 10. HANDOFF SUMMARY\n- What was accomplished vs original requirements\n- Key architectural decisions made and why\n- Important implementation details for future maintainers\n- Recommended follow-up work or improvements\n- Contact points or documentation for questions\n\nConclude with a summary of any potential follow-ups or new dependencies to note.",
             "agentRole": "You are a quality assurance specialist and technical lead responsible for final project validation and comprehensive handoff documentation. Your expertise lies in comprehensive system testing, requirement verification, and ensuring deliverables meet all specified criteria while creating documentation that enables seamless future maintenance.",
             "guidance": [
                 "This is the final quality check. Ensure the agent's summary and checklist validation align with your understanding of the completed work.",
                 "The final CONTEXT.md update should serve as a complete project archive",
                 "Include specific details that would help future developers understand and maintain the work",
-                "Ensure all promised deliverables have been completed and documented"
+                "Ensure all promised deliverables have been completed and documented",
+                "Include quantitative metrics and validation results in the final status"
             ],
             "requireConfirmation": true
         }
