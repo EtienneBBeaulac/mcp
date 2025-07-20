@@ -1,6 +1,6 @@
 {
   "agentCanUpdateSnapshot": true,
-  "install": "npm install",
+  "install": "cd workflow-orchestration && npm install",
   "start": "npm run build",
   "terminals": [
     {
