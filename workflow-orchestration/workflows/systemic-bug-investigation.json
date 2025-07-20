@@ -28,7 +28,7 @@
         "TEST INTEGRATION: Leverage existing tests to validate hypotheses where possible.",
         "LOG ENHANCEMENTS: Include class/function names in logs. For repetitive logs, implement deduplication by tracking counts and appending 'x[count]' on change and grouping logs that always follow each other (down the stack)",
         "RECURSION DEPTH: Limit recursive analysis to 3 levels deep to prevent analysis paralysis while ensuring thoroughness.",
-        "INVESTIGATION BOUNDS: If investigation exceeds 20 steps or 4 hours without root cause, pause and reassess approach with user.""
+        "INVESTIGATION BOUNDS: If investigation exceeds 20 steps or 4 hours without root cause, pause and reassess approach with user."
     ],
     "steps": [
         {

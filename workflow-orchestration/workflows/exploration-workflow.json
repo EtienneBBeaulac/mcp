@@ -1,0 +1,254 @@
+{
+    "id": "exploration-workflow",
+    "name": "Comprehensive Adaptive Exploration Workflow",
+    "version": "0.0.1",
+    "description": "A sophisticated workflow for systematically exploring and determining optimal approaches to accomplish tasks or solve problems. Features adaptive complexity paths, intelligent clarification, devil's advocate analysis, automation levels, failure bounds, and comprehensive documentation for production-ready research.",
+    "clarificationPrompts": [
+        "What specific task, problem, or question do you need to explore?",
+        "What constraints or requirements should guide the exploration? (time, budget, technical, etc.)",
+        "What's your current knowledge level with this domain? (Complete beginner, some exposure, experienced)",
+        "What type of outcome do you need? (Quick recommendation, detailed comparison, comprehensive analysis)",
+        "Are there any existing approaches or solutions you've already considered or ruled out?",
+        "What would constitute success for this exploration? How will you measure if the recommended approach works?"
+    ],
+    "preconditions": [
+        "User has a clear task, problem, or question to explore",
+        "Agent has access to research tools (web search, codebase search, etc.)",
+        "User can provide initial context, constraints, or requirements",
+        "Agent can maintain context variables throughout the workflow"
+    ],
+    "metaGuidance": [
+        "This workflow follows ANALYZE -> CLARIFY -> RESEARCH -> EVALUATE -> RECOMMEND pattern with dynamic re-triage capabilities.",
+        "Automation levels (Low/Medium/High) control confirmation requirements to balance thoroughness with efficiency.",
+        "Dynamic re-triage allows complexity upgrades and safe downgrades based on new insights from research.",
+        "Always base recommendations on evidence from multiple sources with quantified evaluations.",
+        "Context documentation is maintained throughout to enable seamless handoffs between chat sessions.",
+        "Failure bounds prevent analysis paralysis: word limits (2000), step tracking (>15), and escalation protocols.",
+        "Include trade-offs, pros, cons, and alternatives for transparency and informed decision-making.",
+        "Document all sources, methodology, and reasoning for reproducibility and validation.",
+        "Limit exploration depth based on complexity to prevent resource waste while ensuring thoroughness.",
+        "Human approval is required after Devil's Advocate review and before final recommendations.",
+        "Always provide actionable next steps and implementation guidance, not just theoretical analysis."
+    ],
+    "steps": [
+        {
+            "id": "phase-0-intelligent-triage",
+            "title": "Phase 0: Intelligent Triage & Complexity Assessment",
+            "prompt": "**ANALYZE**: Evaluate the exploration task for complexity indicators:\n\n**Simple Path Indicators:**\n- Straightforward question with well-known solutions\n- Quick lookup or established best practices\n- Clear problem definition with obvious sources\n- Low ambiguity, minimal viable options (1-3)\n- Well-documented domain with consensus\n\n**Medium Path Indicators:**\n- Requires moderate research across multiple sources\n- Several viable options to compare (3-6)\n- Some domain complexity but manageable scope\n- Moderate ambiguity with clear evaluation criteria\n- Mix of established and emerging approaches\n\n**Complex Path Indicators:**\n- Multi-faceted problem with many variables\n- Requires deep analysis across multiple domains\n- High ambiguity, many potential approaches (6+)\n- Emerging or rapidly evolving domain\n- Conflicting expert opinions or trade-offs\n\n**IMPLEMENT**: \n1. Analyze the task description for complexity indicators\n2. Recommend complexity level (Simple/Medium/Complex) with detailed reasoning\n3. Set explorationComplexity context variable\n4. Ask user to confirm or override classification\n5. For Medium tasks, ask: \"Would you like optional deep domain analysis?\" (sets requestDeepAnalysis variable)\n6. Ask: \"What automation level would you prefer? High (auto-approve low-risk decisions), Medium (standard confirmations), or Low (extra confirmations for safety)?\" (sets automationLevel variable)\n7. Ask: \"What is your time constraint for this exploration?\" (sets timeConstraint variable)\n\n**VERIFY**: Confirm classification, optional analysis preferences, and automation level before proceeding.",
+            "agentRole": "You are an exploration assessment specialist with expertise in evaluating research complexity across diverse domains. Your role is to accurately classify tasks based on domain maturity, option space, ambiguity, and research depth required. Be thorough in analysis while remaining decisive.",
+            "guidance": [
+                "Be thorough in analysis - this determines the entire workflow path",
+                "Consider both domain complexity and option space size",
+                "When in doubt, err on the side of more thorough analysis (higher complexity)",
+                "Always allow human override of classification",
+                "Set context variables for conditional step execution and automation",
+                "Automation levels: High=auto-approve confidence >8, Medium=standard, Low=extra confirmations"
+            ],
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-1-simple-lookup",
+            "runCondition": {"var": "explorationComplexity", "equals": "Simple"},
+            "title": "Phase 1: Quick Lookup & Direct Recommendation (Simple Path)",
+            "prompt": "**PREP**: Identify key search terms and reliable sources for quick resolution.\n\n**IMPLEMENT**: \n1. Perform targeted search using available tools\n2. Gather 2-3 high-quality, authoritative sources\n3. Synthesize the consensus best approach\n4. Include brief pros/cons and key considerations\n5. Provide actionable next steps\n\n**VERIFY**: Confirm recommendation directly addresses query with cited sources and clear action plan.",
+            "agentRole": "You are an efficient researcher specializing in quick, accurate information retrieval and synthesis. Your strength lies in identifying authoritative sources and extracting actionable insights rapidly.",
+            "guidance": [
+                "Focus on reliability and direct relevance",
+                "Limit to 3 sources maximum for efficiency",
+                "Provide clear, actionable recommendations",
+                "Include basic risk assessment"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-1-medium-analysis-mandatory",
+            "runCondition": {"var": "explorationComplexity", "equals": "Medium"},
+            "title": "Phase 1: Structured Research & Option Generation (Medium Path)",
+            "prompt": "**PREP**: Define research scope based on task and constraints from clarifications.\n\n**IMPLEMENT**: \n1. Conduct structured research across 4-6 diverse sources\n2. Generate 3-5 viable options with clear differentiation\n3. For each option: Describe approach, pros, cons, requirements, use cases\n4. Identify key decision factors and trade-offs\n5. Note any assumptions or unknowns\n\n**VERIFY**: Ensure options cover diverse approaches with balanced evaluation and clear differentiation.",
+            "agentRole": "You are a systematic research analyst expert in generating and comparing practical options across diverse domains. Your approach balances breadth with depth to identify viable alternatives.",
+            "guidance": [
+                "Use diverse source types for comprehensive view",
+                "Include both mainstream and innovative alternatives",
+                "Focus on practical implementability",
+                "Document research methodology"
+            ],
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-1-medium-analysis-optional",
+            "runCondition": {
+                "and": [
+                    {"var": "explorationComplexity", "equals": "Medium"},
+                    {"var": "requestDeepAnalysis", "equals": true}
+                ]
+            },
+            "title": "Phase 1b: Optional Deep Domain Analysis (Medium Path)",
+            "prompt": "You requested optional deep analysis for this Medium exploration. Your goal is to develop expert-level understanding of the domain before option evaluation.\n\n**ANALYSIS BOUNDS: Limit output to 1500 words; prioritize task-relevant insights.**\n\nYour analysis must include:\n1. **Domain Landscape**: Key players, trends, and maturity level\n2. **Technical Architecture**: Underlying technologies and patterns\n3. **Success Patterns**: What approaches have worked well and why\n4. **Common Pitfalls**: Known failure modes and how to avoid them\n5. **Emerging Trends**: New developments that might impact decisions\n6. **Expert Opinions**: Thought leader perspectives and consensus areas\n7. **Task Relevance**: Domain aspects most relevant to the specific exploration\n8. **Complexity Indicators**: Discoveries that might affect initial complexity assessment\n\nProvide summaries and examples to illustrate findings. This analysis will inform all subsequent evaluation and recommendation phases.",
+            "agentRole": "You are a domain research specialist with expertise in rapidly developing deep understanding of technical and business domains. Your approach combines systematic analysis with expert insight synthesis.",
+            "guidance": [
+                "Focus on aspects most relevant to the exploration task",
+                "Respect word limits while maximizing insight density",
+                "This analysis will inform all subsequent phases",
+                "Flag any complexity indicators that might warrant re-triage"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-1-complex-investigation",
+            "runCondition": {"var": "explorationComplexity", "equals": "Complex"},
+            "title": "Phase 1: Comprehensive Investigation (Complex Path)",
+            "prompt": "**PREP**: Break down the problem into research domains and sub-questions based on clarifications.\n\n**IMPLEMENT**: \n1. Perform comprehensive research across multiple domains and source types\n2. Identify key variables, constraints, and decision factors\n3. Generate 5-8 detailed options with variations and hybrid approaches\n4. Include risk assessments and implementation considerations\n5. Map option relationships and dependencies\n6. Document research methodology and source quality\n\n**VERIFY**: Validate comprehensive coverage of problem space with expert-level depth and systematic approach.",
+            "agentRole": "You are a strategic research investigator specializing in complex problem decomposition and comprehensive analysis. Your expertise lies in navigating ambiguous problem spaces and synthesizing insights from diverse domains.",
+            "guidance": [
+                "Use advanced research techniques including cross-domain synthesis",
+                "Document assumptions, uncertainties, and research gaps",
+                "Consider both direct and indirect approaches",
+                "Maintain systematic methodology throughout"
+            ],
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-2-informed-clarification",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "title": "Phase 2: Informed Requirements Clarification",
+            "prompt": "Based on your research from Phase 1, you now have domain understanding that reveals important clarifications needed. Your research may have uncovered trade-offs, constraints, or decision factors that weren't apparent from the initial exploration request.\n\n**Your goal is to ask specific, informed questions that will lead to optimal recommendations. Consider:**\n\n1. **Priority Trade-offs**: Which factors are most important - cost, speed, reliability, maintainability, etc.?\n2. **Context Constraints**: What environmental, technical, or organizational constraints should influence the choice?\n3. **Risk Tolerance**: How much risk is acceptable for potentially better outcomes?\n4. **Implementation Reality**: What resources, skills, or timeline constraints affect feasibility?\n5. **Success Metrics**: How will you measure if the chosen approach is working?\n6. **Integration Requirements**: How must the solution fit with existing systems or processes?\n7. **Future Considerations**: What long-term factors should influence the decision?\n8. **Complexity Concerns**: Based on research, should this exploration be more/less complex than initially classified?\n\n**Present 3-7 well-formulated questions that will significantly improve recommendation quality and implementability.**",
+            "agentRole": "You are a strategic consultant specializing in requirements elicitation based on domain research. Your expertise lies in translating research insights into precise questions that eliminate ambiguity and enable optimal decision-making.",
+            "guidance": [
+                "Ask questions that could only be formulated after domain research",
+                "Focus on questions that significantly impact recommendation quality",
+                "Avoid generic questions - make them specific to the domain and findings",
+                "Present questions in prioritized, clear manner",
+                "Include questions about potential complexity changes"
+            ],
+            "requireConfirmation": {
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"}
+                ]
+            }
+        },
+        {
+            "id": "phase-2b-dynamic-retriage",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "title": "Phase 2b: Dynamic Complexity Re-Triage",
+            "prompt": "Based on your domain research and requirements clarification, re-evaluate the initial complexity classification. New insights may have revealed:\n\n- Domain complexity greater than initially apparent\n- More/fewer viable options than expected\n- Clearer consensus or more conflicting expert opinions\n- Technical constraints that increase difficulty\n- Scope expansion based on clarified requirements\n- **OR established patterns/tools that simplify the exploration**\n\n**EVALUATE:**\n1. Review the original explorationComplexity classification\n2. Consider new information from research and clarifications\n3. Assess if complexity should be upgraded (e.g., Medium → Complex) OR downgraded (e.g., Complex → Medium)\n4. Provide detailed reasoning for any recommended changes\n\n**If you recommend upgrading complexity:**\n- Clearly explain what research insights led to this recommendation\n- Describe additional complexity or ambiguity discovered\n- Justify why the higher complexity path would be beneficial\n- Ask for user confirmation to change the explorationComplexity variable\n\n**If you recommend downgrading complexity:**\n- Set proposedDowngrade context variable to true\n- Clearly explain what patterns, consensus, or simplified scope led to this recommendation\n- Provide evidence of reduced ambiguity and clearer options\n- Require user confirmation unless automationLevel=High and confidence >8\n- Justify why the lower complexity path is appropriate\n\n**If current classification remains appropriate:**\n- Briefly confirm classification accuracy\n- Proceed without requesting changes\n\n**Note:** Both upgrades and downgrades are allowed with proper justification for optimal workflow efficiency.",
+            "agentRole": "You are a research complexity assessor specializing in domain exploration evaluation. Your expertise lies in identifying when initial complexity assumptions need adjustment based on research findings and domain understanding.",
+            "guidance": [
+                "This step allows both upgrading and downgrading complexity based on research insights",
+                "Only change complexity if there are clear, justifiable reasons",
+                "For downgrades, set proposedDowngrade flag and require explicit user approval unless automationLevel=High and confidence >8",
+                "Be specific about what research findings led to the reassessment",
+                "If changing complexity, workflow continues with new complexity path",
+                "Reset proposedDowngrade to false after user confirmation or rejection"
+            ],
+            "requireConfirmation": {
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"},
+                    {"and": [
+                        {"var": "automationLevel", "equals": "High"},
+                        {"var": "confidenceScore", "lt": 8}
+                    ]}
+                ]
+            }
+        },
+        {
+            "id": "phase-3-context-documentation",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "title": "Phase 3: Create Context Documentation",
+            "prompt": "Create a comprehensive context documentation file (`EXPLORATION_CONTEXT.md`) that captures all critical information from the workflow so far. This document enables seamless handoffs between chat sessions when context limits are reached.\n\n**For automationLevel=High, generate summary-only version (limit 1000 words); otherwise, full documentation (limit 2000 words).**\n\n**Your `EXPLORATION_CONTEXT.md` must include:**\n\n## 1. ORIGINAL EXPLORATION CONTEXT\n- Original question/problem and requirements\n- Complexity classification and reasoning\n- Any re-triage decisions and rationale\n- Automation level and time constraints\n\n## 2. DOMAIN RESEARCH SUMMARY\n- Key findings from domain analysis\n- Viable options identified and their characteristics\n- Critical decision factors and trade-offs discovered\n- Research methodology and source quality assessment\n\n## 3. CLARIFICATIONS AND DECISIONS\n- Questions asked and answers received\n- Ambiguities resolved and how\n- Priority weightings and constraints clarified\n- Risk tolerance and success criteria defined\n\n## 4. CURRENT STATUS\n- Research completeness assessment\n- Option space coverage validation\n- Key insights and patterns identified\n- Remaining unknowns or research gaps\n\n## 5. WORKFLOW PROGRESS TRACKING\n- ✅ Completed phases (0, 1, 2, 2b, 3)\n- 🔄 Current phase: Option Evaluation (Phase 4)\n- ⏳ Remaining phases: 4, 4b, 5, 6\n- 📋 Context variables set (explorationComplexity, automationLevel, etc.)\n\n## 6. HANDOFF INSTRUCTIONS\n- Key findings to highlight when resuming\n- Critical decisions that must not be forgotten\n- Methodology to continue if context is lost\n\n**Format as scannable document using bullet points for easy agent onboarding.**",
+            "agentRole": "You are a research documentation specialist with expertise in creating comprehensive exploration handoff documents. Your role is to capture all critical research context enabling seamless continuity across team members or chat sessions.",
+            "guidance": [
+                "This step is automatically skipped for Simple explorations",
+                "Create document allowing completely new agent to continue seamlessly",
+                "Include specific findings, options, and decisions discovered",
+                "Reference all key research insights from previous phases",
+                "Make progress tracking very clear for workflow continuation",
+                "Use bullet points for scannability; limit based on automation level"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-4-option-evaluation",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "title": "Phase 4: Comprehensive Option Evaluation & Ranking",
+            "prompt": "**PREP**: Define evaluation criteria based on clarified requirements, constraints, and priorities.\n\n**IMPLEMENT**: \n1. Create weighted scoring matrix with 4-6 evaluation criteria based on clarifications\n2. Score each option quantitatively (1-10 scale) with detailed rationale\n3. Calculate weighted scores and rank options\n4. Perform sensitivity analysis on key criteria weights\n5. Identify decision breakpoints and scenario dependencies\n6. Document evaluation methodology and assumptions\n\n**VERIFY**: Ensure evaluation is objective, comprehensive, and incorporates all clarified priorities.",
+            "agentRole": "You are an objective decision analyst expert in multi-criteria evaluation and quantitative assessment. Your expertise lies in translating qualitative factors into structured, defensible evaluations.",
+            "guidance": [
+                "Use at least 4-6 evaluation criteria based on clarifications",
+                "Incorporate user's stated priorities and constraints",
+                "Provide quantitative justification for all scores",
+                "Consider both direct and indirect factors",
+                "Include uncertainty and sensitivity analysis"
+            ],
+            "validationCriteria": [
+                {
+                    "type": "contains",
+                    "value": "Scoring Matrix",
+                    "message": "Must include a quantitative scoring matrix for options"
+                },
+                {
+                    "type": "contains",
+                    "value": "Weighted Score",
+                    "message": "Must include weighted scoring calculations"
+                }
+            ],
+            "hasValidation": true,
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-4b-devil-advocate-review",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "title": "Phase 4b: Devil's Advocate Evaluation Review",
+            "prompt": "Perform a 'devil's advocate' review of your option evaluation from Phase 4. The objective is to rigorously stress-test your analysis and strengthen the final recommendation. Your critique must be balanced and evidence-based.\n\nAnalyze the evaluation through these lenses, citing specific evidence:\n\n1. **Hidden Assumptions**: What assumptions does your evaluation make about user context, implementation reality, or future conditions that might be incorrect?\n2. **Evaluation Bias**: Are there systematic biases in your scoring? Do criteria weights reflect stated priorities? Are any important factors missing?\n3. **Option Blind Spots**: What alternatives or hybrid approaches might you have overlooked? Are there emerging options not fully considered?\n4. **Risk Assessment**: What are the biggest risks of the top-ranked option? What could go wrong that isn't reflected in the scoring?\n5. **Evaluation Strengths**: What aspects of your analysis are most robust and reliable? What gives you confidence in the methodology?\n\nConclude with balanced summary. If you found issues, provide concrete suggestions for improving the evaluation. **Set the confidenceScore variable to your 1-10 rating** for the evaluation quality *if* suggestions are implemented.",
+            "agentRole": "You are a skeptical but fair senior research analyst with 15+ years of experience in strategic decision analysis. Your role is to identify potential blind spots, biases, and overlooked factors in evaluation methodologies. You excel at constructive criticism that strengthens analysis rather than destroys it.",
+            "guidance": [
+                "This is critical thinking step to find weaknesses in your own analysis",
+                "Not all identified 'risks' may be realistic - be balanced",
+                "After this review, user can ask for revised evaluation before final recommendation",
+                "This step is skipped for Simple explorations",
+                "CRITICAL: Set confidenceScore variable (1-10) in your response",
+                "For automationLevel=High with confidenceScore >8, auto-approve if no critical issues"
+            ],
+            "requireConfirmation": {
+                "or": [
+                    {"var": "automationLevel", "equals": "Low"},
+                    {"var": "automationLevel", "equals": "Medium"},
+                    {"and": [
+                        {"var": "automationLevel", "equals": "High"},
+                        {"var": "confidenceScore", "lt": 8}
+                    ]}
+                ]
+            }
+        },
+        {
+            "id": "phase-5-final-recommendation",
+            "title": "Phase 5: Final Recommendation & Implementation Guidance",
+            "prompt": "**PREP**: Synthesize all findings from research, clarifications, evaluation, and devil's advocate review.\n\n**IMPLEMENT**: \n1. **Primary Recommendation**: Clearly state the optimal approach with detailed reasoning\n2. **Implementation Roadmap**: Provide step-by-step implementation guide with milestones\n3. **Alternative Options**: Include when to use top 2-3 alternatives and their trade-offs\n4. **Risk Mitigation**: Address key risks identified during devil's advocate review\n5. **Success Metrics**: Define how to measure if the approach is working\n6. **Fallback Plans**: Provide contingency options if primary approach fails\n7. **Next Steps**: Immediate actionable steps to begin implementation\n8. **Source Documentation**: Complete methodology and source references\n\n**VERIFY**: Confirm recommendation aligns with all stated constraints, priorities, and success criteria.",
+            "agentRole": "You are a strategic advisor specializing in actionable recommendations and implementation planning. Your expertise lies in translating complex analysis into clear, implementable guidance that accounts for real-world constraints.",
+            "guidance": [
+                "Make recommendation clear, specific, and immediately actionable",
+                "Include comprehensive implementation guidance",
+                "Address concerns raised in devil's advocate review",
+                "Provide multiple scenarios and contingency plans",
+                "Ensure traceability back to research and evaluation"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-6-final-documentation",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "title": "Phase 6: Final Documentation & Knowledge Transfer",
+            "prompt": "Create final comprehensive documentation by updating `EXPLORATION_CONTEXT.md` with complete exploration results and knowledge transfer information.\n\n**Add these final sections:**\n\n## 7. FINAL EVALUATION RESULTS\n- Complete scoring matrix and methodology\n- Top-ranked options with detailed comparison\n- Devil's advocate review insights and resolution\n- Confidence assessment and reasoning\n\n## 8. FINAL RECOMMENDATION\n- Primary recommendation and implementation roadmap\n- Alternative options and decision criteria for choosing them\n- Risk mitigation strategies and success metrics\n- Immediate next steps and milestones\n\n## 9. EXPLORATION COMPLETION STATUS\n- ✅ Research phases completed\n- ✅ Options identified and evaluated\n- ✅ Recommendations validated through devil's advocate review\n- 📁 Deliverables created (evaluation matrix, implementation guide)\n- 📊 Quality metrics (confidence score, source count, option coverage)\n- 📋 Limitations and assumptions documented\n\n## 10. KNOWLEDGE TRANSFER SUMMARY\n- Key insights for future similar explorations\n- Methodology lessons learned\n- Domain expertise gained\n- Recommended follow-up research areas\n- Reusable evaluation frameworks\n\nConclude with summary of exploration quality and any recommended follow-up work or monitoring.",
+            "agentRole": "You are a knowledge management specialist responsible for final project documentation and organizational learning. Your expertise lies in creating comprehensive exploration archives that enable future reference, replication, and knowledge transfer.",
+            "guidance": [
+                "This is the final knowledge capture for organizational learning",
+                "Include specific details enabling future replication",
+                "Document lessons learned and methodology insights",
+                "Ensure all promised deliverables are documented",
+                "Include quantitative quality metrics and assessments"
+            ],
+            "requireConfirmation": true
+        }
+    ]
+} 
