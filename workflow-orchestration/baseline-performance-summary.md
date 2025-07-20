@@ -15,3 +15,10 @@
 - **Validation**: Passes mcp_workrail_workflow_validate_json
 - **Note**: Syntax appears to have been fixed in commit 60c4977
 
+## Step 4: Schema Compliance Baseline
+- **Status**: ❌ 2 validation issues identified
+- **Issues Found**:
+  - Step 4 prompt exceeds 2048 character limit
+  - Step 5 prompt exceeds 2048 character limit
+- **Baseline Established**: Schema compliance issues documented for remediation
+
