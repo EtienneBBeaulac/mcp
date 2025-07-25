@@ -310,10 +310,10 @@
 
 ### Current Status
 - **Phase**: 3 (Full Loop Support) 
-- **Progress**: 9/16 steps complete (56.25%)
-- **Current Step**: 3.2 - Multi-Step Body Support
+- **Progress**: 10/16 steps complete (62.5%)
+- **Current Step**: 3.3 - Integration Tests
 - **Branch**: feature/loop-implementation
-- **All Tests**: ✅ Passing (28 workflow service tests, 11 context size tests, 19 loop validation tests)
+- **All Tests**: ✅ Passing (32 workflow service tests, 11 context size tests, 19 loop validation tests)
 
 ### Implementation Notes for Step 2.2 (COMPLETED) ✅
 - Implemented stateless while loop execution logic in WorkflowService
@@ -369,6 +369,26 @@
 - All 28 workflow service tests passing with no regressions
 - Commit: fcb30ac
 
+### Implementation Notes for Step 3.2 (COMPLETED) ✅
+- Implemented multi-step loop body support
+- Key features:
+  - Loops can now have arrays of steps as body instead of just single step reference
+  - Support for inline step definitions within loop bodies
+  - Proper handling of runConditions on individual steps within multi-step bodies
+  - Automatic clearing of completed body steps for each iteration
+- Technical changes:
+  - Updated loopBodySteps collection to include steps from array bodies
+  - Enhanced step filtering logic to handle multi-step bodies correctly
+  - Added condition evaluation for steps within multi-step bodies
+  - Updated validation engine to validate inline step arrays
+- Comprehensive test coverage:
+  - Multi-step for loops with execution order verification
+  - Multi-step forEach loops processing multiple items
+  - Multi-step loops with conditional steps (runConditions)
+  - Validation tests for multi-step workflows
+- All 32 workflow service tests passing with no regressions
+- Commit: 43dce1f
+
 ### Key Design Decisions
 - **Stateless Design**: Loop state is passed through context rather than stored in service
 - **Loop Body Isolation**: Steps referenced as loop bodies are automatically skipped unless their loop is executing
@@ -396,7 +416,7 @@
 - `tests/unit/workflow-service.test.ts` (added validation tests, fixed conflicts)
 
 ### Remaining Work
-- Phase 3: Full loop support (3 steps remaining) - IN PROGRESS
+- Phase 3: Full loop support (2 steps remaining) - IN PROGRESS
 - Phase 4: Polish & tools (4 steps)
 
 ## 11. HANDOFF INSTRUCTIONS
