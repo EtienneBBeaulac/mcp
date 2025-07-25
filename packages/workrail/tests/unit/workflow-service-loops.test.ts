@@ -32,6 +32,11 @@ describe('WorkflowService - Loop Recognition', () => {
         body: 'process-item'
       } as LoopStep,
       {
+        id: 'process-item',
+        title: 'Process Item',
+        prompt: 'Process a single item'
+      },
+      {
         id: 'step3',
         title: 'Step 3',
         prompt: 'Final step'
@@ -140,7 +145,12 @@ describe('WorkflowService - Loop Recognition', () => {
               maxIterations: 5
             },
             body: 'loop-body'
-          } as LoopStep
+          } as LoopStep,
+          {
+            id: 'loop-body',
+            title: 'Loop Body',
+            prompt: 'Execute loop body'
+          }
         ]
       };
 
