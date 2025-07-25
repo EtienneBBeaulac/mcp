@@ -397,4 +397,122 @@ describe('DefaultWorkflowService', () => {
       expect(result.step?.id).toBe('after-loop');
     });
   });
+
+  describe('getNextStep with context size monitoring', () => {
+    it('should track context size and add warnings', async () => {
+      const workflowWithContext: Workflow = {
+        id: 'context-workflow',
+        name: 'Context Workflow',
+        description: 'Workflow for testing context size',
+        version: '0.1.0',
+        steps: [
+          { id: 'step1', title: 'Step 1', prompt: 'First step' },
+          { id: 'step2', title: 'Step 2', prompt: 'Second step' }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithContext);
+
+      // Create a large context (but not too large)
+      const largeData = 'x'.repeat(50 * 1024); // 100KB
+      const result = await service.getNextStep('context-workflow', [], { data: largeData });
+      
+      expect(result.step?.id).toBe('step1');
+      expect(result.context?._contextSize).toBeGreaterThan(100000);
+      expect(result.context?._warnings).toBeUndefined(); // No warning yet
+    });
+
+    it('should add warning when context approaches size limit', async () => {
+      const workflowWithContext: Workflow = {
+        id: 'context-workflow',
+        name: 'Context Workflow',
+        description: 'Workflow for testing context size',
+        version: '0.1.0',
+        steps: [
+          { id: 'step1', title: 'Step 1', prompt: 'First step' }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithContext);
+
+      // Create a large context that triggers warning (>204KB)
+      const largeData = 'x'.repeat(105 * 1024); // 210KB
+      const result = await service.getNextStep('context-workflow', [], { data: largeData });
+      
+      expect(result.step?.id).toBe('step1');
+      expect(result.context?._warnings?.contextSize).toBeDefined();
+      expect(result.context?._warnings?.contextSize[0]).toContain('exceeds 80%');
+    });
+
+    it('should throw error when context exceeds max size', async () => {
+      const workflowWithContext: Workflow = {
+        id: 'context-workflow',
+        name: 'Context Workflow',
+        description: 'Workflow for testing context size',
+        version: '0.1.0',
+        steps: [
+          { id: 'step1', title: 'Step 1', prompt: 'First step' }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithContext);
+
+      // Create a very large context that exceeds limit (>256KB)
+      const veryLargeData = 'x'.repeat(130 * 1024); // 260KB
+      
+      await expect(
+        service.getNextStep('context-workflow', [], { data: veryLargeData })
+      ).rejects.toThrow('exceeds maximum allowed size');
+    });
+
+    it('should monitor context size during loop execution', async () => {
+      const loopWorkflow: Workflow = {
+        id: 'loop-size-workflow',
+        name: 'Loop Size Workflow',
+        description: 'Workflow with loop and growing context',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'accumulator-loop',
+            type: 'loop',
+            title: 'Accumulator Loop',
+            prompt: 'Loop that accumulates data',
+            loop: {
+              type: 'while',
+              condition: { var: 'iteration', lt: 3 },
+              maxIterations: 5
+            },
+            body: 'accumulate'
+          } as LoopStep,
+          { 
+            id: 'accumulate', 
+            title: 'Accumulate Data', 
+            prompt: 'Add more data'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(loopWorkflow);
+
+      // Start with moderate context
+      let context: any = { 
+        iteration: 0,
+        accumulated: 'x'.repeat(50 * 1024) // 100KB
+      };
+      
+      const result1 = await service.getNextStep('loop-size-workflow', [], context);
+      expect(result1.step?.id).toBe('accumulate');
+      expect(result1.context?._contextSize).toBeGreaterThan(100000);
+      
+      // Simulate accumulating more data
+      context = await service.updateContextForStepCompletion('loop-size-workflow', 'accumulate', result1.context || context);
+      context.iteration = 1;
+      context.accumulated += 'y'.repeat(55 * 1024); // Add another 110KB to ensure we exceed 80%
+      
+      const result2 = await service.getNextStep('loop-size-workflow', [], context);
+      expect(result2.step?.id).toBe('accumulate');
+      expect(result2.context?._contextSize).toBeGreaterThan(204 * 1024); // Should be over 204KB
+      expect(result2.context?._warnings?.contextSize).toBeDefined(); // Should warn now
+    });
+  });
 }); 

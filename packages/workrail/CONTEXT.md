@@ -310,10 +310,10 @@
 
 ### Current Status
 - **Phase**: 2 (Core Implementation) 
-- **Progress**: 6/16 steps complete (37.5%)
-- **Current Step**: 2.3 - Context Size Monitoring
+- **Progress**: 7/16 steps complete (43.75%)
+- **Current Step**: 2.4 - Loop Validation Rules
 - **Branch**: feature/loop-implementation
-- **All Tests**: ✅ Passing
+- **All Tests**: ✅ Passing (19 workflow service tests, 11 context size tests)
 
 ### Implementation Notes for Step 2.2 (COMPLETED) ✅
 - Implemented stateless while loop execution logic in WorkflowService
@@ -323,6 +323,19 @@
 - Added updateContextForStepCompletion method to handle loop iteration tracking
 - Fixed test conditions to use supported operators (lt, gt, not lessThan, greaterThan)
 - All loop tests passing with proper iteration tracking and completion
+
+### Implementation Notes for Step 2.3 (COMPLETED) ✅
+- Created context size utility with efficient object size calculation
+- Added context size checking at all key points:
+  - Before processing in getNextStep
+  - After loop variable injection
+  - When starting a new loop
+  - After step completion in updateContextForStepCompletion
+- Implemented size limits: 256KB max, warning at 204KB (80%)
+- Size is tracked in `_contextSize` property
+- Warnings added to `_warnings.contextSize` array
+- Handles circular references properly
+- All tests passing with proper size validation
 
 ### Key Design Decisions
 - **Stateless Design**: Loop state is passed through context rather than stored in service
@@ -339,6 +352,11 @@
 - `src/application/services/loop-step-resolver.ts`
 - `tests/unit/workflow-service.test.ts` (added loop tests, fixed conditions)
 - Test files for each component
+- `src/utils/context-size.ts` (new file)
+- `src/application/services/workflow-service.ts` (added size checks)
+- `src/types/workflow-types.ts` (added _currentLoop)
+- `tests/unit/context-size.test.ts` (new test file)
+- `tests/unit/workflow-service.test.ts` (added context size tests)
 
 ### Remaining Work
 - Phase 2: Core implementation (4 steps) - IN PROGRESS

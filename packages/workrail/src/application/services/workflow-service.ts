@@ -48,6 +48,7 @@ import { ValidationEngine } from './validation-engine';
 import { LoopStep, isLoopStep, EnhancedContext } from '../../types/workflow-types';
 import { LoopExecutionContext } from './loop-execution-context';
 import { LoopStepResolver } from './loop-step-resolver';
+import { checkContextSize } from '../../utils/context-size';
 
 /**
  * Default implementation of {@link WorkflowService} that relies on
@@ -76,6 +77,14 @@ export class DefaultWorkflowService implements WorkflowService {
     completedSteps: string[],
     context: ConditionContext = {}
   ): Promise<{ step: WorkflowStep | null; guidance: WorkflowGuidance; isComplete: boolean; context?: ConditionContext }> {
+    // Check context size before processing
+    const sizeCheck = checkContextSize(context);
+    if (sizeCheck.isError) {
+      throw new Error(`Context size (${Math.round(sizeCheck.sizeBytes / 1024)}KB) exceeds maximum allowed size (256KB)`);
+    }
+    
+    const checkedContext = sizeCheck.context;
+    
     const workflow = await this.storage.getWorkflowById(workflowId);
     if (!workflow) {
       throw new WorkflowNotFoundError(workflowId);
@@ -83,7 +92,7 @@ export class DefaultWorkflowService implements WorkflowService {
 
     // Create a mutable copy of completed steps
     const completed = [...(completedSteps || [])];
-    const enhancedContext = context as EnhancedContext;
+    const enhancedContext = checkedContext as EnhancedContext;
     
     // Build a set of step IDs that are loop bodies
     const loopBodySteps = new Set<string>();
@@ -115,6 +124,12 @@ export class DefaultWorkflowService implements WorkflowService {
           // Always inject loop variables first
           const loopEnhancedContext = loopContext.injectVariables(context);
           
+          // Check context size after injection
+          const loopSizeCheck = checkContextSize(loopEnhancedContext);
+          if (loopSizeCheck.isError) {
+            throw new Error(`Context size (${Math.round(loopSizeCheck.sizeBytes / 1024)}KB) exceeds maximum allowed size (256KB) during loop execution`);
+          }
+          
           // Return the body step for execution
           return {
             step: bodyStep,
@@ -122,7 +137,7 @@ export class DefaultWorkflowService implements WorkflowService {
               prompt: this.buildStepPrompt(bodyStep, loopContext)
             },
             isComplete: false,
-            context: loopEnhancedContext
+            context: loopSizeCheck.context
           };
         } else {
           // Multi-step body support will be implemented in Phase 3
@@ -187,8 +202,14 @@ export class DefaultWorkflowService implements WorkflowService {
         }
       };
       
+      // Check context size when starting loop
+      const loopStartSizeCheck = checkContextSize(newContext);
+      if (loopStartSizeCheck.isError) {
+        throw new Error(`Context size (${Math.round(loopStartSizeCheck.sizeBytes / 1024)}KB) exceeds maximum allowed size (256KB) when starting loop`);
+      }
+      
       // Return to get loop body
-      return this.getNextStep(workflowId, completedSteps, newContext);
+      return this.getNextStep(workflowId, completedSteps, loopStartSizeCheck.context);
     }
     
     const isComplete = !nextStep;
@@ -314,7 +335,13 @@ export class DefaultWorkflowService implements WorkflowService {
       }
     }
     
-    return enhancedContext;
+    // Check context size after update
+    const sizeCheck = checkContextSize(enhancedContext);
+    if (sizeCheck.isError) {
+      throw new Error(`Context size (${Math.round(sizeCheck.sizeBytes / 1024)}KB) exceeds maximum allowed size (256KB) after step completion`);
+    }
+    
+    return sizeCheck.context as EnhancedContext;
   }
 }
 
