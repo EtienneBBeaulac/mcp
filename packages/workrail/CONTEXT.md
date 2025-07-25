@@ -310,8 +310,8 @@
 
 ### Current Status
 - **Phase**: 4 (Polish & Tools) 
-- **Progress**: 13/16 steps complete (81.25%)
-- **Current Step**: 4.2 - Documentation
+- **Progress**: 14/16 steps complete (87.5%)
+- **Current Step**: 4.3 - Documentation
 - **Branch**: feature/loop-implementation
 - **All Tests**: ✅ Passing (32 workflow service tests, 11 context size tests, 19 loop validation tests, 7/9 integration tests, 2 performance tests, 14 migration tests)
 
@@ -455,6 +455,25 @@
   - `tests/unit/migrate-workflow.test.ts`
 - Commit: cbb93be
 
+### Implementation Notes for Step 4.2 (COMPLETED) ✅
+- Created example workflows demonstrating all loop types
+- Examples created:
+  - `simple-polling.json`: While loop for API polling pattern
+  - `simple-retry.json`: For loop for retry logic with fixed attempts
+  - `simple-batch.json`: forEach loop for batch data processing
+  - `simple-search.json`: Until loop for searching across sources
+- Key learnings:
+  - Loop steps don't have a `prompt` property
+  - Condition operators use short form: `lte`, `gte`, `lt`, `gt`, not full names
+  - All examples reference steps by ID (not inline)
+  - All examples validated against v0.1.0 schema
+- Documentation:
+  - Created comprehensive README with usage guide
+  - Explained each loop type and use case
+  - Included validation and creation tips
+- Location: `workflows/examples/loops/`
+- Commit: e259175
+
 ### Key Design Decisions
 - **Stateless Design**: Loop state is passed through context rather than stored in service
 - **Loop Body Isolation**: Steps referenced as loop bodies are automatically skipped unless their loop is executing
@@ -483,7 +502,7 @@
 
 ### Remaining Work
 - Phase 3: Full loop support - COMPLETED ✅
-- Phase 4: Polish & tools (3 steps remaining) - IN PROGRESS
+- Phase 4: Polish & tools (2 steps remaining) - IN PROGRESS
 
 ## 11. HANDOFF INSTRUCTIONS
 
