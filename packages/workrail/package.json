@@ -12,6 +12,7 @@
     "workflows"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "dev": "npm run build && node dist/mcp-server.js",
     "prepare": "npm run build",
     "watch": "tsc --watch"
@@ -34,5 +35,9 @@
     "orchestration",
     "ai-assistant",
     "task-management"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "typescript": "^5.8.3"
+  }
 }

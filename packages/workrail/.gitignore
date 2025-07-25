@@ -5,6 +5,12 @@ node_modules/
 dist/
 build/
 
+# Compiled JavaScript files (from TypeScript)
+**/*.js
+**/*.js.map
+!jest.config.cjs
+!eslint.config.js
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
