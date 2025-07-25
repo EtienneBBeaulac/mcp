@@ -184,6 +184,77 @@
             "hasValidation": true
         },
         {
+            "id": "marp-markdown-generation",
+            "title": "Generate Marp Markdown Presentation",
+            "prompt": "**PREP**: Using the detailed content, structure, visuals, and engagement elements from previous steps, create the full presentation as a Marp-flavored Markdown file.\n\n**IMPLEMENT**: Generate a complete Markdown file in Marp format:\n- Start with Marp directives (e.g., --- marp: true, theme, etc.) for styling and layout.\n- Create slides based on the outlined structure, including titles, bullet points, images, code blocks, and diagrams.\n- Incorporate speaker notes using Marp's note syntax.\n- Add engagement elements like polls or questions as annotated slides.\n- Ensure accessibility with alt text for images and proper heading structure.\n- Export the full Markdown content ready for rendering in Marp.\n\n**VERIFY**: Confirm the Markdown is valid, renders correctly in Marp, and faithfully represents the planned content without unnecessary complexity.",
+            "agentRole": "You are a Marp expert and Markdown presentation specialist with expertise in converting structured content into clean, visually appealing, and interactive Markdown-based slides. Your strength lies in using Marp features like themes, pagination, and notes to create professional presentations that are easy to edit and render.",
+            "guidance": [
+                "Reference Marp documentation for advanced features like custom CSS or slide transitions",
+                "Keep slides concise: aim for one main idea per slide with minimal text",
+                "Use relative paths for any embedded images or assets",
+                "Test rendering locally to ensure no syntax errors",
+                "Include a title slide and ending slide with call-to-action"
+            ],
+            "requireConfirmation": true,
+            "askForFiles": true,
+            "validationCriteria": [
+                {
+                    "type": "regex",
+                    "pattern": "^---\\nmarp: true",
+                    "message": "Markdown must start with Marp header directive (e.g., --- marp: true)"
+                },
+                {
+                    "type": "regex",
+                    "pattern": "---",
+                    "message": "Markdown must include slide separators (---) to divide slides"
+                },
+                {
+                    "type": "length",
+                    "min": 1000,
+                    "message": "Generated Markdown should be at least 1000 characters for a comprehensive presentation"
+                }
+            ],
+            "hasValidation": true
+        },
+        {
+            "id": "marp-presentation-generation",
+            "title": "Generate Final Presentation from Marp Markdown",
+            "prompt": "**PREP**: Using the Marp Markdown file generated in the previous step, convert it into the user's preferred output format using the optimal tool for each format.\n\n**IMPLEMENT**: \n- First, confirm the desired output format with the user:\n  - **HTML**: Use Marp CLI for web viewing and presentations with full theme support\n  - **PDF**: Use Marp CLI for printing/sharing with preserved styling\n  - **PPTX**: Use Pandoc for fully editable PowerPoint format (recommended over Marp's experimental PPTX)\n- For HTML/PDF: Use Marp CLI commands (e.g., `marp slides.md --html` or `marp slides.md --pdf`)\n- For PPTX: Use Pandoc for native, editable PowerPoint elements (`pandoc slides.md -o slides.pptx -s`)\n- If user has a custom PowerPoint template, use `--reference-doc=template.pptx` with Pandoc\n- Note: Keep Markdown simple for PPTX conversion - avoid Marp-specific CSS or advanced directives\n- Use standard Markdown image syntax (`![alt](path)`) rather than Marp-specific image features\n- Add speaker notes using HTML comments (`<!-- Speaker note here -->`) - these become PowerPoint notes\n- Verify the output renders correctly and maintains editability (especially for PPTX)\n- Provide the generated file with format-specific usage instructions\n\n**VERIFY**: Ensure the generated file is complete, error-free, and optimized for the chosen format with full editability where expected.",
+            "agentRole": "You are a presentation file conversion expert with deep knowledge of both Marp CLI and Pandoc tools. Your expertise includes selecting the optimal conversion tool for each format, troubleshooting rendering issues, and ensuring maximum editability and cross-platform compatibility for presentations.",
+            "guidance": [
+                "Use Marp CLI for HTML and PDF outputs to preserve themes and styling",
+                "Use Pandoc for PPTX to ensure fully editable text, lists, and native PowerPoint elements",
+                "Install Pandoc via 'brew install pandoc' on macOS, 'choco install pandoc' on Windows, or package manager on Linux",
+                "For PPTX: Use 'pandoc slides.md -o slides.pptx -s' for basic conversion, add '--reference-doc=template.pptx' for custom themes",
+                "Create reference templates by saving a styled blank PPTX with your desired fonts, colors, and slide masters",
+                "Test PPTX output in both PowerPoint and Google Slides - text should be selectable and editable, not images",
+                "Pandoc may not support all Marp-specific features (custom CSS, advanced directives) - keep Markdown simple for PPTX",
+                "For images: Use standard Markdown syntax ![alt](path) - Pandoc handles these better than Marp-specific image directives",
+                "Speaker notes in Markdown comments <!-- --> will become PowerPoint speaker notes in PPTX output",
+                "If conversion fails, check for unsupported Marp features and simplify the Markdown syntax"
+            ],
+            "requireConfirmation": true,
+            "askForFiles": true,
+            "validationCriteria": [
+                {
+                    "type": "regex",
+                    "pattern": "(?i)(html|pdf|pptx)",
+                    "message": "Output must specify and confirm one of the supported formats: HTML, PDF, or PPTX"
+                },
+                {
+                    "type": "regex",
+                    "pattern": "(?i)(generated.*file|marp|pandoc)",
+                    "message": "Response must reference the generated presentation file and the tool used"
+                },
+                {
+                    "type": "length",
+                    "min": 400,
+                    "message": "Generation summary and instructions should be at least 400 characters for comprehensive tool guidance"
+                }
+            ],
+            "hasValidation": true
+        },
+        {
             "id": "practice-and-timing",
             "title": "Practice & Timing Optimization",
             "prompt": "**PREP**: Develop a practice strategy to ensure confident, well-timed delivery.\n\n**IMPLEMENT**: Create a comprehensive practice plan:\n- **Run-Through Schedule**: Multiple practice sessions with increasing realism\n- **Timing Benchmarks**: Target time for each section with buffer zones\n- **Difficult Transitions**: Extra practice on challenging sections or technical demonstrations\n- **Q&A Preparation**: Anticipated questions with prepared responses\n- **Contingency Planning**: Backup plans for technical issues, timing problems, or unexpected situations\n- **Feedback Integration**: Plan for getting feedback and making final adjustments\n- **Confidence Building**: Techniques for managing nerves and maintaining energy\n\n**VERIFY**: Ensure you have a realistic practice schedule that will prepare you for confident delivery.",
