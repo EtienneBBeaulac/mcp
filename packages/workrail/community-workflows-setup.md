@@ -13,7 +13,7 @@ Your MCP server already supports community workflows via the `WORKFLOW_STORAGE_P
 mkdir -p ~/community-workflows
 cd ~/community-workflows
 git init
-git remote add origin https://github.com/your-org/workrail-community-workflows.git
+git remote add origin https://github.com/EtienneBBeaulac/workrail-community-workflows.git
 
 # Add first community workflow
 cat > example-community-workflow.json << 'EOF'
@@ -56,7 +56,7 @@ cat > sync-community-workflows.sh << 'EOF'
 set -e
 
 COMMUNITY_DIR="$HOME/.workrail/community-workflows"
-REPO_URL="https://github.com/your-org/workrail-community-workflows.git"
+REPO_URL="https://github.com/EtienneBBeaulac/mcp-community-workflows.git"
 
 # Create directory if it doesn't exist
 mkdir -p "$COMMUNITY_DIR"

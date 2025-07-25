@@ -336,7 +336,7 @@ export class GitWorkflowStorage implements IWorkflowStorage {
 export const COMMUNITY_WORKFLOW_REPOS = {
   // Official community repository
   official: {
-    repositoryUrl: 'https://github.com/your-org/workrail-community-workflows.git',
+    repositoryUrl: 'https://github.com/EtienneBBeaulac/workrail-community-workflows.git',
     branch: 'main',
     syncInterval: 60, // 1 hour
     maxFileSize: 1024 * 1024, // 1MB

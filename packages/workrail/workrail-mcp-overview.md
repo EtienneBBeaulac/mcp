@@ -2353,7 +2353,7 @@ workflow-lookup search "authentication" --tags=jwt,nodejs
     "autoUpdate": true,
     "repositories": [
       "public",
-      "https://company.internal/workflows"
+      "https://example.com/workflows"
     ]
   }
 }
