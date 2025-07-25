@@ -279,6 +279,304 @@ describe('DefaultWorkflowService', () => {
       expect(result4.isComplete).toBe(true);
     });
 
+    it('should handle until loop iterations correctly', async () => {
+      const workflowWithUntil: Workflow = {
+        id: 'until-workflow',
+        name: 'Until Workflow',
+        description: 'Workflow with until loop',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'until-loop',
+            type: 'loop',
+            title: 'Until Loop',
+            prompt: 'Loop until condition met',
+            loop: {
+              type: 'until',
+              condition: { var: 'done', equals: true },
+              maxIterations: 10,
+              iterationVar: 'iteration'
+            },
+            body: 'check-done'
+          } as LoopStep,
+          { 
+            id: 'check-done', 
+            title: 'Check Done', 
+            prompt: 'Check if done'
+          },
+          {
+            id: 'final',
+            title: 'Final',
+            prompt: 'After loop'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithUntil);
+
+      // First iteration - done is false/undefined, so loop continues
+      let context: any = { done: false };
+      const result1 = await service.getNextStep('until-workflow', [], context);
+      expect(result1.step?.id).toBe('check-done');
+      expect(result1.context?.iteration).toBe(1);
+
+      // Second iteration - still not done
+      context = await service.updateContextForStepCompletion('until-workflow', 'check-done', result1.context || context);
+      const result2 = await service.getNextStep('until-workflow', [], context);
+      expect(result2.step?.id).toBe('check-done');
+      expect(result2.context?.iteration).toBe(2);
+
+      // Third iteration - mark as done
+      context = await service.updateContextForStepCompletion('until-workflow', 'check-done', result2.context || context);
+      context.done = true;
+      const result3 = await service.getNextStep('until-workflow', [], context);
+      
+      // Should exit loop and go to final step
+      expect(result3.step?.id).toBe('final');
+    });
+
+    it('should handle for loop with fixed count', async () => {
+      const workflowWithFor: Workflow = {
+        id: 'for-workflow',
+        name: 'For Workflow',
+        description: 'Workflow with for loop',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'for-loop',
+            type: 'loop',
+            title: 'For Loop',
+            prompt: 'Loop 3 times',
+            loop: {
+              type: 'for',
+              count: 3,
+              maxIterations: 10,
+              iterationVar: 'i'
+            },
+            body: 'process-item'
+          } as LoopStep,
+          { 
+            id: 'process-item', 
+            title: 'Process Item', 
+            prompt: 'Process current iteration'
+          },
+          {
+            id: 'done',
+            title: 'Done',
+            prompt: 'All done'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithFor);
+
+      let context: any = {};
+      const iterations: number[] = [];
+
+      // Execute all 3 iterations
+      for (let i = 0; i < 3; i++) {
+        const result = await service.getNextStep('for-workflow', [], context);
+        expect(result.step?.id).toBe('process-item');
+        iterations.push(result.context?.i || 0);
+        context = await service.updateContextForStepCompletion('for-workflow', 'process-item', result.context || context);
+      }
+
+      // Check that iterations were correct
+      expect(iterations).toEqual([1, 2, 3]);
+
+      // After 3 iterations, should move to done
+      const finalResult = await service.getNextStep('for-workflow', [], context);
+      expect(finalResult.step?.id).toBe('done');
+    });
+
+    it('should handle for loop with variable count', async () => {
+      const workflowWithVarFor: Workflow = {
+        id: 'var-for-workflow',
+        name: 'Variable For Workflow',
+        description: 'Workflow with variable for loop',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'for-loop',
+            type: 'loop',
+            title: 'For Loop',
+            prompt: 'Loop n times',
+            loop: {
+              type: 'for',
+              count: 'repeatCount',
+              maxIterations: 10
+            },
+            body: 'action'
+          } as LoopStep,
+          { 
+            id: 'action', 
+            title: 'Action', 
+            prompt: 'Do something'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithVarFor);
+
+      // Test with count from context
+      let context: any = { repeatCount: 2 };
+      
+      // First iteration
+      const result1 = await service.getNextStep('var-for-workflow', [], context);
+      expect(result1.step?.id).toBe('action');
+      
+      // Second iteration
+      context = await service.updateContextForStepCompletion('var-for-workflow', 'action', result1.context || context);
+      const result2 = await service.getNextStep('var-for-workflow', [], context);
+      expect(result2.step?.id).toBe('action');
+      
+      // Should complete after 2 iterations
+      context = await service.updateContextForStepCompletion('var-for-workflow', 'action', result2.context || context);
+      const result3 = await service.getNextStep('var-for-workflow', [], context);
+      expect(result3.isComplete).toBe(true);
+    });
+
+    it('should handle forEach loop over array', async () => {
+      const workflowWithForEach: Workflow = {
+        id: 'foreach-workflow',
+        name: 'ForEach Workflow',
+        description: 'Workflow with forEach loop',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'foreach-loop',
+            type: 'loop',
+            title: 'ForEach Loop',
+            prompt: 'Process each item',
+            loop: {
+              type: 'forEach',
+              items: 'itemsToProcess',
+              maxIterations: 10,
+              itemVar: 'currentItem',
+              indexVar: 'currentIndex'
+            },
+            body: 'process'
+          } as LoopStep,
+          { 
+            id: 'process', 
+            title: 'Process', 
+            prompt: 'Process the item'
+          },
+          {
+            id: 'summary',
+            title: 'Summary',
+            prompt: 'Summarize results'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithForEach);
+
+      const items = ['apple', 'banana', 'cherry'];
+      let context: any = { itemsToProcess: items, processedItems: [] };
+
+      // Process each item
+      for (let i = 0; i < items.length; i++) {
+        const result = await service.getNextStep('foreach-workflow', [], context);
+        expect(result.step?.id).toBe('process');
+        expect(result.context?.currentItem).toBe(items[i]);
+        expect(result.context?.currentIndex).toBe(i);
+        
+        // Simulate processing and use the enhanced context for next iteration
+        if (result.context) {
+          result.context.processedItems.push(result.context.currentItem);
+          context = await service.updateContextForStepCompletion('foreach-workflow', 'process', result.context);
+        }
+      }
+
+      // After all items, should move to summary
+      const finalResult = await service.getNextStep('foreach-workflow', [], context);
+      expect(finalResult.step?.id).toBe('summary');
+      expect(context.processedItems).toEqual(items);
+    });
+
+    it('should handle forEach with empty array', async () => {
+      const workflowWithEmptyForEach: Workflow = {
+        id: 'empty-foreach-workflow',
+        name: 'Empty ForEach Workflow',
+        description: 'Workflow with empty forEach loop',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'foreach-loop',
+            type: 'loop',
+            title: 'ForEach Loop',
+            prompt: 'Process each item',
+            loop: {
+              type: 'forEach',
+              items: 'emptyList',
+              maxIterations: 10
+            },
+            body: 'process'
+          } as LoopStep,
+          { 
+            id: 'process', 
+            title: 'Process', 
+            prompt: 'Process the item'
+          },
+          {
+            id: 'no-items',
+            title: 'No Items',
+            prompt: 'No items to process'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithEmptyForEach);
+
+      // Empty array should skip loop body entirely
+      const context = { emptyList: [] };
+      const result = await service.getNextStep('empty-foreach-workflow', [], context);
+      expect(result.step?.id).toBe('no-items');
+    });
+
+    it('should handle forEach with non-array value gracefully', async () => {
+      const workflowWithBadForEach: Workflow = {
+        id: 'bad-foreach-workflow',
+        name: 'Bad ForEach Workflow',
+        description: 'Workflow with bad forEach loop',
+        version: '0.1.0',
+        steps: [
+          {
+            id: 'foreach-loop',
+            type: 'loop',
+            title: 'ForEach Loop',
+            prompt: 'Process each item',
+            loop: {
+              type: 'forEach',
+              items: 'notAnArray',
+              maxIterations: 10
+            },
+            body: 'process'
+          } as LoopStep,
+          { 
+            id: 'process', 
+            title: 'Process', 
+            prompt: 'Process the item'
+          },
+          {
+            id: 'fallback',
+            title: 'Fallback',
+            prompt: 'Fallback step'
+          }
+        ]
+      };
+
+      mockStorage.getWorkflowById.mockResolvedValue(workflowWithBadForEach);
+
+      // Non-array value should skip loop and add warning
+      const context = { notAnArray: 'not an array' };
+      const result = await service.getNextStep('bad-foreach-workflow', [], context);
+      expect(result.step?.id).toBe('fallback');
+      expect(result.context?._warnings?.loops?.['foreach-loop']).toBeDefined();
+      expect(result.context?._warnings?.loops?.['foreach-loop'][0]).toContain('Expected array');
+    });
+
     it('should inject loop variables into context', async () => {
       const workflowWithVars: Workflow = {
         id: 'vars-workflow',
@@ -309,11 +607,11 @@ describe('DefaultWorkflowService', () => {
 
       mockStorage.getWorkflowById.mockResolvedValue(workflowWithVars);
 
-      // First iteration should have loopCount = 0
+      // First iteration should have loopCount = 1 (1-based counting)
       const result1 = await service.getNextStep('vars-workflow', [], { shouldContinue: true });
       expect(result1.step?.id).toBe('check-var');
       // Context should have loop variables injected
-      expect(result1.context).toHaveProperty('loopCount', 0);
+      expect(result1.context).toHaveProperty('loopCount', 1);
     });
 
     it('should respect max iterations limit', async () => {

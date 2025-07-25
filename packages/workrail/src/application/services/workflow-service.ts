@@ -196,7 +196,27 @@ export class DefaultWorkflowService implements WorkflowService {
       if (!loopContext.shouldContinue(context)) {
         // Loop condition is false from the start, skip it
         completed.push(nextStep.id);
-        return this.getNextStep(workflowId, completed, context);
+        
+        // Preserve loop state including any warnings
+        const skipContext: EnhancedContext = { ...context };
+        if (!skipContext._loopState) {
+          skipContext._loopState = {};
+        }
+        skipContext._loopState[nextStep.id] = loopContext.getCurrentState();
+        
+        // Inject any warnings from the skipped loop
+        const loopState = loopContext.getCurrentState();
+        if (loopState.warnings && loopState.warnings.length > 0) {
+          if (!skipContext._warnings) {
+            skipContext._warnings = {};
+          }
+          if (!skipContext._warnings.loops) {
+            skipContext._warnings.loops = {};
+          }
+          skipContext._warnings.loops[nextStep.id] = [...loopState.warnings];
+        }
+        
+        return this.getNextStep(workflowId, completed, skipContext);
       }
       
       // Set current loop in context
@@ -207,6 +227,12 @@ export class DefaultWorkflowService implements WorkflowService {
           loopStep: loopStep
         }
       };
+      
+      // Save loop state after initialization
+      if (!newContext._loopState) {
+        newContext._loopState = {};
+      }
+      newContext._loopState[nextStep.id] = loopContext.getCurrentState();
       
       // Check context size when starting loop
       const loopStartSizeCheck = checkContextSize(newContext);

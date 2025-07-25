@@ -20,8 +20,8 @@ export class LoopExecutionContext {
       warnings: []
     };
 
-    // Initialize forEach-specific state
-    if (loopConfig.type === 'forEach' && loopConfig.items) {
+    // Initialize forEach-specific state only if not already present
+    if (loopConfig.type === 'forEach' && loopConfig.items && this.state.index === undefined) {
       this.state.index = 0;
     }
   }
@@ -117,7 +117,7 @@ export class LoopExecutionContext {
 
     // Inject iteration counter
     const iterationVar = this.loopConfig.iterationVar || 'currentIteration';
-    enhanced[iterationVar] = this.state.iteration;
+    enhanced[iterationVar] = this.state.iteration + 1;
 
     // Inject forEach-specific variables
     if (this.loopConfig.type === 'forEach' && this.state.items) {
