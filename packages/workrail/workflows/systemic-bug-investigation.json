@@ -35,7 +35,7 @@
         "CONTEXT DOCUMENTATION: Maintain INVESTIGATION_CONTEXT.md throughout. Update after major milestones, failures, or user interventions to enable seamless handoffs between sessions.",
         "GIT FALLBACK STRATEGY: If git unavailable, gracefully skip commits/branches, log changes manually in CONTEXT.md with timestamps, warn user, document modifications for manual control.",
         "GIT ERROR HANDLING: Use run_terminal_cmd for git operations; if fails, output exact command for user manual execution. Never halt investigation due to git unavailability.",
-        "TOOL AVAILABILITY AWARENESS: Check debugging tool availability before investigation design. Have fallbacks for when primary tools unavailable (grep→file_search, etc).",
+        "TOOL AVAILABILITY AWARENESS: Check debugging tool availability before investigation design. Have fallbacks for when primary tools unavailable (grep\u2192file_search, etc).",
         "SECURITY PROTOCOLS: Sanitize sensitive data in logs/reproduction steps. Be mindful of exposing credentials, PII, or system internals during evidence collection phases.",
         "DYNAMIC RE-TRIAGE: Allow complexity upgrades during investigation if evidence reveals deeper issues. Safe downgrades only with explicit user confirmation after evidence review.",
         "DEVIL'S ADVOCATE REVIEW: Actively challenge primary hypothesis with available evidence. Seek alternative explanations and rate alternative likelihood before final confidence assessment.",
@@ -96,16 +96,14 @@
             ]
         },
         {
-            "id": "phase-2-hypothesis-formation",
-            "title": "Phase 2: Evidence-Based Hypothesis Formation",
-            "prompt": "**HYPOTHESIS GENERATION FROM EVIDENCE** - Based on codebase analysis, formulate testable hypotheses about the bug's root cause.\n\n**STEP 1: Evidence-Based Hypothesis Development**\nCreate maximum 5 prioritized hypotheses. Each includes:\n- **Root Cause Theory**: Specific technical explanation\n- **Supporting Evidence**: Code patterns/logic flows supporting this theory\n- **Failure Mechanism**: Exact sequence leading to observed bug\n- **Testability Score**: Quantified assessment (1-10) of validation ease\n- **Evidence Strength Score**: Quantified assessment (1-10) based on code findings\n\n**STEP 2: Hypothesis Prioritization Matrix**\nRank hypotheses using weighted scoring:\n- **Evidence Strength** (40%): Code analysis support for theory\n- **Testability** (35%): Validation ease with debugging instruments\n- **Impact Scope** (25%): How well this explains all symptoms\n\n**STEP 3: Hypothesis Validation Strategy**\nFor top 3 hypotheses, define:\n- **Required Evidence**: Specific evidence to confirm/refute hypothesis\n- **Debugging Approach**: Instrumentation/tests providing evidence\n- **Success Criteria**: Results proving hypothesis correct\n- **Confidence Threshold**: Minimum evidence quality needed\n\n**STEP 4: Hypothesis Documentation**\nCreate structured registry:\n- **Hypothesis ID**: H1, H2, H3 for tracking\n- **Status**: Active, Refuted, Confirmed\n- **Evidence Log**: Supporting and contradicting evidence\n- **Validation Plan**: Specific testing approach\n\n**STEP 5: Coverage Check**\nEnsure hypotheses cover diverse categories (logic, state, dependencies) with deep analysis.\n\n**CRITICAL RULE**: All hypotheses must be based on concrete evidence from code analysis, not assumptions.\n\n**OUTPUTS**: Maximum 5 hypotheses with quantified scoring, top 3 selected for validation with structured documentation.",
+            "id": "phase-2a-hypothesis-development",
+            "title": "Phase 2a: Hypothesis Development & Prioritization",
+            "prompt": "**HYPOTHESIS GENERATION** - Based on codebase analysis, formulate testable hypotheses about the bug's root cause.\n\n**STEP 1: Evidence-Based Hypothesis Development**\nCreate maximum 5 prioritized hypotheses. Each includes:\n- **Root Cause Theory**: Specific technical explanation\n- **Supporting Evidence**: Code patterns/logic flows supporting this theory\n- **Failure Mechanism**: Exact sequence leading to observed bug\n- **Testability Score**: Quantified assessment (1-10) of validation ease\n- **Evidence Strength Score**: Quantified assessment (1-10) based on code findings\n\n**STEP 2: Hypothesis Prioritization Matrix**\nRank hypotheses using weighted scoring:\n- **Evidence Strength** (40%): Code analysis support for theory\n- **Testability** (35%): Validation ease with debugging instruments\n- **Impact Scope** (25%): How well this explains all symptoms\n\n**CRITICAL RULE**: All hypotheses must be based on concrete evidence from code analysis.\n\n**OUTPUTS**: Maximum 5 hypotheses with quantified scoring, ranked by priority.",
             "agentRole": "You are a senior software detective and root cause analysis expert with deep expertise in systematic hypothesis formation. Your strength lies in connecting code evidence to potential failure mechanisms and creating testable theories. You excel at logical reasoning and evidence-based deduction. You must maintain rigorous quantitative standards and reject any hypothesis not grounded in concrete code evidence.",
             "guidance": [
                 "EVIDENCE-BASED ONLY: Every hypothesis must be grounded in concrete code analysis findings with quantified evidence scores",
                 "HYPOTHESIS LIMITS: Generate maximum 5 hypotheses to prevent analysis paralysis",
-                "QUANTIFIED SCORING: Use 1-10 scales for evidence strength and testability with clear criteria",
-                "STRUCTURED DOCUMENTATION: Create formal hypothesis registry with tracking IDs and status",
-                "VALIDATION RIGOR: Only proceed with top 3 hypotheses that meet minimum evidence thresholds"
+                "QUANTIFIED SCORING: Use 1-10 scales for evidence strength and testability with clear criteria"
             ],
             "validationCriteria": [
                 {
@@ -117,16 +115,30 @@
                     "type": "contains",
                     "value": "Testability Score",
                     "message": "Must include quantified testability scoring (1-10) for each hypothesis"
-                },
+                }
+            ],
+            "hasValidation": true
+        },
+        {
+            "id": "phase-2b-hypothesis-validation-strategy",
+            "title": "Phase 2b: Hypothesis Validation Strategy & Documentation",
+            "prompt": "**HYPOTHESIS VALIDATION PLANNING** - For the top 3 hypotheses, create validation strategies and documentation.\n\n**STEP 1: Hypothesis Validation Strategy**\nFor top 3 hypotheses, define:\n- **Required Evidence**: Specific evidence to confirm/refute hypothesis\n- **Debugging Approach**: Instrumentation/tests providing evidence\n- **Success Criteria**: Results proving hypothesis correct\n- **Confidence Threshold**: Minimum evidence quality needed\n\n**STEP 2: Hypothesis Documentation**\nCreate structured registry:\n- **Hypothesis ID**: H1, H2, H3 for tracking\n- **Status**: Active, Refuted, Confirmed\n- **Evidence Log**: Supporting and contradicting evidence\n- **Validation Plan**: Specific testing approach\n\n**STEP 3: Coverage Check**\nEnsure hypotheses cover diverse categories (logic, state, dependencies) with deep analysis.\n\n**OUTPUTS**: Top 3 hypotheses selected for validation with structured documentation and validation plans.",
+            "agentRole": "You are a systematic testing strategist and documentation expert. Your strength lies in creating clear validation plans and maintaining rigorous documentation standards for hypothesis tracking and evidence collection.",
+            "guidance": [
+                "STRUCTURED DOCUMENTATION: Create formal hypothesis registry with tracking IDs and status",
+                "VALIDATION RIGOR: Only proceed with top 3 hypotheses that meet minimum evidence thresholds",
+                "COMPREHENSIVE PLANNING: Each hypothesis must have clear validation approach and success criteria"
+            ],
+            "validationCriteria": [
                 {
                     "type": "contains",
                     "value": "Hypothesis ID",
-                    "message": "Must assign tracking IDs (H1, H2, H3, etc.) to each hypothesis"
+                    "message": "Must assign tracking IDs (H1, H2, H3) to each hypothesis"
                 },
                 {
                     "type": "regex",
-                    "pattern": "H[1-5]",
-                    "message": "Must use proper hypothesis ID format (H1, H2, H3, H4, H5)"
+                    "pattern": "H[1-3]",
+                    "message": "Must use proper hypothesis ID format (H1, H2, H3)"
                 }
             ],
             "hasValidation": true
@@ -134,7 +146,7 @@
         {
             "id": "phase-3-debugging-instrumentation",
             "title": "Phase 3: Debugging Instrumentation Setup",
-            "prompt": "**SYSTEMATIC DEBUGGING INSTRUMENTATION** - Implement debugging mechanisms to gather evidence for hypothesis validation.\n\n**STEP 1: Instrumentation Strategy**\nBased on `projectType` and `debuggingMechanism`, choose approaches:\n- **Logging**: Strategic log statements for state/flow capture\n- **Print Debugging**: Console output for immediate feedback\n- **Test Modifications**: Enhanced test cases with assertions\n- **Debugging Tests**: New test cases for hypothesis validation\n- **Profiling**: Performance monitoring if relevant\n\n**STEP 2: Strategic Implementation**\nFor top-priority hypotheses, implement:\n- **Entry/Exit Logging**: Function entry/exit with parameter/return values\n- **State Capture**: Critical variable values at key decision points\n- **Flow Tracing**: Execution path tracking through complex logic\n- **Error Context**: Enhanced error messages with diagnostic information\n- **Timing Information**: Timestamps for race conditions/performance issues\n\n**LOG DEDUPLICATION**: For high-frequency logs:\n- **Pattern Recognition**: Group similar logs (calls, validation, cache)\n- **Count Tracking**: Emit indicators ('validateUser [x10] - last: user123')\n- **Log Grouping**: Combine sequential ('checkAuth → validateToken → queryDB')\n- **Time Windows**: Use 50-100ms windows for related operations\n- **Summaries**: Provide counts ('validateUser [x47 total]')\n\n**SUB-ANALYSIS METADATA**: Include metadata to facilitate future sub-analysis:\n- **Hypothesis Tags**: Prefix logs with hypothesis IDs (e.g., 'H1_DEBUG: cache miss for key X')\n- **Structured Format**: Use consistent log patterns for easy parsing (timestamps, component names, operation types)\n- **Context Preservation**: Include sufficient context in each log entry for standalone analysis\n- **Searchable Patterns**: Design log messages with clear search terms and regex-friendly formats\n\nInclude class/function names. Preserve diagnostic info while ensuring sub-analysis compatibility.\n\n**STEP 3: Instrumentation Validation**\nVerify instrumentation:\n- **Covers All Hypotheses**: Each hypothesis has debugging output\n- **Maintains Code Safety**: Debugging doesn't alter production behavior\n- **Provides Clear Evidence**: Output confirms/refutes hypotheses\n- **Handles Edge Cases**: Works for all execution paths\n\n**STEP 4: Execution Instructions**\nProvide clear instructions for:\n- **Running instrumented code**: Specific commands/procedures\n- **Expected patterns**: What to look for in each hypothesis\n- **Result capture**: Complete log/output collection\n\n**OUTPUTS**: Instrumented code ready for execution.",
+            "prompt": "**DEBUGGING INSTRUMENTATION** - Implement mechanisms to gather evidence for hypothesis validation.\n\n**STEP 1: Strategy Selection**\nChoose approach based on `projectType`:\n- **Logging**: Strategic state/flow capture\n- **Print Debug**: Console output\n- **Test Mods**: Enhanced test assertions\n- **Debug Tests**: New validation tests\n- **Profiling**: Performance monitoring\n\n**STEP 2: Implementation**\nFor top hypotheses:\n- **Entry/Exit**: Function calls with params/returns\n- **State**: Variable values at decision points\n- **Flow**: Execution path tracking\n- **Error Context**: Enhanced error messages\n- **Timing**: Timestamps for race conditions\n\n**LOG DEDUPLICATION**:\n- **Pattern Groups**: Similar logs (validateUser)\n- **Count Track**: Indicators ('x10 - last: user123')\n- **Grouping**: Sequential ('auth\u2192token\u2192db')\n- **Windows**: 50-100ms for related ops\n- **Summaries**: Total counts ('x47 total')\n\n**SUB-ANALYSIS META**:\n- **H-Tags**: Prefix with hypothesis IDs ('H1_DEBUG:')\n- **Format**: Consistent patterns (timestamp, component)\n- **Context**: Standalone analysis info\n- **Searchable**: Clear terms and regex patterns\n\n**STEP 3: Validation**\n- All hypotheses covered\n- Code safety maintained\n- Clear evidence provided\n- Edge cases handled\n\n**STEP 4: Execution**\n- Running commands\n- Expected patterns\n- Result capture\n\n**OUTPUTS**: Instrumented code ready.",
             "agentRole": "You are a debugging instrumentation specialist and diagnostic expert with extensive experience in systematic evidence collection. Your expertise lies in implementing non-intrusive debugging mechanisms that provide clear evidence for hypothesis validation. You excel at strategic instrumentation that maximizes diagnostic value.",
             "guidance": [
                 "STRATEGIC PLACEMENT: Place instrumentation at points that will provide maximum diagnostic value",
@@ -156,17 +168,25 @@
             ]
         },
         {
-            "id": "phase-5-root-cause-confirmation",
-            "title": "Phase 5: Root Cause Confirmation",
-            "prompt": "**ROOT CAUSE CONFIRMATION** - Based on collected evidence, I will confirm the definitive root cause with high confidence.\n\n**STEP 1: Evidence Synthesis**\n- **Sub-Analysis Integration**: Incorporate sub-analysis summaries per guidance\n- **Primary Hypothesis**: Identify strongest evidence-supported hypothesis\n- **Eliminate Alternatives**: Rule out other hypotheses based on evidence\n- **Address Contradictions**: Resolve conflicting evidence or findings\n- **Validate Completeness**: Ensure hypothesis explains all symptoms\n\n**STEP 2: Objective Evidence Verification**\n- **Evidence Diversity**: Minimum 3 independent supporting sources\n- **Reproducibility**: Evidence consistently reproducible across test runs\n- **Specificity**: Evidence directly relates to hypothesis, not circumstantial\n- **Contradiction Resolution**: Conflicting evidence explicitly addressed\n\n**STEP 3: Adversarial Challenge Protocol**\n- **Devil's Advocate Analysis**: Argue against primary hypothesis\n- **Alternative Explanations**: Identify 2+ alternative explanations for evidence\n- **Confidence Calibration**: Rate certainty on calibrated scale with reasoning\n- **Uncertainty Documentation**: List remaining unknowns and impact\n\n**STEP 4: Confidence Assessment Matrix**\n- **Evidence Quality Score** (1-10): Reliability and completeness of supporting evidence\n- **Explanation Completeness** (1-10): How well root cause explains all symptoms\n- **Alternative Likelihood** (1-10): Probability alternatives are correct (inverted)\n- **Final Confidence** = (Evidence Quality \u00d7 0.4) + (Completeness \u00d7 0.4) + (Alternative \u00d7 0.2)\n\n**CONFIDENCE THRESHOLD**: Proceed only if Final Confidence \u2265 9.0/10. If below, recommend additional investigation with specific evidence gaps.\n\n**OUTPUTS**: High-confidence root cause with quantified assessment and adversarial validation.",
-            "agentRole": "You are a senior root cause analysis expert and forensic investigator with deep expertise in systematic evidence evaluation and definitive conclusion formation. Your strength lies in synthesizing complex evidence into clear, confident determinations. You excel at maintaining rigorous standards for certainty while providing actionable insights. You must actively challenge your own conclusions and maintain objective, quantified confidence assessments.",
+            "id": "phase-5a-evidence-synthesis",
+            "title": "Phase 5a: Evidence Synthesis & Verification",
+            "prompt": "**EVIDENCE SYNTHESIS** - Synthesize all collected evidence to identify the root cause.\n\n**STEP 1: Evidence Synthesis**\n- **Sub-Analysis Integration**: Incorporate sub-analysis summaries per guidance\n- **Primary Hypothesis**: Identify strongest evidence-supported hypothesis\n- **Eliminate Alternatives**: Rule out other hypotheses based on evidence\n- **Address Contradictions**: Resolve conflicting evidence or findings\n- **Validate Completeness**: Ensure hypothesis explains all symptoms\n\n**STEP 2: Objective Evidence Verification**\n- **Evidence Diversity**: Minimum 3 independent supporting sources\n- **Reproducibility**: Evidence consistently reproducible across test runs\n- **Specificity**: Evidence directly relates to hypothesis, not circumstantial\n- **Contradiction Resolution**: Conflicting evidence explicitly addressed\n\n**OUTPUTS**: Primary hypothesis identified with comprehensive evidence synthesis and verification.",
+            "agentRole": "You are a forensic evidence analyst specializing in systematic evidence evaluation. Your expertise lies in synthesizing complex evidence from multiple sources into clear conclusions while maintaining objectivity.",
             "guidance": [
                 "OBJECTIVE VERIFICATION: Use quantified evidence quality criteria, not subjective assessments",
+                "EVIDENCE CITATION: Support every conclusion with specific, reproducible evidence",
+                "SUB-ANALYSIS INTEGRATION: Verify sub-analysis summaries meet diversity and reproducibility criteria"
+            ]
+        },
+        {
+            "id": "phase-5b-confidence-assessment",
+            "title": "Phase 5b: Adversarial Challenge & Confidence Assessment",
+            "prompt": "**CONFIDENCE ASSESSMENT** - Challenge the root cause conclusion and quantify confidence.\n\n**STEP 1: Adversarial Challenge Protocol**\n- **Devil's Advocate Analysis**: Argue against primary hypothesis\n- **Alternative Explanations**: Identify 2+ alternative explanations for evidence\n- **Confidence Calibration**: Rate certainty on calibrated scale with reasoning\n- **Uncertainty Documentation**: List remaining unknowns and impact\n\n**STEP 2: Confidence Assessment Matrix**\n- **Evidence Quality Score** (1-10): Reliability and completeness of supporting evidence\n- **Explanation Completeness** (1-10): How well root cause explains all symptoms\n- **Alternative Likelihood** (1-10): Probability alternatives are correct (inverted)\n- **Final Confidence** = (Evidence Quality \u00d7 0.4) + (Completeness \u00d7 0.4) + (Alternative \u00d7 0.2)\n\n**CONFIDENCE THRESHOLD**: Proceed only if Final Confidence \u2265 9.0/10. If below, recommend additional investigation with specific evidence gaps.\n\n**OUTPUTS**: High-confidence root cause with quantified assessment and adversarial validation.",
+            "agentRole": "You are a senior root cause analysis expert and forensic investigator with deep expertise in systematic evidence evaluation and definitive conclusion formation. Your strength lies in synthesizing complex evidence into clear, confident determinations. You excel at maintaining rigorous standards for certainty while providing actionable insights. You must actively challenge your own conclusions and maintain objective, quantified confidence assessments.",
+            "guidance": [
                 "ADVERSARIAL MINDSET: Actively challenge your own conclusions with available evidence",
                 "CONFIDENCE CALIBRATION: Use mathematical framework for confidence scoring, not intuition",
-                "UNCERTAINTY DOCUMENTATION: Explicitly list all remaining unknowns and their impact",
-                "EVIDENCE CITATION: Support every conclusion with specific, reproducible evidence",
-                "SUB-ANALYSIS INTEGRATION: For Step 1, verify sub-analysis summaries meet diversity and reproducibility criteria (min 3 evidence sources). Include sub-analysis findings in hypothesis confirmation. Cross-reference sub-analysis anomaly flags when eliminating alternatives. Address discrepancies between direct and sub-analysis results. Ensure all evidence sources (main and sub-analysis) are documented."
+                "UNCERTAINTY DOCUMENTATION: Explicitly list all remaining unknowns and their impact"
             ],
             "validationCriteria": [
                 {
