@@ -249,13 +249,13 @@ describe('LoopExecutionContext', () => {
         items: 'myItems',
         maxIterations: 10
       };
-      
+
       const context = new LoopExecutionContext('test-loop', config);
       const executionContext: ConditionContext = { myItems: ['a', 'b', 'c'] };
-      
+
       context.initializeForEach(executionContext);
       const state = context.getCurrentState();
-      
+
       expect(state.items).toEqual(['a', 'b', 'c']);
       expect(state.index).toBe(0);
     });
@@ -266,15 +266,37 @@ describe('LoopExecutionContext', () => {
         items: 'myItems',
         maxIterations: 10
       };
-      
+
       const context = new LoopExecutionContext('test-loop', config);
       const executionContext: ConditionContext = { myItems: 'not an array' };
-      
+
       context.initializeForEach(executionContext);
       const state = context.getCurrentState();
-      
+
       expect(state.items).toEqual([]);
       expect(state.warnings).toContain("Expected array for forEach items 'myItems', got string");
+    });
+
+    it('should reset items and index when called multiple times', () => {
+      const config: LoopConfig = {
+        type: 'forEach',
+        items: 'myItems',
+        maxIterations: 10
+      };
+
+      const context = new LoopExecutionContext('test-loop', config);
+
+      const firstContext: ConditionContext = { myItems: ['first', 'second'] };
+      context.initializeForEach(firstContext);
+      context.incrementIteration(); // advance index
+      expect(context.getCurrentState().index).toBe(1);
+
+      const secondContext: ConditionContext = { myItems: ['x', 'y', 'z'] };
+      context.initializeForEach(secondContext);
+      const state = context.getCurrentState();
+
+      expect(state.items).toEqual(['x', 'y', 'z']);
+      expect(state.index).toBe(0);
     });
   });
 
@@ -292,7 +314,7 @@ describe('LoopExecutionContext', () => {
       const context: ConditionContext = { existingVar: 'value' };
       const enhanced = loopContext.injectVariables(context);
       
-      expect(enhanced.currentIteration).toBe(2);
+      expect(enhanced.currentIteration).toBe(3);
       expect(enhanced.existingVar).toBe('value');
       expect(enhanced._loopState?.['test-loop'].iteration).toBe(2);
     });
@@ -309,7 +331,7 @@ describe('LoopExecutionContext', () => {
       
       const enhanced = loopContext.injectVariables({});
       
-      expect(enhanced.myCounter).toBe(1);
+      expect(enhanced.myCounter).toBe(2);
       expect(enhanced.currentIteration).toBeUndefined();
     });
 
@@ -332,7 +354,7 @@ describe('LoopExecutionContext', () => {
       
       expect(enhanced.item).toBe('banana');
       expect(enhanced.idx).toBe(1);
-      expect(enhanced.currentIteration).toBe(1);
+      expect(enhanced.currentIteration).toBe(2);
     });
 
     it('should inject warnings', () => {
