@@ -514,15 +514,9 @@ The system will be benchmarked to meet the following Service Level Agreements fo
 - Human-readable structure
 - Tool-independent format
 
-## Backward Compatibility
+### Legacy Manual Context Migration
 
-### Existing Workflows
-- **Guaranteed Compatibility**: All existing workflows will continue to function without any modification.
-- The context management feature is designed as a progressive enhancement. Workflows that do not use the new checkpointing tools will experience no change in behavior.
-
-### Progressive Enhancement
-- Workflows can start using the new checkpoint tools at any time without special configuration.
-- Manual context management strategies (like saving summaries to a `CONTEXT.md` file) will continue to work alongside the new system, providing a graceful and gradual migration path.
+We have decided not to prioritize automated tools or features for migrating legacy manual context (e.g., from CONTEXT.md files) into the new checkpoint system at this time. Current manual context files are very limited in scope and functionality, and there are no known users with active, long-running legacy contexts that require porting. This decision keeps the MVP focused and avoids unnecessary complexity. If user needs evolve, we can revisit adding import capabilities in a future iteration.
 
 ### Feature Detection
 An agent or workflow can detect if the native context management features are available and adjust its strategy accordingly. This ensures robust behavior in environments with different server versions.
@@ -543,6 +537,7 @@ if (serverCapabilities.tools.some(tool => tool.name === 'workflow_checkpoint_sav
 3. **Cloud Backup**: Optional cloud storage integration
 4. **Context Search**: Full-text search across checkpoints
 5. **Visual Timeline**: GUI for checkpoint exploration
+6. **Chunked Processing for Large Contexts**: Post-MVP enhancement to handle very large context blobs (e.g., 100MB+) by breaking them into chunks for streaming compression/decompression, improving scalability and preventing timeouts on lower-end hardware.
 
 ### Extension Points
 - Pluggable storage providers
@@ -570,6 +565,7 @@ A comprehensive testing strategy is critical for ensuring the reliability and da
 - **Workflow Interruption & Resumption**: Simulate a full user journey where a complex workflow is started, the server is unexpectedly terminated, and the workflow is successfully and accurately resumed from the last checkpoint.
 - **Storage Cleanup**: Verify that automatic and manual cleanup policies correctly identify and delete old or excessive checkpoints without affecting active workflows.
 - **Cross-Platform Compatibility**: Run key E2E tests on all three target operating systems (Windows, macOS, Linux) to ensure consistent behavior.
+- **Resilience and Chaos Testing**: Incorporate fault injection to simulate real-world failures, such as disk full mid-save, process interruptions, concurrent overloads, or low-resource conditions, and verify that recovery mechanisms (e.g., atomic writes, graceful degradation) function correctly while meeting SLAs.
 
 ## Implementation Timeline
 
@@ -629,14 +625,15 @@ This section tracks key decisions made during the design process, including rati
 - **Automatic Setup**: Non-interactive background downloads to global persistent storage (e.g., `~/.workrail/models/`); silent fallbacks to basic if offline/low-spec.
 - **Post-MVP Note**: Local LLM integration is post-MVP—implement algorithmic core first, add LLM later after thorough testing (e.g., performance benchmarks, hardware compatibility verification across platforms, and edge-case handling like failed downloads).
 - **Testing/Verification**: This needs proper validation, including benchmarks for compression ratios, startup times, offline behavior, and cross-platform persistence.
+- **Post-MVP Deferral with Enhanced Basic Mode**: Defer local LLM entirely to post-MVP, and strengthen the basic mode with additional algorithmic techniques (e.g., multi-level gzip + TF-IDF-based summarization) to achieve 5-10x compression ratios reliably in the MVP.
 
 **Pros**:
-- High compression ratios (up to 20x); intelligent (preserves meaning); flexible (fall back to algorithmic if no model); future-proof for better local models.
+- Eliminates overhead and bloat in the initial release; provides a robust, dependency-free baseline; maintains zero-config purity while improving default performance.
 
 **Cons**:
-- Adds dependency bloat (~100-500MB for model weights); requires hardware (GPU preferred for speed); potential setup time for first use.
+- Delays access to maximum compression ratios; requires additional implementation effort for enhanced algorithms.
 
-**Rationale**: Balances effectiveness with zero-config and low bloat. Feasibility confirmed: Small local LLMs run via transformers.js or ONNX, with automatic setup fitting NPX/Docker. Addresses local-only constraints while enabling research-level compression. 
+**Rationale**: This prioritizes a lightweight MVP, avoiding potential user frustration from model downloads or hardware requirements, while ensuring basic compression is effective enough for most use cases and setting up a clear path for advanced features.
 
 ### Decision 2: Semantic Search Implementation
 
@@ -723,6 +720,7 @@ This section tracks key decisions made during the design process, including rati
 
 **Refinements**:
 - We will consider **ML-Enhanced Classification** (using a small, local model) as a potential post-MVP enhancement to further improve classification accuracy.
+- **Hybrid with Content Analysis**: Augment pattern-based rules with lightweight, pure-JS content heuristics (e.g., score based on text length, keyword density like "critical" or "temporary") applied as a secondary refinement pass. This improves accuracy for non-standard keys without adding dependencies.
 
 **Pros**:
 - Highly flexible and accurate; provides smart defaults while allowing for precise control; decouples classification logic from the agent's core task; makes workflows more self-documenting.
@@ -739,10 +737,12 @@ This section tracks key decisions made during the design process, including rati
 **Description**:
 - **MVP (Rank 4 for initial simplicity)**: The system will only support resuming a workflow via an exact `checkpointId` or `sessionId`. A `workflow_checkpoint_list` tool will be available for manual discovery by the agent.
 - **Post-MVP (Rank 1 for user experience)**: We will implement a multi-layered discovery process. This will include an exact `sessionId` match, followed by indexed metadata search, with a semantic search fallback. Crucially, non-exact matches will require agent confirmation before loading to prevent errors.
+- **Basic Keyword Search in MVP**: Enhance the MVP's `workflow_checkpoint_list` tool with simple keyword filtering (e.g., by tags, names, or partial metadata) using indexed SQLite queries, allowing more intuitive discovery without new dependencies.
 
 **Pros**:
 - **MVP**: Simplest implementation; zero risk of incorrect automatic resumption; provides a solid foundation.
 - **Post-MVP**: Most reliable and safest option; combines automatic search with user control; excellent user experience.
+- **Basic Keyword Search in MVP**: Improves MVP usability by reducing manual ID hunting; fast and efficient leveraging existing storage; zero additional deps or complexity.
 
 **Cons**:
 - **MVP**: Places the initial burden of discovery on the agent; less user-friendly.
