@@ -43,13 +43,14 @@ This creates an enhanced experience where developers are guided through optimal 
 
 ## 🛠️ MCP Tools
 
-WorkRail exposes 5 core tools through the Model Context Protocol:
+WorkRail exposes 6 core tools through the Model Context Protocol:
 
 - **`workflow_list`** - Browse available workflows for different task types
 - **`workflow_get`** - Get complete workflow details and requirements  
 - **`workflow_next`** - Get the next step in an active workflow
 - **`workflow_validate`** - Validate step outputs against quality criteria
 - **`workflow_validate_json`** - Validate and lint workflow JSON files
+- **`workflow_get_schema`** - Get the complete workflow JSON schema for workflow creation
 
 ---
 
@@ -57,8 +58,8 @@ WorkRail exposes 5 core tools through the Model Context Protocol:
 
 Add WorkRail to your AI agent by configuring the MCP server:
 
-### Claude Desktop
-Add to your `claude_desktop_config.json`:
+### NPX (Recommended)
+Add to your agent's `config.json`:
 ```json
 {
   "mcpServers": {
@@ -70,8 +71,18 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-### Other MCP Clients
-Use the same command pattern: `npx -y @exaudeus/workrail`
+### Docker
+Add to your agent's `config.json`:
+```json
+{
+  "mcpServers": {
+    "workrail": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "workrail-mcp"]
+    }
+  }
+}
+```
 
 ---
 
@@ -82,7 +93,8 @@ WorkRail comes with battle-tested workflows for common development tasks:
 ### 🔧 **Development Workflows**
 - **`coding-task-workflow`** - Comprehensive coding workflow with analysis, planning, implementation, and review
 - **`coding-task-workflow-with-loops`** - Enhanced version with iterative refinement loops
-- **`systemic-bug-investigation`** - Systematic debugging methodology that prevents jumping to conclusions
+- **`systematic-bug-investigation`** - Systematic debugging methodology that prevents jumping to conclusions
+- **`systemic-bug-investigation-with-loops`** - Enhanced debugging with iterative analysis loops
 
 ### 🚀 **Project Management**  
 - **`adaptive-ticket-creation`** - Create well-structured tickets with proper requirements
@@ -91,7 +103,8 @@ WorkRail comes with battle-tested workflows for common development tasks:
 ### 📚 **Content & Documentation**
 - **`document-creation-workflow`** - Structured approach to creating comprehensive documentation
 - **`presentation-creation`** - Build engaging presentations with clear narrative flow
-- **`learner-centered-course-workflow`** - Design educational content with learning objectives
+- **`personal-learning-course-design`** - Design educational content with learning objectives
+- **`personal-learning-materials-creation-branched`** - Create comprehensive learning materials with adaptive complexity
 
 ### 🔍 **Discovery & Analysis**
 - **`exploration-workflow`** - Systematic codebase or domain exploration

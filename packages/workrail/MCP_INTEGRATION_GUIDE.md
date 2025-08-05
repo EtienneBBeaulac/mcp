@@ -2,11 +2,79 @@
 
 This guide provides instructions for integrating the WorkRail MCP server with various clients and environments.
 
+## NPX Installation (Recommended)
+
+### With Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "workrail": {
+      "command": "npx",
+      "args": ["-y", "@exaudeus/workrail"]
+    }
+  }
+}
+```
+
+### With VS Code
+
+Add to your `.vscode/mcp.json` file:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "workrail": {
+        "command": "npx",
+        "args": ["-y", "@exaudeus/workrail"]
+      }
+    }
+  }
+}
+```
+
+## Docker Installation
+
+### With Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "workrail": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "workrail-mcp"]
+    }
+  }
+}
+```
+
+### With VS Code
+
+Add to your `.vscode/mcp.json` file:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "workrail": {
+        "command": "docker",
+        "args": ["run", "--rm", "-i", "workrail-mcp"]
+      }
+    }
+  }
+}
+```
+
 ## Local Development
 
 ### With VS Code
 
-To use the WorkRail server in VS Code for local development, add the following to your `.vscode/mcp.json` file:
+For local development and testing, add the following to your `.vscode/mcp.json` file:
 
 ```json
 {
