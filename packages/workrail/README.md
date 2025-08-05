@@ -1,136 +1,150 @@
-# WorkRail: A Workflow Orchestration Server for MCP
+# WorkRail: Guided Workflow Orchestration for AI Agents
 
-> **Reliable, test-driven workflow execution for AI coding assistants – powered by Clean Architecture**
+> **Transform chaotic AI interactions into structured, reliable workflows**
 
-[![Build](https://img.shields.io/github/actions/workflow/status/EtienneBBeaulac/mcp/ci.yml?branch=main)]()
-[![Version](https://img.shields.io/badge/version-0.0.1--alpha-orange)]()
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)]()
 
 ---
 
-## 🚀 Overview
+## 🤔 The Problem
 
-Large language models are phenomenal at generating code, yet they often hallucinate, lose context, or perform unsafe operations.  
-This server provides **structured, step-by-step workflows** (defined as JSON documents) that guide an AI assistant through safe, repeatable tasks.  
-It follows [Model Context Protocol (MCP)](https://modelcontextprotocol.org) conventions and exposes a **JSON-RPC 2.0** interface on `stdin/stdout`.
+AI agents are incredibly powerful but often:
+- **Hallucinate** solutions without proper analysis
+- **Lose context** in complex, multi-step tasks  
+- **Skip critical steps** like testing or validation
+- **Make unsafe changes** without proper review processes
 
-See [Workrail Overview](workrail-mcp-overview.md)
+## 💡 The Solution
 
-### ✨ New in v0.1.0: Loop Support
-WorkRail now supports powerful iteration patterns with four loop types:
-- **while**: Continue while a condition is true
-- **until**: Continue until a condition is met  
-- **for**: Execute a fixed number of times
-- **forEach**: Process items in an array
+WorkRail provides **structured, step-by-step workflows** that guide AI agents through complex tasks safely and reliably. Instead of letting AI "wing it," workflows ensure:
 
-See the [Loop Documentation](docs/features/loops.md) for details.
-
----
-
-## ✨ Key Features
-
-* **Clean Architecture** – clear separation of **Domain → Application → Infrastructure** layers.
-* **MCP Protocol Support** – Full MCP SDK integration with proper tool definitions and stdio transport.
-* **Workflow Orchestration Tools** – 5 core tools for workflow management:
-  - `workflow_list` - List all available workflows
-  - `workflow_get` - Get detailed workflow information  
-  - `workflow_next` - Get the next step in a workflow
-  - `workflow_validate` - Advanced validation of step outputs with schema, context-aware, and composition rules
-  - `workflow_validate_json` - Direct JSON workflow validation with comprehensive error reporting and actionable suggestions
-* **Loop Support (v0.1.0)** – Four loop types for powerful iteration patterns:
-  - `while` loops - Continue while a condition is true
-  - `until` loops - Continue until a condition is met
-  - `for` loops - Execute a fixed number of times
-  - `forEach` loops - Process items in an array
-* **Dependency Injection** – pluggable components are wired by `src/container.ts` (Inversify-style, no runtime reflection).
-* **Async, Secure Storage** – interchangeable back-ends: in-memory (default for tests) and file-based storage with path-traversal safeguards.
-* **Advanced ValidationEngine** – Three-tier validation system with JSON Schema validation (AJV), Context-Aware Validation (conditional rules), and Logical Composition (and/or/not operators) for comprehensive step output quality assurance.
-* **Typed Error Mapping** – domain errors (`WorkflowNotFoundError`, `ValidationError`, …) automatically translate to proper JSON-RPC codes.
-* **CLI Tools** – 
-  - `validate` - Test workflow files locally with comprehensive error reporting
-  - `migrate` - Automatically migrate workflows from v0.0.1 to v0.1.0
-* **Comprehensive Test Coverage** – 81 tests passing, 7 failing (performance optimizations in progress), 88 total tests covering storage, validation, error mapping, CLI, and server logic.
+- ✅ **Systematic approach** - Every critical step is covered
+- ✅ **Quality gates** - Built-in validation and review points  
+- ✅ **Repeatable processes** - Consistent results across tasks
+- ✅ **Safety guardrails** - Prevent dangerous or incomplete work
 
 ---
 
-## 🔧 Configuration
+## 🛠️ MCP Tools
 
-### Usage with Claude Desktop
+WorkRail exposes 5 core tools through the Model Context Protocol:
 
-Add this to your `claude_desktop_config.json`:
+- **`workflow_list`** - Browse available workflows for different task types
+- **`workflow_get`** - Get complete workflow details and requirements  
+- **`workflow_next`** - Get the next step in an active workflow
+- **`workflow_validate`** - Validate step outputs against quality criteria
+- **`workflow_validate_json`** - Validate and lint workflow JSON files
 
-#### npx (once published to npm)
+---
 
+## ⚙️ Installation
+
+Add WorkRail to your AI agent by configuring the MCP server:
+
+### Claude Desktop
+Add to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
     "workrail": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@exaudeus/workrail"
-      ]
+      "args": ["-y", "@exaudeus/workrail"]
     }
   }
 }
 ```
 
-#### Local development
+### Other MCP Clients
+Use the same command pattern: `npx -y @exaudeus/workrail`
+
+---
+
+## 📋 Available Workflows
+
+WorkRail comes with battle-tested workflows for common development tasks:
+
+### 🔧 **Development Workflows**
+- **`coding-task-workflow`** - Comprehensive coding workflow with analysis, planning, implementation, and review
+- **`coding-task-workflow-with-loops`** - Enhanced version with iterative refinement loops
+- **`systemic-bug-investigation`** - Systematic debugging methodology that prevents jumping to conclusions
+
+### 🚀 **Project Management**  
+- **`adaptive-ticket-creation`** - Create well-structured tickets with proper requirements
+- **`mr-review-workflow`** - Thorough merge request review process
+
+### 📚 **Content & Documentation**
+- **`document-creation-workflow`** - Structured approach to creating comprehensive documentation
+- **`presentation-creation`** - Build engaging presentations with clear narrative flow
+- **`learner-centered-course-workflow`** - Design educational content with learning objectives
+
+### 🔍 **Discovery & Analysis**
+- **`exploration-workflow`** - Systematic codebase or domain exploration
+- **`workflow-for-workflows`** - Meta-workflow for designing new workflows
+
+---
+
+## 🔄 Loop Support
+
+WorkRail supports powerful iteration patterns for complex tasks:
+
+- **`while`** - Continue while a condition is true
+- **`until`** - Continue until a condition is met  
+- **`for`** - Execute a fixed number of times
+- **`forEach`** - Process items in an array
+
+Perfect for batch operations, retries, polling, and iterative refinement.
+
+---
+
+## 📖 Quick Example
+
+Here's what a workflow step looks like:
 
 ```json
 {
-  "mcpServers": {
-    "workrail": {
-      "command": "node",
-      "args": [
-        "/path/to/your/mcp/packages/workrail/dist/mcp-server.js"
-      ]
-    }
+  "id": "analyze-codebase",
+  "name": "Deep Codebase Analysis",
+  "description": "Understand the codebase structure before making changes",
+  "agentRole": "You are a senior engineer performing careful code analysis",
+  "runCondition": {
+    "type": "context",
+    "key": "taskComplexity", 
+    "operator": "in",
+    "values": ["Medium", "Large"]
+  },
+  "validationCriteria": {
+    "outputLength": {"min": 200, "max": 2000},
+    "mustContain": ["file structure", "key components", "dependencies"]
   }
 }
 ```
 
-### Usage with VS Code
+The agent receives structured guidance on **what to do**, **how to do it**, and **quality standards to meet**.
 
-For manual installation, add this to your User Settings (JSON) or `.vscode/mcp.json`:
+---
 
-#### npx (once published)
+## 🌟 Why Choose WorkRail?
 
-```json
-{
-  "mcp": {
-    "servers": {
-      "workrail": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@exaudeus/workrail"
-        ]
-      }
-    }
-  }
-}
-```
+| Without WorkRail | With WorkRail |
+|------------------|---------------|
+| "Just fix this bug" → agent makes random changes | Systematic investigation → evidence-based diagnosis → targeted fix |
+| "Add a feature" → incomplete implementation | Analysis → planning → implementation → testing → review |
+| Inconsistent quality across tasks | Repeatable, high-quality processes |
+| Context lost in long conversations | Structured progression with validation gates |
 
-#### Local development
+---
 
-```json
-{
-  "mcp": {
-    "servers": {
-      "workrail": {
-        "command": "node",
-        "args": [
-          "/path/to/your/mcp/packages/workrail/dist/mcp-server.js"
-        ]
-      }
-    }
-  }
-}
-```
+## 🚀 Getting Started
+
+1. **Install** WorkRail as an MCP server (see installation above)
+2. **Browse workflows** - Use `workflow_list` to see available options
+3. **Start a workflow** - Use `workflow_get` to load a workflow for your task  
+4. **Follow the steps** - Use `workflow_next` to get guided, step-by-step instructions
+5. **Validate progress** - Use `workflow_validate` to ensure quality at each step
 
 ---
 
 ## 📄 License
 
-MIT – see [LICENSE](LICENSE).
+MIT License - see [LICENSE](LICENSE)
