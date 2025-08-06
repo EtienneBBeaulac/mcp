@@ -137,13 +137,13 @@ fi
 
 # Bump version
 if [ "$TYPE" = "custom" ]; then
-    NEW_VERSION=$(npm version "$CUSTOM_VERSION" --no-git-tag-version 2>&1) || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
+    npm version "$CUSTOM_VERSION" --no-git-tag-version --silent || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
 else
-    NEW_VERSION=$(npm version "$TYPE" --no-git-tag-version 2>&1) || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
+    npm version "$TYPE" --no-git-tag-version --silent || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
 fi
 
-# Strip the 'v' prefix if present
-NEW_VERSION=${NEW_VERSION#v}
+# Get the new version from package.json
+NEW_VERSION=$(get_current_version)
 
 print_color "$GREEN" "✅ Version bumped to: $NEW_VERSION"
 echo
