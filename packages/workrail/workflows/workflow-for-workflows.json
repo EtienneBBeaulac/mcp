@@ -21,6 +21,9 @@
         "fun agentInstruct(action) = 'Agent: {action}. Confirm with user before proceeding with file modifications.'",
         "fun useEditFile(purpose) = 'Use edit_file for {purpose}. Explain changes and validate with workflow_validate.'",
         "fun teachFeature(feature, context) = 'Introduce {feature} progressively. Use adaptToPath() for explanation depth. Even basic users learn advanced features when {context} demands it.'",
+        "fun gatherDiscovery(focus) = 'Ask 2-3 focused questions about {focus}. Store responses in context.discoveryData. Be conversational and build on previous answers.'",
+        "fun analyzeGaps() = 'Review discoveryData for missing critical information. Identify next area to explore. Set context.questionFocus for next iteration.'",
+        "fun checkConvergence() = 'Evaluate if discovery is sufficient: clear problem, user needs, success criteria defined. Set context.discoveryComplete=true if ready.'",
         "PROGRESSIVE LEARNING: adaptToPath() throughout - detailed for basic, balanced for intermediate, expert for advanced.",
         "QUALITY FOCUS: All paths produce sophisticated workflows. Difference is in teaching approach, not final capability.",
         "The goal is to create a *reusable template*, not a single-use script. Use placeholders like [User provides X] where appropriate.",
@@ -36,15 +39,60 @@
     ],
     "steps": [
         {
-            "id": "phase-0-discovery",
-            "title": "Phase 0: Comprehensive Discovery & Requirements Analysis",
-            "prompt": "**STEP 1: Define the Core Problem & Goal**\n\n- **Problem Statement**: What is the specific, recurring task or problem this new workflow will solve?\n- **Primary Objective**: What is the single most important outcome you want users to achieve by completing this workflow?\n- **Critical Failure Mode**: What is the most critical error or negative outcome this workflow is designed to prevent?\n\n**STEP 2: Understand the Users & Context**\n\n- **Target Audience**: Who is this workflow for? What is their role, expertise level, and what do they need to succeed?\n- **Usage Context**: In what situation or environment will this workflow be used? (e.g., during code review, content planning, incident response, customer onboarding).\n\n**STEP 3: Gather Materials & Define Success**\n\n- **Supporting Materials**: What supporting documents, data, or examples can you provide that could inform the design?\n- **Constraints & Requirements**: Are there any specific constraints, required tools, or other absolute requirements to consider?\n- **Success Metrics**: How will you measure if this workflow is successful? What does a high-quality result look like?\n\n**Agent Guidance**: After gathering the user's answers, your goal is to synthesize them into a refined problem statement. Use `workflow_list` and `workflow_get` to find suitable templates based on the problem *structure*, not necessarily the domain, and present your findings for confirmation.",
-            "agentRole": "You are a workflow requirements analyst and discovery specialist with expertise in understanding complex business processes and user needs. Your primary goal is to ask the user the questions below to understand their needs. Do not answer these questions yourself. Wait for the user's detailed response, then synthesize their answers and confirm your understanding before proceeding. Your role is to ask insightful questions, synthesize information effectively, and identify suitable workflow patterns that can be adapted to new use cases.",
+            "id": "phase-0-discovery-loop",
+            "type": "loop",
+            "title": "Phase 0: Adaptive Discovery & Requirements Analysis",
+            "loop": {
+                "type": "while",
+                "condition": {
+                    "and": [
+                        {"var": "discoveryComplete", "not_equals": true},
+                        {"var": "discoveryIteration", "lt": 5}
+                    ]
+                },
+                "maxIterations": 5
+            },
+            "body": [
+                {
+                    "id": "discovery-iteration",
+                    "title": "Discovery Iteration: Gathering Requirements",
+                    "prompt": "gatherDiscovery(current focus area)\n\n**Current Focus:** Understanding the workflow requirements\n\nAgent: For iteration 1, ask the 3 core questions about problem, users, and success. For later iterations, ask targeted follow-ups based on context.questionFocus and context.focusedQuestions.\n\n**Core Questions (Iteration 1):**\n1. What specific, recurring task or problem will this workflow solve?\n2. Who will use this workflow and approximately how often?\n3. What does a successful outcome look like?\n\n**Follow-up Areas (Iterations 2+):**\n- Technical: Integration points, tools, error handling\n- Process: Decision branches, approvals, handoffs\n- Scale: Frequency, user count, growth expectations\n- Constraints: Time limits, compliance, resources",
+                    "agentRole": "You are an adaptive discovery specialist. For iteration 1, ask the core questions. For subsequent iterations, analyze context.discoveryData to identify gaps and ask targeted follow-ups. Store all responses in context.discoveryData. Be conversational and acknowledge previous answers.",
+                    "guidance": [
+                        "ITERATION 1: Focus on problem, users, and success criteria only",
+                        "ITERATION 2+: Based on problem type, explore: technical requirements OR process flows OR creative iterations OR data handling",
+                        "BUILD CONTEXT: Reference previous answers when asking follow-ups",
+                        "STAY FOCUSED: Maximum 3 questions per iteration to avoid overwhelming",
+                        "CONVERGENCE: After each iteration, analyzeGaps() and checkConvergence()"
+                    ],
+                    "requireConfirmation": false
+                },
+                {
+                    "id": "discovery-analysis",
+                    "title": "Analyzing Discovery Progress",
+                    "prompt": "analyzeGaps() to identify what's still needed.\n\nReview the discovery data collected so far and determine:\n1. What critical information is still missing?\n2. Which area should we explore next?\n3. Are we ready to proceed to synthesis?\n\ncheckConvergence() to determine if we have enough information.\n\nAgent: Set context.questionFocus for next iteration OR set context.discoveryComplete=true if ready. Increment context.discoveryIteration.",
+                    "agentRole": "You are a discovery analyst. Review all collected data, identify critical gaps, and determine the next area to explore. Common follow-up areas: integration points, error handling, decision branches, constraints, scale/frequency, evolution needs.",
+                    "guidance": [
+                        "CHECK COMPLETENESS: Problem clarity, user needs, success criteria, basic constraints",
+                        "IDENTIFY GAPS: What's critical but missing? Focus on one area at a time",
+                        "SET FOCUS: Update questionFocus with specific area (e.g., 'integration requirements', 'error handling', 'decision points')",
+                        "GENERATE QUESTIONS: Set context.focusedQuestions with 2-3 specific questions for next iteration",
+                        "KNOW WHEN TO STOP: Don't over-analyze; 80% complete is often enough"
+                    ],
+                    "requireConfirmation": false
+                }
+            ]
+        },
+        {
+            "id": "discovery-synthesis",
+            "title": "Discovery Synthesis & Template Matching",
+            "prompt": "Excellent! I now have a comprehensive understanding of your workflow needs.\n\n**Discovery Summary:**\nAgent: Summarize the key findings from context.discoveryData in a structured format.\n\n**Next Steps:**\n1. I'll synthesize this into a refined problem statement\n2. Use workflow_list and workflow_get to find suitable templates\n3. Present recommendations based on structural patterns\n\nAgent: Create a concise problem statement. Search for workflows with similar patterns (not necessarily same domain). A 'bug investigation' workflow might be perfect for a 'customer complaint' workflow if they share similar structures.",
+            "agentRole": "You are a workflow synthesis expert. Compile all discovery data into a clear, actionable problem statement. Use workflow_list and workflow_get to find templates based on structural similarity. Present 2-3 best matches with explanations.",
             "guidance": [
-                "BE SPECIFIC: Vague goals lead to vague workflows. The more precise the user's answers are here, the better the final product.",
-                "THINK ABOUT THE USER: A workflow for an expert looks very different from one for a novice. Encourage the user to be detailed about their audience.",
-                "REQUEST EXAMPLES: If the user mentions examples of the problem or desired outcome, ask them to share them.",
-                "TEMPLATE STRATEGY: Focus on structural similarity, not domain similarity, when recommending templates. A good 'bug investigation' workflow might be a great template for a 'customer complaint' workflow."
+                "SYNTHESIZE: Create clear, one-paragraph problem statement",
+                "PATTERN MATCH: Focus on workflow structure, not domain",
+                "RECOMMEND: Present 2-3 template options with rationale",
+                "CONFIRM: Get user agreement before proceeding to learning path selection"
             ],
             "askForFiles": true,
             "requireConfirmation": true
