@@ -1,8 +1,8 @@
 {
     "id": "exploration-workflow",
     "name": "Comprehensive Adaptive Exploration Workflow",
-    "version": "0.0.1",
-    "description": "A sophisticated workflow for systematically exploring and determining optimal approaches to accomplish tasks or solve problems. Features adaptive complexity paths, intelligent clarification, devil's advocate analysis, automation levels, failure bounds, and comprehensive documentation for production-ready research.",
+    "version": "0.1.0",
+    "description": "An enterprise-grade exploration workflow featuring multi-phase research loops with saturation detection, evidence-based validation, diverse solution generation, and adversarial challenge patterns. Adapts methodology based on domain type (technical/business/creative) while ensuring depth through triangulation, confidence scoring, and systematic quality gates.",
     "clarificationPrompts": [
         "What specific task, problem, or question do you need to explore?",
         "What constraints or requirements should guide the exploration? (time, budget, technical, etc.)",
@@ -13,22 +13,26 @@
     ],
     "preconditions": [
         "User has a clear task, problem, or question to explore",
-        "Agent has access to research tools (web search, codebase search, etc.)",
         "User can provide initial context, constraints, or requirements",
         "Agent can maintain context variables throughout the workflow"
     ],
     "metaGuidance": [
-        "This workflow follows ANALYZE -> CLARIFY -> RESEARCH -> EVALUATE -> RECOMMEND pattern with dynamic re-triage capabilities.",
-        "Automation levels (Low/Medium/High) control confirmation requirements to balance thoroughness with efficiency.",
-        "Dynamic re-triage allows complexity upgrades and safe downgrades based on new insights from research.",
-        "Always base recommendations on evidence from multiple sources with quantified evaluations.",
-        "Context documentation is maintained throughout to enable seamless handoffs between chat sessions.",
-        "Failure bounds prevent analysis paralysis: word limits (2000), step tracking (>15), and escalation protocols.",
-        "Include trade-offs, pros, cons, and alternatives for transparency and informed decision-making.",
-        "Document all sources, methodology, and reasoning for reproducibility and validation.",
-        "Limit exploration depth based on complexity to prevent resource waste while ensuring thoroughness.",
-        "Human approval is required after Devil's Advocate review and before final recommendations.",
-        "Always provide actionable next steps and implementation guidance, not just theoretical analysis."
+        "FUNCTION DEFINITIONS: fun trackEvidence(source, grade) = 'Add to context.evidenceLog[] with {source, grade, timestamp}. Grade: High (peer-reviewed/official), Medium (expert/established), Low (anecdotal/emerging)'",
+        "fun checkSaturation() = 'Calculate novelty score: (new_insights / total_insights). If <0.1 for last 3 iterations, set context.saturationReached=true'",
+        "fun generateSolution(index, approach) = 'Create solution in context.solutions[index] with {approach, evidence, confidence, tradeoffs, risks}'",
+        "fun calculateConfidence() = '(0.4 × evidenceStrength) + (0.3 × triangulation) + (0.2 × sourceDiversity) + (0.1 × recency). Result in context.confidenceScores[]'",
+        "fun triggerDeepDive() = 'If confidence < 0.7 OR evidenceGaps.length > 0 OR contradictions found, set context.needsDeepDive=true'",
+        "CONTEXT ARCHITECTURE: Track explorationDomain (technical/business/creative), solutions[], evidenceLog[], confidenceScores[], researchPhases[], currentPhase, saturationMetrics, contradictions[], evidenceGaps[]",
+        "EVIDENCE STANDARDS: Minimum 3 sources per key claim (from available sources: web, agent knowledge, user environment), at least 1 contrasting perspective required, formal grading using adapted RAND scale (High/Medium/Limited)",
+        "SOLUTION DIVERSITY: Generate minimum 5 solutions: Quick/Simple, Thorough/Proven, Creative/Novel, Optimal/Balanced, Contrarian/Alternative",
+        "VALIDATION GATES: Phase transitions require validation; solutions need confidence ≥0.7; evidence must pass triangulation check",
+        "This workflow follows ANALYZE -> CLARIFY -> RESEARCH (loop) -> GENERATE (divergent) -> EVALUATE (convergent) -> CHALLENGE -> RECOMMEND pattern.",
+        "Automation levels (Low/Medium/High) control confirmation requirements. High: auto-proceed if confidence >0.8",
+        "Dynamic re-triage allows complexity upgrades and safe downgrades based on research insights and saturation metrics.",
+        "TOOL ADAPTATION: Workflow adapts to available tools. Check MCPs and adjust strategy based on what's available.",
+        "Context documentation updated at phase boundaries. Include function definitions for resumption.",
+        "Failure bounds: word limits (2000), max iterations (5 per loop), total steps (>20 triggers review).",
+        "Human approval required after adversarial challenge and before final recommendations."
     ],
     "steps": [
         {
@@ -45,6 +49,32 @@
                 "Automation levels: High=auto-approve confidence >8, Medium=standard, Low=extra confirmations"
             ],
             "requireConfirmation": true
+        },
+        {
+            "id": "phase-0a-user-context",
+            "title": "Phase 0a: User Context & Preferences Check",
+            "prompt": "**GATHER USER CONTEXT**: Before proceeding, check for relevant user preferences, rules, and past decisions that should influence this exploration.\n\n**CHECK FOR:**\n1. **User Rules/Preferences**: Use memory tools to check for:\n   - Organizational standards or guidelines\n   - Preferred technologies or approaches\n   - Constraints or requirements from past decisions\n   - Specific methodologies or frameworks to follow/avoid\n\n2. **Environmental Context**:\n   - Current tech stack (if technical)\n   - Business constraints (budget, timeline, resources)\n   - Regulatory or compliance requirements\n   - Team capabilities and preferences\n\n3. **Historical Decisions**:\n   - Similar problems solved before\n   - Lessons learned from past explorations\n   - Established patterns to follow\n\n**ACTIONS:**\n1. Query memory/knowledge base for relevant rules\n2. Set context.userRules[] with applicable preferences\n3. Set context.constraints[] with hard requirements\n4. Note any past decisions that create precedent\n\nIf no specific rules found, note that and proceed with general best practices.",
+            "agentRole": "You are gathering user-specific context that will influence all subsequent exploration phases. Your role is to ensure the exploration aligns with the user's established preferences and constraints.",
+            "guidance": [
+                "This context check happens for all complexity levels",
+                "Rules and preferences should influence solution generation",
+                "Document which rules apply and why",
+                "If conflicts exist between rules and task requirements, flag for clarification"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-0b-domain-classification",
+            "title": "Phase 0b: Domain Classification & Tool Selection",
+            "prompt": "**CLASSIFY EXPLORATION DOMAIN**: Based on the task, classify the exploration into one of these domains:\n\n**Technical Domain:**\n- Code implementation, architecture design, debugging\n- Tool selection, framework comparison, performance optimization\n- Primary tools: codebase_search, grep_search (if available), technical documentation\n- Fallback: Agent's technical knowledge, architectural patterns from training\n\n**Business Domain:**\n- Strategy formulation, market analysis, process improvement\n- Cost-benefit analysis, resource allocation, risk assessment\n- Primary tools: web_search for market data (if available), case studies, industry reports\n- Fallback: Business frameworks and principles from agent knowledge\n\n**Creative Domain:**\n- Content creation, design systems, user experience\n- Innovation, brainstorming, conceptual development\n- Primary tools: web_search for inspiration (if available), trend analysis\n- Fallback: Creative methodologies and patterns from agent training\n\n**IMPLEMENT:**\n1. Analyze task characteristics\n2. Set context.explorationDomain = 'technical' | 'business' | 'creative'\n3. Set context.primaryTools[] based on domain\n4. Set context.evaluationCriteria[] appropriate for domain\n\n**DOMAIN-SPECIFIC SUCCESS METRICS:**\n- Technical: Feasibility, performance, maintainability, scalability\n- Business: ROI, time-to-value, risk mitigation, strategic alignment\n- Creative: Innovation, user satisfaction, aesthetics, differentiation",
+            "agentRole": "You are a domain classification specialist who identifies the nature of exploration tasks and configures appropriate methodologies, tools, and success criteria for each domain type.",
+            "guidance": [
+                "Some tasks may span domains - choose primary domain",
+                "This classification affects tool selection and evaluation criteria",
+                "Document reasoning for domain choice",
+                "Set domain-specific context variables for later steps"
+            ],
+            "requireConfirmation": false
         },
         {
             "id": "phase-1-simple-lookup",
@@ -153,6 +183,97 @@
             }
         },
         {
+            "id": "phase-2c-iterative-research-loop",
+            "type": "loop",
+            "title": "Phase 2c: Multi-Phase Deep Research with Saturation Detection",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "loop": {
+                "type": "for",
+                "count": 5,
+                "maxIterations": 5,
+                "iterationVar": "researchPhase"
+            },
+            "body": [
+                {
+                    "id": "research-phase-1-broad",
+                    "title": "Research Phase 1/5: Broad Scan",
+                    "runCondition": { "var": "researchPhase", "equals": 1 },
+                    "prompt": "**OBJECTIVE**: Cast a wide net to map the solution landscape, identify key themes, and find conflicting viewpoints.",
+                    "agentRole": "Systematic Researcher: Broad Scan Specialist",
+                    "guidance": [
+                        "Use multiple search strategies (e.g., 'how to [task]', 'alternatives to [tool]').",
+                        "Identify 3-5 high-level solution categories.",
+                        "Note sources that directly conflict with each other.",
+                        "ACTIONS: Update context.evidenceLog[], context.broadScanThemes[], context.contradictions[]"
+                    ]
+                },
+                {
+                    "id": "research-phase-2-deep-dive",
+                    "title": "Research Phase 2/5: Deep Dive",
+                    "runCondition": { "var": "researchPhase", "equals": 2 },
+                    "prompt": "**OBJECTIVE**: Focus on the most promising themes from the broad scan. Investigate technical details, find implementation examples, and assess feasibility.",
+                    "agentRole": "Systematic Researcher: Deep Dive Analyst",
+                    "guidance": [
+                        "Focus on the themes in context.broadScanThemes[].",
+                        "Find specific, real-world implementation examples or case studies.",
+                        "Assess complexity, dependencies, and requirements for each.",
+                        "ACTIONS: Update context.evidenceLog[], context.deepDiveFindings[]"
+                    ]
+                },
+                {
+                    "id": "research-phase-3-contrarian",
+                    "title": "Research Phase 3/5: Contrarian Research",
+                    "runCondition": { "var": "researchPhase", "equals": 3 },
+                    "prompt": "**OBJECTIVE**: Actively seek out opposing viewpoints, failure cases, and critiques of the promising solutions. The goal is to challenge assumptions.",
+                    "agentRole": "Systematic Researcher: Devil's Advocate",
+                    "guidance": [
+                        "Search for '[solution] problems', '[approach] failures', 'why not use [tool]'.",
+                        "Identify hidden assumptions in the mainstream approaches.",
+                        "Look for entirely different paradigms that were missed.",
+                        "ACTIONS: Update context.evidenceLog[], context.contrarianEvidence[]"
+                    ]
+                },
+                {
+                    "id": "research-phase-4-synthesis",
+                    "title": "Research Phase 4/5: Evidence Synthesis",
+                    "runCondition": { "var": "researchPhase", "equals": 4 },
+                    "prompt": "**OBJECTIVE**: Consolidate all findings. Resolve contradictions, identify patterns, and build a coherent narrative of the solution landscape.",
+                    "agentRole": "Systematic Researcher: Synthesizer",
+                    "guidance": [
+                        "Review evidence from all previous phases.",
+                        "Where sources conflict, try to understand the reason for the disagreement.",
+                        "Build a framework or matrix to compare the approaches.",
+                        "ACTIONS: Update context.synthesisFramework, context.evidenceGaps[]"
+                    ]
+                },
+                {
+                    "id": "research-phase-5-gap-filling",
+                    "title": "Research Phase 5/5: Gap Filling & Closure",
+                    "runCondition": { "var": "researchPhase", "equals": 5 },
+                    "prompt": "**OBJECTIVE**: Address the specific, critical unknowns identified during synthesis. Verify key assumptions and prepare for solution generation.",
+                    "agentRole": "Systematic Researcher: Finisher",
+                    "guidance": [
+                        "Focus only on the critical gaps listed in context.evidenceGaps[].",
+                        "Perform targeted searches to answer these specific questions.",
+                        "This is the final research step. The goal is to be 'done', not perfect.",
+                        "ACTIONS: Update context.evidenceLog[], set context.researchComplete = true"
+                    ]
+                },
+                {
+                    "id": "research-phase-validation",
+                    "title": "Validation: Research Quality Check",
+                    "prompt": "**OBJECTIVE**: After each research phase, perform a quick quality check.",
+                    "agentRole": "Quality Analyst",
+                    "guidance": [
+                        "EVIDENCE CHECK: Have we gathered at least 3 new sources in this phase? (unless it was gap-filling).",
+                        "QUALITY CHECK: Is there at least one 'High' or 'Medium' grade source?",
+                        "SATURATION CHECK: Use checkSaturation() to assess if we are still gathering novel information. If not, we can consider exiting the loop early by setting context.researchComplete = true.",
+                        "ACTIONS: Update context.qualityMetrics[]"
+                    ]
+                }
+            ]
+        },
+        {
             "id": "phase-3-context-documentation",
             "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
             "title": "Phase 3: Create Context Documentation",
@@ -169,10 +290,70 @@
             "requireConfirmation": false
         },
         {
+            "id": "phase-3a-prepare-solutions",
+            "title": "Phase 3a: Prepare Solution Generation",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "prompt": "**PREPARE SOLUTION GENERATION**\n\nBased on your research findings, prepare for systematic solution generation:\n\n**SETUP TASKS:**\n1. Review research synthesis from Phase 2c\n2. Identify top solution categories/approaches\n3. Create solution generation framework\n\n**CREATE SOLUTION APPROACHES ARRAY:**\nSet context.solutionApproaches with these 5 types:\n```json\n[\n  {\"type\": \"Quick/Simple\", \"focus\": \"Minimal time, proven approaches, immediate value\"},\n  {\"type\": \"Thorough/Proven\", \"focus\": \"Best practices, comprehensive, long-term sustainability\"},\n  {\"type\": \"Creative/Novel\", \"focus\": \"Innovation, emerging tech, competitive advantage\"},\n  {\"type\": \"Optimal/Balanced\", \"focus\": \"Best trade-offs, practical yet forward-thinking\"},\n  {\"type\": \"Contrarian/Alternative\", \"focus\": \"Challenge assumptions, overlooked approaches\"}\n]\n```\n\n**Also set:**\n- context.solutionCriteria[] from research findings\n- context.evaluationFramework for comparing solutions\n- context.userConstraints from Phase 0a\n\n**This enables the next loop to generate each solution type systematically.**",
+            "agentRole": "You are preparing the solution generation phase by creating a structured framework based on research findings.",
+            "guidance": [
+                "This step makes the loop cleaner by preparing the array",
+                "Each solution type should address different user needs",
+                "Framework should incorporate research insights"
+            ],
+            "requireConfirmation": false
+        },
+        {
+            "id": "phase-3b-solution-generation-loop",
+            "type": "loop",
+            "title": "Phase 3b: Diverse Solution Portfolio Generation",
+            "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
+            "loop": {
+                "type": "forEach",
+                "items": "solutionApproaches",
+                "itemVar": "approach",
+                "indexVar": "solutionIndex",
+                "maxIterations": 5
+            },
+            "body": [
+                {
+                    "id": "generate-solution",
+                    "title": "Generate {{approach.type}} Solution ({{solutionIndex + 1}}/5)",
+                    "prompt": "**GENERATE SOLUTION: {{approach.type}}**\n\n**Focus for this solution type**: {{approach.focus}}\n\n**DIVERGENT THINKING MODE - NO JUDGMENT**\nYou are in pure generation mode. Do NOT evaluate, compare, or judge this solution against others. Focus solely on creating a complete solution that embodies the {{approach.type}} approach.\n\n**SOLUTION REQUIREMENTS:**\n1. Generate a solution that embodies the {{approach.type}} approach\n2. Base it on evidence from all research phases\n3. Make it genuinely different from other solutions (not just variations)\n4. DEFER ALL JUDGMENT - no scoring, ranking, or comparison\n\n**INCORPORATE USER CONTEXT:**\n- Apply all relevant rules from context.userRules[]\n- Respect constraints from context.constraints[]\n- Align with organizational standards and preferences\n- Consider environment-specific factors\n\n**SOLUTION STRUCTURE:**\n1. **Core Approach**: Clear description (what makes this {{approach.type}}?)\n2. **Implementation Path**: 3-5 key steps to execute\n3. **Evidence Base**: Which research findings support this approach?\n4. **Key Features**: What distinguishes this approach?\n5. **Resource Requirements**: What's needed to implement?\n6. **Success Indicators**: Observable outcomes when working\n\n**NO EVALUATION ELEMENTS:**\n- Do NOT include confidence scores\n- Do NOT compare to other solutions\n- Do NOT rank or judge quality\n- Simply generate and document\n\n**ACTIONS:**\n- generateSolution({{solutionIndex}}, '{{approach.type}}')\n- Store complete solution in context.solutions[{{solutionIndex}}]\n- Track which evidence supports this approach",
+                    "agentRole": "You are in DIVERGENT THINKING mode, generating the {{approach.type}} solution. Focus on creation without judgment. Draw from research to build a complete solution.",
+                    "guidance": [
+                        "DIVERGENT PHASE: Generate without evaluating or comparing",
+                        "Each solution should be genuinely different, not just variations",
+                        "Ground each solution in evidence from research phases",
+                        "Align with user rules and preferences from Phase 0a",
+                        "Include enough detail to be actionable",
+                        "Reference specific sources from evidenceLog",
+                        "If a solution conflicts with user rules, note it factually without judgment",
+                        "DEFER ALL EVALUATION until Phase 4"
+                    ],
+                    "hasValidation": true,
+                    "validationCriteria": {
+                        "and": [
+                            {
+                                "type": "contains",
+                                "value": "Evidence:",
+                                "message": "Must include evidence section"
+                            },
+                            {
+                                "type": "contains",
+                                "value": "Key Features:",
+                                "message": "Must describe distinguishing features"
+                            }
+                        ]
+                    },
+                    "requireConfirmation": false
+                }
+            ]
+        },
+        {
             "id": "phase-4-option-evaluation",
             "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
-            "title": "Phase 4: Comprehensive Option Evaluation & Ranking",
-            "prompt": "**PREP**: Define evaluation criteria based on clarified requirements, constraints, and priorities.\n\n**IMPLEMENT**: \n1. Create weighted scoring matrix with 4-6 evaluation criteria based on clarifications\n2. Score each option quantitatively (1-10 scale) with detailed rationale\n3. Calculate weighted scores and rank options\n4. Perform sensitivity analysis on key criteria weights\n5. Identify decision breakpoints and scenario dependencies\n6. Document evaluation methodology and assumptions\n\n**VERIFY**: Ensure evaluation is objective, comprehensive, and incorporates all clarified priorities.",
+            "title": "Phase 4: CONVERGENT THINKING - Option Evaluation & Ranking",
+            "prompt": "**TRANSITION TO CONVERGENT THINKING MODE**\n\nThe divergent generation phase is complete. Now shift to analytical, convergent thinking to systematically evaluate all solutions.\n\n**CONVERGENT THINKING PRINCIPLES:**\n- This is NOW the time for judgment and comparison\n- Apply critical analysis to all generated solutions\n- Use evidence-based evaluation criteria\n- Be rigorous and systematic\n\n**PREP**: Define evaluation criteria based on clarified requirements, constraints, and priorities.\n\n**IMPLEMENT**: \n1. Create weighted scoring matrix with 4-6 evaluation criteria based on clarifications\n2. Score each option quantitatively (1-10 scale) with detailed rationale\n3. Calculate weighted scores and rank options\n4. Perform sensitivity analysis on key criteria weights\n5. Identify decision breakpoints and scenario dependencies\n6. Document evaluation methodology and assumptions\n\n**VERIFY**: Ensure evaluation is objective, comprehensive, and incorporates all clarified priorities.",
             "agentRole": "You are an objective decision analyst expert in multi-criteria evaluation and quantitative assessment. Your expertise lies in translating qualitative factors into structured, defensible evaluations.",
             "guidance": [
                 "Use at least 4-6 evaluation criteria based on clarifications",
@@ -200,7 +381,7 @@
             "id": "phase-4b-devil-advocate-review",
             "runCondition": {"var": "explorationComplexity", "not_equals": "Simple"},
             "title": "Phase 4b: Devil's Advocate Evaluation Review",
-            "prompt": "Perform a 'devil's advocate' review of your option evaluation from Phase 4. The objective is to rigorously stress-test your analysis and strengthen the final recommendation. Your critique must be balanced and evidence-based.\n\nAnalyze the evaluation through these lenses, citing specific evidence:\n\n1. **Hidden Assumptions**: What assumptions does your evaluation make about user context, implementation reality, or future conditions that might be incorrect?\n2. **Evaluation Bias**: Are there systematic biases in your scoring? Do criteria weights reflect stated priorities? Are any important factors missing?\n3. **Option Blind Spots**: What alternatives or hybrid approaches might you have overlooked? Are there emerging options not fully considered?\n4. **Risk Assessment**: What are the biggest risks of the top-ranked option? What could go wrong that isn't reflected in the scoring?\n5. **Evaluation Strengths**: What aspects of your analysis are most robust and reliable? What gives you confidence in the methodology?\n\nConclude with balanced summary. If you found issues, provide concrete suggestions for improving the evaluation. **Set the confidenceScore variable to your 1-10 rating** for the evaluation quality *if* suggestions are implemented.",
+            "prompt": "Perform a rigorous 'devil's advocate' review of your solutions and evaluation. This is a mandatory adversarial self-challenge to prevent overconfidence and blind spots.\n\n**STRUCTURED ADVERSARIAL ANALYSIS:**\n\n1. **Evidence Challenge**: For each solution's top 3 claims:\n   - Is the evidence truly supporting this claim?\n   - Are there contradicting sources we dismissed?\n   - What evidence grade did we assign vs. what it deserves?\n\n2. **Hidden Failure Modes**: For the top-ranked solution:\n   - What could cause catastrophic failure?\n   - What assumptions could be completely wrong?\n   - What context changes would invalidate this approach?\n\n3. **Overlooked Alternatives**:\n   - What hybrid approaches could combine solution strengths?\n   - What completely different paradigm did we miss?\n   - Are we solving the right problem?\n\n4. **Bias Detection**:\n   - Did we favor familiar over novel?\n   - Did recent sources overshadow established wisdom?\n   - Did domain bias affect our evaluation?\n\n5. **Confidence Calibration**:\n   - Where are we overconfident?\n   - What unknowns are we treating as knowns?\n   - calculateConfidence() with penalty for identified weaknesses\n\n**OUTPUT REQUIREMENTS:**\n- Identify at least 3 significant concerns\n- Propose specific remedies for each\n- Re-calculate confidence scores\n- Set context.confidenceScore (1-10) for overall analysis quality\n- Set context.criticalIssues[] with must-address items\n\ntriggerDeepDive() if confidence drops below 0.7",
             "agentRole": "You are a skeptical but fair senior research analyst with 15+ years of experience in strategic decision analysis. Your role is to identify potential blind spots, biases, and overlooked factors in evaluation methodologies. You excel at constructive criticism that strengthens analysis rather than destroys it.",
             "guidance": [
                 "This is critical thinking step to find weaknesses in your own analysis",
