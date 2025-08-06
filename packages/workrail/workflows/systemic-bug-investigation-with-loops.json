@@ -19,6 +19,20 @@
         "Bug is reproducible with specific steps or a minimal test case"
     ],
     "metaGuidance": [
+        "**FUNCTION DEFINITIONS:**",
+        "fun instrumentCode(location, hypothesis) = 'Add debug logs at {location} for {hypothesis}. Format: ClassName.method [{hypothesis}]: message. Include timestamp, thread ID if concurrent.'",
+        "fun collectEvidence(hypothesis) = 'Run instrumented code, collect logs, analyze results. Score evidence quality 1-10. Document in Evidence/{hypothesis}.md.'",
+        "fun updateHypothesisLog(id, status, evidence) = 'Update INVESTIGATION_CONTEXT.md section {id} with {status} and {evidence}. Include confidence score.'",
+        "fun analyzeTests(component) = 'Find all tests for {component} using grep_search. Check coverage, recent changes, what they validate vs miss. Run with --debug flag.'",
+        "fun recursiveAnalysis(component, depth=3) = 'Analyze {component} to {depth} levels. L1: implementation, L2: direct deps, L3: transitive deps. Document each level.'",
+        "fun controlledModification(type, location) = 'Make {type} change at {location}. Types: guard (add logging), assert (add assertion), fix (minimal fix), break (controlled failure). Commit: DEBUG: {type} at {location}'",
+        "fun checkHypothesisInTests(hypothesis) = 'Search existing tests for evidence. Direct: tests of suspected components. Indirect: tests that would fail if true. Document in TestEvidence/{hypothesis}.md'",
+        "fun aggregateDebugLogs(pattern, timeWindow=100) = 'Deduplicate logs matching {pattern}. Output: {pattern} x{count} in {timeWindow}ms, variations: {unique_values}'",
+        "fun createInvestigationBranch() = 'git checkout -b investigate/{bug-id}-{timestamp}. If git unavailable, create Investigation/{timestamp}/ directory for artifacts.'",
+        "fun trackInvestigation(phase, status) = 'Update INVESTIGATION_CONTEXT.md progress: ✅ {completed}, 🔄 {phase}, ⏳ Remaining: {list}, 📊 Confidence: {score}/10'",
+        "",
+        "**USAGE:** When you see function calls like instrumentCode() or analyzeTests(), execute the full instructions defined above.",
+        "",
         "INVESTIGATION DISCIPLINE: Never propose fixes or solutions until Phase 6 (Comprehensive Diagnostic Writeup). Focus entirely on systematic evidence gathering and analysis.",
         "HYPOTHESIS RIGOR: All hypotheses must be based on concrete evidence from code analysis with quantified scoring (1-10 scales). Maximum 5 hypotheses per investigation.",
         "DEBUGGING INSTRUMENTATION: Always implement debugging mechanisms before running tests - logs, print statements, or test modifications that will provide evidence.",
@@ -28,7 +42,12 @@
         "UNCERTAINTY ACKNOWLEDGMENT: Explicitly document all remaining unknowns and their potential impact. No subjective confidence assessments.",
         "THOROUGHNESS: For complex bugs, recursively analyze dependencies and internals of identified components to ensure full picture.",
         "TEST INTEGRATION: Leverage existing tests to validate hypotheses where possible.",
-        "LOG ENHANCEMENTS: Include class/function names. For repetitive logs, implement deduplication by tracking counts ('x[count]') and grouping related sequential logs for readability. See Phase 3 for detailed implementation patterns and examples.",
+        "**LOGGING STANDARDS:**",
+        "LOG FORMAT: Always use 'ClassName.methodName [hypothesisId] {timestamp}: message'. For concurrent code, add thread/worker ID.",
+        "LOG DEDUPLICATION: Implement in debug code: if (lastMsg === currentMsg) { count++; if (count % 10 === 0) log(`${msg} x${count}`); } else { if (count > 1) log(`Previous: x${count}`); log(currentMsg); count = 1; }",
+        "LOG AGGREGATION: For high-frequency events, create summaries: 'Event X occurred 847 times between 10:23:45-10:23:47, unique values: [val1: 623, val2: 224]'",
+        "LOG WINDOWS: Group related logs within 50-100ms. Mark groups with '=== Operation: XYZ Start ===' and '=== Operation: XYZ End (duration: 73ms) ==='",
+        "LOG CONTEXT: Include hypothesis ID in all debug logs. Use prefixes like 'H1_DEBUG:', 'H2_TRACE:', 'H3_ERROR:'",
         "LOG ANALYSIS OFFLOADING: For voluminous logs (>500 lines), offload analysis to sub-chats with structured prompts. See Phase 4 for detailed sub-analysis implementation.",
         "RECURSION DEPTH: Limit recursive analysis to 3 levels deep to prevent analysis paralysis while ensuring thoroughness.",
         "INVESTIGATION BOUNDS: If investigation exceeds 20 steps or 4 hours without root cause, pause and reassess approach with user.",
@@ -123,44 +142,37 @@
             }
         },
         {
-            "id": "phase-1-streamlined-analysis",
+            "id": "phase-1-iterative-analysis",
+            "type": "loop",
+            "title": "Phase 1: Multi-Dimensional Codebase Analysis",
             "runCondition": {
-                "var": "bugComplexity",
-                "equals": "simple"
+                "var": "isReproducible",
+                "equals": true
             },
-            "title": "Phase 1: Streamlined Analysis (Simple Bugs)",
-            "prompt": "**STREAMLINED CODEBASE INVESTIGATION** - For simple bugs, I will perform focused analysis of the core issue.\n\n**STEP 1: Direct Component Analysis**\nI will examine the specific component involved:\n- **Primary Function/Method**: Direct analysis of the failing code\n- **Input/Output Analysis**: What data enters and exits the component\n- **Logic Flow**: Step-by-step execution path\n- **Error Point**: Exact location where failure occurs\n\n**STEP 2: Immediate Context Review**\n- **Recent Changes**: Git commits affecting this specific component\n- **Related Tests**: Existing test coverage for this functionality\n- **Dependencies**: Direct dependencies that could affect this component\n\n**STEP 3: Quick Hypothesis Formation**\nI will generate 1-3 focused hypotheses based on:\n- **Obvious Error Patterns**: Common failure modes for this type of component\n- **Change Impact**: How recent modifications could cause this issue\n- **Input Validation**: Whether invalid inputs are causing the failure\n\n**OUTPUTS**: Focused understanding of the simple bug with 1-3 targeted hypotheses ready for validation.",
-            "agentRole": "You are an experienced debugging specialist who excels at quickly identifying and resolving straightforward technical issues. Your strength lies in pattern recognition and efficient root cause analysis for simple bugs. You focus on the most likely causes while avoiding over-analysis.",
-            "guidance": [
-                "FOCUSED ANALYSIS: Concentrate on the specific failing component, avoid deep architectural analysis",
-                "PATTERN RECOGNITION: Use experience to identify common failure modes quickly",
-                "EFFICIENT HYPOTHESIS: Generate 1-3 focused hypotheses, not exhaustive possibilities",
-                "DIRECT APPROACH: Skip complex dependency analysis unless directly relevant"
-            ]
-        },
-        {
-            "id": "phase-1-comprehensive-analysis",
-            "runCondition": {
-                "or": [
-                    {
-                        "var": "bugComplexity",
-                        "equals": "standard"
-                    },
-                    {
-                        "var": "bugComplexity",
-                        "equals": "complex"
-                    }
-                ]
+            "loop": {
+                "type": "for",
+                "count": 4,
+                "maxIterations": 4,
+                "iterationVar": "analysisPhase"
             },
-            "title": "Phase 1: Deep Codebase Analysis (Standard/Complex Bugs)",
-            "prompt": "**SYSTEMATIC CODEBASE INVESTIGATION** - I will now perform comprehensive analysis of the relevant codebase components.\n\n**STEP 1: Affected Component Identification**\nBased on the bug report, I will identify and analyze:\n- **Primary Components**: Classes, functions, modules directly involved\n- **Dependency Chain**: Related components that could influence the bug\n- **Data Flow**: How data moves through the affected systems\n- **Error Propagation Paths**: Where and how errors can originate and propagate\n\n**STEP 2: Code Structure Analysis**\nFor each relevant component, I will examine:\n- **Implementation Logic**: Step-by-step code execution flow\n- **State Management**: How state is created, modified, and shared\n- **Error Handling**: Existing error handling mechanisms\n- **External Dependencies**: Third-party libraries, APIs, database interactions\n- **Concurrency Patterns**: Threading, async operations, shared resources\n\n**STEP 3: Historical Context Review**\nI will analyze:\n- **Recent Changes**: Git history around the affected components\n- **Test Coverage**: Existing tests and their coverage of the bug area\n- **Known Issues**: TODO comments, FIXME notes, or similar patterns\n\n**STEP 4: Recursive Dependency Dive**\nFor key components, analyze dependencies and internals recursively to uncover hidden issues.\n\n**OUTPUTS**: Comprehensive understanding of the codebase architecture and potential failure points.",
-            "agentRole": "You are a principal software architect and code analysis expert specializing in systematic codebase investigation. Your strength lies in quickly understanding complex system architectures, identifying failure points, and tracing execution flows. You excel at connecting code patterns to potential runtime behaviors.",
-            "guidance": [
-                "SYSTEMATIC COVERAGE: Analyze all relevant components, not just the obvious ones",
-                "EXECUTION FLOW FOCUS: Trace the actual code execution path that leads to the bug",
-                "STATE ANALYSIS: Pay special attention to state management and mutation patterns",
-                "DEPENDENCY MAPPING: Understand how external dependencies could contribute to the issue"
-            ]
+            "body": [
+                {
+                    "id": "analysis-iteration",
+                    "title": "Analysis Phase {{analysisPhase}}/4: {{analysisPhase === 1 ? 'Breadth Scan' : analysisPhase === 2 ? 'Component Deep Dive' : analysisPhase === 3 ? 'Dependency & Flow Analysis' : 'Test Coverage Analysis'}}",
+                    "prompt": "{{analysisPhase === 1 ? '**BREADTH SCAN - Cast Wide Net**\\n\\nGoal: Understand full system impact and identify all potentially involved components.\\n\\n1. **Error Propagation Mapping**:\\n   - Use grep_search for all error occurrences\\n   - Trace error messages across all log files\\n   - Map all stack traces to identify call chains\\n\\n2. **Component Discovery**:\\n   - Find ALL components that interact with failing area\\n   - Use codebase_search: \"How is [failing component] used?\"\\n   - Identify all callers and callees\\n\\n3. **Data Flow Mapping**:\\n   - Trace data that flows through bug area\\n   - Identify all transformations\\n   - Find all persistence points\\n\\n4. **Recent Changes**:\\n   - Git history for all identified components\\n   - Check last 10 commits affecting these areas\\n\\n**Output**: Complete BreadthAnalysis.md with interaction map and suspicious areas ranked by likelihood.' : analysisPhase === 2 ? '**COMPONENT DEEP DIVE - Understand Internals**\\n\\nGoal: Deep understanding of top 5 suspicious components from breadth scan.\\n\\nFor each component, use recursiveAnalysis(component, 3):\\n\\n1. **Level 1 - Direct Implementation**:\\n   - Read COMPLETE file including private methods\\n   - Understand state management\\n   - Analyze error handling\\n   - Check initialization/cleanup\\n\\n2. **Level 2 - Direct Dependencies**:\\n   - Follow all imports\\n   - Understand dependency contracts\\n   - Check version compatibility\\n   - Analyze coupling points\\n\\n3. **Level 3 - Integration Points**:\\n   - How component fits in larger system\\n   - Side effects and external calls\\n   - Concurrency/threading concerns\\n   - Resource management\\n\\n**Output**: ComponentAnalysis.md with deep insights for each suspicious component.' : analysisPhase === 3 ? '**DEPENDENCY & FLOW ANALYSIS - Trace Connections**\\n\\nGoal: Understand how components interact and data flows between them.\\n\\n1. **Static Dependency Graph**:\\n   - Build import/dependency tree\\n   - Identify circular dependencies\\n   - Find hidden dependencies (reflection, dynamic loading)\\n\\n2. **Runtime Flow Analysis**:\\n   - Trace execution paths leading to bug\\n   - Identify async/concurrent flows\\n   - Map state changes through execution\\n\\n3. **Data Transformation Pipeline**:\\n   - Track data from input to error point\\n   - Document each transformation\\n   - Identify validation points\\n   - Find where data could be corrupted\\n\\n4. **Integration Analysis**:\\n   - External service calls\\n   - Database interactions\\n   - Message queue operations\\n   - File system operations\\n\\n**Output**: FlowAnalysis.md with sequence diagrams and data flow maps.' : '**TEST COVERAGE ANALYSIS - Leverage Existing Knowledge**\\n\\nGoal: Use existing tests as source of truth about system behavior.\\n\\nFor each suspicious component, use analyzeTests(component):\\n\\n1. **Direct Test Coverage**:\\n   - Find all tests for component\\n   - Analyze what aspects are tested\\n   - Identify what is NOT tested\\n   - Check test quality/assertions\\n\\n2. **Integration Test Analysis**:\\n   - Find tests that exercise bug area\\n   - Analyze test assumptions\\n   - Check for flaky tests\\n   - Review disabled/skipped tests\\n\\n3. **Test History Investigation**:\\n   - When were tests added/modified?\\n   - Do test changes correlate with bug appearance?\\n   - Were any tests removed recently?\\n\\n4. **Test Execution with Debugging**:\\n   - Run relevant tests with debug flags\\n   - Add instrumentation to tests\\n   - Compare expected vs actual behavior\\n\\n**Output**: TestAnalysis.md with coverage gaps and test evidence matrix.'}}",
+                    "agentRole": "You are performing systematic analysis phase {{analysisPhase}} of 4. Your focus is {{analysisPhase === 1 ? 'casting a wide net to find all potentially related components' : analysisPhase === 2 ? 'deep diving into the most suspicious components to understand their internals' : analysisPhase === 3 ? 'tracing how components connect and data flows between them' : 'leveraging existing tests to understand expected behavior and find coverage gaps'}}.",
+                    "guidance": [
+                        "This is analysis phase {{analysisPhase}} of 4 total phases",
+                        "Each phase builds on previous findings",
+                        "Create a structured markdown file for each phase output",
+                        "Use the function definitions for standardized operations",
+                        "If you discover the bug's root cause with high confidence, note it but complete all analysis phases for thoroughness",
+                        "Update INVESTIGATION_CONTEXT.md after each phase with key findings"
+                    ],
+                    "requireConfirmation": false
+                }
+            ],
+            "requireConfirmation": false
         },
         {
             "id": "phase-1a-binary-search",
@@ -259,6 +271,23 @@
             "requireConfirmation": false
         },
         {
+            "id": "phase-2d-test-evidence-gathering",
+            "title": "Phase 2d: Test-Based Hypothesis Evidence",
+            "runCondition": {
+                "var": "hypothesesToValidate",
+                "exists": true
+            },
+            "prompt": "**TEST-DRIVEN HYPOTHESIS VALIDATION**\n\nFor each hypothesis in hypothesesToValidate, use checkHypothesisInTests(hypothesis):\n\n**1. Direct Test Evidence**:\n- Find tests that directly test suspected components\n- Analyze test names, descriptions, and assertions\n- Check if tests actually validate what we think\n\n**2. Indirect Test Evidence**:\n- Find tests that would fail if hypothesis is true\n- Look for integration tests touching the area\n- Check for tests that assume opposite behavior\n\n**3. Test Coverage Gaps**:\n- What aspects of hypothesis are NOT tested?\n- Where would a test have caught this bug?\n- What assumptions do tests make?\n\n**4. Test Execution Analysis**:\n- Run tests with debug instrumentation\n- Add temporary logging to tests\n- Compare test expectations vs reality\n\n**5. Historical Test Analysis**:\n- When were relevant tests last modified?\n- Were any tests disabled recently?\n- Do test changes correlate with bug appearance?\n\n**Create TestEvidence Matrix**:\n```\n| Hypothesis | Supporting Tests | Contradicting Tests | Coverage Gaps | Confidence Impact |\n|------------|------------------|---------------------|---------------|-------------------|\n| H1         | TestA, TestB     | TestC (partially)   | Edge case X   | +2 confidence     |\n```\n\n**Update each hypothesis** with test evidence findings.",
+            "agentRole": "You are a test analysis specialist validating hypotheses against the existing test suite. Your goal is to use tests as objective evidence for or against each hypothesis.",
+            "guidance": [
+                "Tests are the codified understanding of system behavior",
+                "A hypothesis contradicted by passing tests needs reconsideration",
+                "Missing test coverage often indicates where bugs hide",
+                "Update hypothesis confidence based on test evidence"
+            ],
+            "requireConfirmation": false
+        },
+        {
             "id": "phase-3-4-5-validation-loop",
             "type": "loop",
             "title": "Hypothesis Validation Loop (Phases 3-4-5)",
@@ -273,7 +302,7 @@
                 {
                     "id": "loop-phase-3-instrumentation",
                     "title": "Phase 3: Debug Instrumentation for {{currentHypothesis.id}}",
-                    "prompt": "**DEBUGGING INSTRUMENTATION for {{currentHypothesis.id}}**\n\n**Hypothesis**: {{currentHypothesis.description}}\n**Validation Plan**: {{currentHypothesis.validationPlan}}\n\n**IMPLEMENT INSTRUMENTATION:**\n1. **Strategy**: Choose based on hypothesis needs (logging, debug prints, test mods)\n2. **Coverage**: Instrument all paths related to {{currentHypothesis.id}}\n3. **Evidence Points**: Focus on gathering evidence that will confirm/refute this specific hypothesis\n\n**LOG OPTIMIZATION:**\n- Use '{{currentHypothesis.id}}_DEBUG:' prefix for all logs\n- Implement deduplication for high-frequency events\n- Group related operations within 50-100ms windows\n\n**OUTPUT**: Instrumented code ready to validate {{currentHypothesis.id}}",
+                    "prompt": "**DEBUGGING INSTRUMENTATION for {{currentHypothesis.id}}**\n\n**Hypothesis**: {{currentHypothesis.description}}\n\n**IMPLEMENT SMART LOGGING**:\n\n1. **Standard Format**: Use instrumentCode(location, '{{currentHypothesis.id}}')\n   ```\n   className.methodName [{{currentHypothesis.id}}] {timestamp}: Specific message\n   ```\n\n2. **Deduplication Implementation**:\n   ```javascript\n   // Add to each instrumentation point\n   const debugState = { lastMsg: '', count: 0 };\n   function smartLog(msg) {\n     if (debugState.lastMsg === msg) {\n       debugState.count++;\n       if (debugState.count % 10 === 0) {\n         console.log(`[{{currentHypothesis.id}}] ${msg} x${debugState.count}`);\n       }\n     } else {\n       if (debugState.count > 1) {\n         console.log(`[{{currentHypothesis.id}}] Previous message x${debugState.count}`);\n       }\n       console.log(`[{{currentHypothesis.id}}] ${msg}`);\n       debugState.lastMsg = msg;\n       debugState.count = 1;\n     }\n   }\n   ```\n\n3. **Operation Grouping**:\n   ```javascript\n   console.log(`=== {{currentHypothesis.id}}: Operation ${opName} Start ===`);\n   const startTime = Date.now();\n   // ... operation code with smartLog() calls ...\n   console.log(`=== {{currentHypothesis.id}}: Operation ${opName} End (${Date.now() - startTime}ms) ===`);\n   ```\n\n4. **Test Instrumentation**:\n   - Add debugging to relevant test files\n   - Instrument test setup/teardown\n   - Log test assumptions vs actual behavior\n\n5. **High-Frequency Aggregation**:\n   - For loops/iterations, log summary every 100 iterations\n   - For events, create time-window summaries\n   - Track unique values and their counts\n\n**OUTPUT**: Instrumented code ready to produce clean, manageable logs for {{currentHypothesis.id}}",
                     "agentRole": "You are instrumenting code specifically to validate hypothesis {{currentHypothesis.id}}. Focus on targeted evidence collection.",
                     "guidance": [
                         "This is hypothesis {{hypothesisIndex + 1}} of {{hypothesesToValidate.length}}",
@@ -285,7 +314,7 @@
                 {
                     "id": "loop-phase-4-evidence",
                     "title": "Phase 4: Evidence Collection for {{currentHypothesis.id}}",
-                    "prompt": "**EVIDENCE COLLECTION for {{currentHypothesis.id}}**\n\n**Execute instrumented code and collect evidence:**\n1. Run the instrumented test/reproduction\n2. Collect all {{currentHypothesis.id}}_DEBUG logs\n3. Analyze results against validation criteria\n4. Document evidence quality and relevance\n\n**EVIDENCE ASSESSMENT:**\n- Does evidence support {{currentHypothesis.id}}? (Yes/No/Partial)\n- Evidence quality score (1-10)\n- Contradicting evidence found?\n- Additional evidence needed?\n\n**If log volume >500 lines, create sub-analysis prompt.**\n\n**OUTPUT**: Evidence assessment for {{currentHypothesis.id}} with quality scoring",
+                    "prompt": "**EVIDENCE COLLECTION for {{currentHypothesis.id}}**\n\n**Execute instrumented code and collect evidence:**\n1. Run the instrumented test/reproduction\n2. Collect all {{currentHypothesis.id}}_DEBUG logs\n3. Analyze results against validation criteria\n4. Document evidence quality and relevance\n\n**TEST EXECUTION EVIDENCE**:\n- Run instrumented tests for {{currentHypothesis.id}}\n- Collect test debug output\n- Note any test failures or unexpected behavior\n- Compare with production bug behavior\n\n**EVIDENCE ASSESSMENT:**\n- Does evidence support {{currentHypothesis.id}}? (Yes/No/Partial)\n- Evidence quality score (1-10)\n- Contradicting evidence found?\n- Additional evidence needed?\n\n**If log volume >500 lines, use aggregateDebugLogs() and create sub-analysis prompt.**\n\n**OUTPUT**: Evidence assessment for {{currentHypothesis.id}} with quality scoring",
                     "agentRole": "You are collecting and analyzing evidence specifically for hypothesis {{currentHypothesis.id}}.",
                     "guidance": [
                         "Focus on evidence directly related to this hypothesis",
@@ -314,6 +343,31 @@
                 ]
             },
             "requireConfirmation": false
+        },
+        {
+            "id": "phase-4a-controlled-experimentation",
+            "title": "Phase 4a: Controlled Code Experiments",
+            "runCondition": {
+                "var": "currentConfidence",
+                "lt": 8.0
+            },
+            "prompt": "**CONTROLLED EXPERIMENTATION** - When observation isn't enough, experiment!\n\n**Current Top Hypothesis**: {{hypothesesToValidate[0].id}} (Confidence: {{currentConfidence}}/10)\n\n**EXPERIMENT TYPES** (use controlledModification()):\n\n1. **Guard Additions (Non-Breaking)**:\n   ```javascript\n   // Add defensive check that logs but doesn't change behavior\n   if (unexpectedCondition) {\n     console.error('[H1_GUARD] Unexpected state detected:', state);\n     // Continue normal execution\n   }\n   ```\n\n2. **Assertion Injections**:\n   ```javascript\n   // Add assertion that would fail if hypothesis is correct\n   console.assert(expectedCondition, '[H1_ASSERT] Hypothesis H1 violated!');\n   ```\n\n3. **Minimal Fix Test**:\n   ```javascript\n   // Apply minimal fix for hypothesis, see if bug disappears\n   if (process.env.DEBUG_FIX_H1 === 'true') {\n     // Apply hypothesized fix\n     return fixedBehavior();\n   }\n   ```\n\n4. **Controlled Breaking**:\n   ```javascript\n   // Temporarily break suspected component to verify involvement\n   if (process.env.DEBUG_BREAK_H1 === 'true') {\n     throw new Error('[H1_BREAK] Intentionally breaking to test hypothesis');\n   }\n   ```\n\n**PROTOCOL**:\n1. Choose experiment type based on confidence and risk\n2. Implement modification with clear DEBUG markers\n3. Use createInvestigationBranch() if not already on investigation branch\n4. Commit: `git commit -m \"DEBUG: {{experiment_type}} for {{currentHypothesis.id}}\"`\n5. Run reproduction steps\n6. Use collectEvidence() to gather results\n7. Revert changes: `git revert HEAD`\n8. Document results in ExperimentResults/{{currentHypothesis.id}}.md\n\n**SAFETY LIMITS**:\n- Max 3 experiments per hypothesis\n- Each experiment in separate commit\n- Always revert after evidence collection\n- Document everything in INVESTIGATION_CONTEXT.md\n\n**UPDATE** hypothesis confidence based on experimental results.",
+            "agentRole": "You are a careful experimenter using controlled code modifications to validate hypotheses. Safety and reversibility are paramount.",
+            "guidance": [
+                "Start with non-breaking experiments (guards, logs)",
+                "Only use breaking experiments if essential",
+                "Every change must be easily reversible",
+                "Document rationale for each experiment type",
+                "Consider test environment experiments first"
+            ],
+            "requireConfirmation": true,
+            "validationCriteria": [
+                {
+                    "type": "contains",
+                    "value": "commit",
+                    "message": "Must specify commit message for experiment"
+                }
+            ]
         },
         {
             "id": "phase-3a-observability-setup",
