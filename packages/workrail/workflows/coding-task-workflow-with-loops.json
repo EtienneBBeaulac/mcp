@@ -1,5 +1,5 @@
 {
-    "id": "coding-task-workflow",
+    "id": "coding-task-workflow-with-loops",
     "name": "Excellent Adaptive Coding Workflow with Devil's Advocate Review",
     "version": "0.8.0",
     "description": "Comprehensive AI coding workflow with bidirectional re-triage, deep analysis, intelligent clarification, devil's advocate review, automation levels, failure bounds, tool fallbacks, and context documentation for production-ready development.",
