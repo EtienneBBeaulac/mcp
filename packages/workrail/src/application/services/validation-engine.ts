@@ -2,6 +2,7 @@ import { ValidationError } from '../../core/error-handler';
 import { evaluateCondition, Condition, ConditionContext } from '../../utils/condition-evaluator';
 import Ajv from 'ajv';
 import { WorkflowStep, LoopStep, Workflow, isLoopStep } from '../../types/workflow-types';
+import { EnhancedLoopValidator } from './enhanced-loop-validator';
 
 export interface ValidationRule {
   type: 'contains' | 'regex' | 'length' | 'schema';
@@ -27,6 +28,8 @@ export interface ValidationResult {
   valid: boolean;
   issues: string[];
   suggestions: string[];
+  warnings?: string[];
+  info?: string[];
 }
 
 /**
@@ -37,9 +40,11 @@ export interface ValidationResult {
 export class ValidationEngine {
   private ajv: Ajv;
   private schemaCache = new Map<string, any>();
+  private enhancedLoopValidator: EnhancedLoopValidator;
   
   constructor() {
     this.ajv = new Ajv({ allErrors: true });
+    this.enhancedLoopValidator = new EnhancedLoopValidator();
   }
 
   /**
@@ -373,6 +378,8 @@ export class ValidationEngine {
    * @returns ValidationResult with validation status and issues
    */
   validateLoopStep(step: LoopStep, workflow: Workflow): ValidationResult {
+    // Run enhanced validation first
+    const enhancedResult = this.enhancedLoopValidator.validateLoopStep(step);
     const issues: string[] = [];
     const suggestions: string[] = [];
 
@@ -493,10 +500,17 @@ export class ValidationEngine {
       suggestions.push('Use a valid JavaScript variable name');
     }
 
+    // Merge enhanced validation results
+    const allWarnings = [...(enhancedResult.warnings || [])];
+    const allSuggestions = [...suggestions, ...(enhancedResult.suggestions || [])];
+    const allInfo = [...(enhancedResult.info || [])];
+
     return {
       valid: issues.length === 0,
       issues,
-      suggestions
+      suggestions: allSuggestions,
+      warnings: allWarnings.length > 0 ? allWarnings : undefined,
+      info: allInfo.length > 0 ? allInfo : undefined
     };
   }
 
@@ -508,6 +522,8 @@ export class ValidationEngine {
   validateWorkflow(workflow: Workflow): ValidationResult {
     const issues: string[] = [];
     const suggestions: string[] = [];
+    const warnings: string[] = [];
+    const info: string[] = [];
 
     // Check for duplicate step IDs
     const stepIds = new Set<string>();
@@ -525,6 +541,12 @@ export class ValidationEngine {
         const loopResult = this.validateLoopStep(step, workflow);
         issues.push(...loopResult.issues.map(issue => `Step '${step.id}': ${issue}`));
         suggestions.push(...loopResult.suggestions);
+        if (loopResult.warnings) {
+          warnings.push(...loopResult.warnings.map(warning => `Step '${step.id}': ${warning}`));
+        }
+        if (loopResult.info) {
+          info.push(...loopResult.info.map(i => `Step '${step.id}': ${i}`));
+        }
       } else {
         // Basic step validation
         if (!step.id) {
@@ -566,7 +588,9 @@ export class ValidationEngine {
     return {
       valid: issues.length === 0,
       issues,
-      suggestions
+      suggestions,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      info: info.length > 0 ? info : undefined
     };
   }
 

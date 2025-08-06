@@ -443,6 +443,17 @@ See the `workflows/examples/loops/` directory for complete examples:
 - Validate workflows before execution
 - Monitor context size with large datasets
 
+## Enhanced Loop Validation
+
+WorkRail includes enhanced validation features specifically for loops that help catch common issues and promote best practices:
+
+- **Conditional Logic Complexity**: Warns about complex ternary operators and suggests using runCondition
+- **Prompt Length Validation**: Checks for excessively long prompts that could cause issues
+- **Template Variable Usage**: Validates that all referenced variables are properly defined
+- **Pattern Detection**: Recognizes common loop patterns and provides guidance
+
+For detailed information about loop validation and best practices, see the [Loop Validation Best Practices](./loop-validation-best-practices.md) guide.
+
 ## Future Enhancements
 
 Potential future improvements:

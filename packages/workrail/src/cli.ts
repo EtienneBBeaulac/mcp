@@ -8,7 +8,8 @@ import os from 'os';
 import { createWorkflowLookupServer } from './infrastructure/rpc/server';
 import { DefaultWorkflowService } from './application/services/workflow-service';
 // import { createDefaultWorkflowStorage } from './infrastructure/storage';
-import { validateWorkflow } from './application/validation';
+import { ValidationEngine } from './application/services/validation-engine';
+import { Workflow } from './types/workflow-types';
 import { initializeUserWorkflowDirectory } from './infrastructure/storage/multi-directory-workflow-storage';
 import { handleMigrationCommand } from './cli/migrate-workflow';
 
@@ -197,18 +198,49 @@ async function validateWorkflowFile(filePath: string): Promise<void> {
     }
 
     // 4. Validate workflow
-    const result = validateWorkflow(workflow);
+    const validationEngine = new ValidationEngine();
+    const result = validationEngine.validateWorkflow(workflow as Workflow);
     
-    if (result.valid) {
+    if (result.valid && !result.warnings?.length && !result.info?.length) {
       console.log(chalk.green('✅ Workflow is valid:'), filePath);
-      process.exit(0);
+    } else if (result.valid) {
+      console.log(chalk.green('✅ Workflow is valid with warnings:'), filePath);
+      
+      if (result.warnings && result.warnings.length > 0) {
+        console.log(chalk.yellow('\n⚠️  Warnings:'));
+        result.warnings.forEach(warning => {
+          console.log(chalk.yellow('  •'), warning);
+        });
+      }
+      
+      if (result.info && result.info.length > 0) {
+        console.log(chalk.blue('\nℹ️  Information:'));
+        result.info.forEach(info => {
+          console.log(chalk.blue('  •'), info);
+        });
+      }
+      
+      if (result.suggestions && result.suggestions.length > 0) {
+        console.log(chalk.gray('\n💡 Suggestions:'));
+        result.suggestions.forEach(suggestion => {
+          console.log(chalk.gray('  •'), suggestion);
+        });
+      }
     } else {
       console.error(chalk.red('❌ Workflow validation failed:'), filePath);
       console.error(chalk.yellow('\nValidation errors:'));
-      result.errors.forEach(error => {
+      result.issues.forEach(error => {
         console.error(chalk.red('  •'), error);
       });
-      console.error(chalk.yellow(`\nFound ${result.errors.length} validation error${result.errors.length === 1 ? '' : 's'}.`));
+      console.error(chalk.yellow(`\nFound ${result.issues.length} validation error${result.issues.length === 1 ? '' : 's'}.`));
+      
+      if (result.suggestions && result.suggestions.length > 0) {
+        console.log(chalk.gray('\n💡 Suggestions:'));
+        result.suggestions.forEach(suggestion => {
+          console.log(chalk.gray('  •'), suggestion);
+        });
+      }
+      
       process.exit(1);
     }
     
