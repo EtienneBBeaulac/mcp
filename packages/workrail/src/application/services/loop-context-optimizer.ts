@@ -37,11 +37,11 @@ export class LoopContextOptimizer implements ILoopContextOptimizer {
     };
 
     // For subsequent iterations, add phase reference
-    if (!isFirstIteration) {
+    if (!isFirstIteration && optimizedContext._currentLoop) {
       optimizedContext._currentLoop.phaseReference = this.createPhaseReference(loopStep);
       
       // Strip unnecessary data for subsequent iterations
-      return this.stripLoopMetadata(context);
+      return this.stripLoopMetadata(optimizedContext as EnhancedContext);
     }
 
     return optimizedContext;
