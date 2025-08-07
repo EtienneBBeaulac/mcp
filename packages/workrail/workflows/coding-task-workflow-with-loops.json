@@ -406,7 +406,7 @@
         {
             "id": "phase-6-count-steps",
             "title": "Phase 6 Preparation: Count Implementation Steps",
-            "prompt": "Before starting the implementation loop, count the discrete implementation steps in the approved `implementation_plan.md`.\n\n**Your task:**\n1. Read the implementation_plan.md\n2. Count each discrete, actionable step from the Implementation Strategy section\n3. Set `totalImplementationSteps` to the count (e.g., 8)\n4. Set `currentStepNumber` to 0\n\n**What counts as a step:**\n- Each bullet point or numbered item that represents a concrete implementation task\n- Each item that would result in a code change or file creation\n- Each item that could be a logical git commit\n\n**Example:**\nIf the plan has:\n- Create user model\n- Add authentication service\n- Implement validation\n- Write tests\n\nThen set `totalImplementationSteps` = 4\n\n**IMPORTANT:** Only count, don't extract or store the steps. You'll read them directly from the plan during implementation.",
+            "prompt": "Before starting the implementation loop, count the discrete implementation steps in the approved `implementation_plan.md`.\n\n**Your task:**\n1. Read the implementation_plan.md\n2. Count each discrete, actionable step from the Implementation Strategy section\n3. Set `totalImplementationSteps` to the count (e.g., 8)\n\n**What counts as a step:**\n- Each bullet point or numbered item that represents a concrete implementation task\n- Each item that would result in a code change or file creation\n- Each item that could be a logical git commit\n\n**Example:**\nIf the plan has:\n- Create user model\n- Add authentication service\n- Implement validation\n- Write tests\n\nThen set `totalImplementationSteps` = 4\n\n**IMPORTANT:** Only count, don't extract or store the steps. You'll read them directly from the plan during implementation.",
             "agentRole": "You are preparing the implementation phase by counting the steps to enable progress tracking.",
             "guidance": [
                 "Count only actionable implementation steps",
@@ -423,8 +423,7 @@
             "runCondition": {"var": "taskComplexity", "not_equals": "Small"},
             "loop": {
                 "type": "for",
-                "start": 0,
-                "end": "totalImplementationSteps",
+                "count": "totalImplementationSteps",
                 "indexVar": "currentStepNumber",
                 "maxIterations": 25
             },
