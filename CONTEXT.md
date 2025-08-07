@@ -371,6 +371,7 @@ All 8 implementation steps have been successfully completed:
 - `92e5b0e`: feat(workflows): add explicit agent instructions to reduce context size
 - `79941f3`: docs: add context cleaner snippet for agents  
 - `894036e`: Revert input context POC (focused on agent-side optimization instead)
+- `[pending]`: Replace implementationSteps array with step counter approach
 
 ## Final Solution Summary
 
@@ -390,3 +391,19 @@ All 8 implementation steps have been successfully completed:
 
 ### Key Insight
 The MCP server doesn't need to enforce input size limits - that's an agent-side concern for token usage. The solution is better agent behavior through clearer instructions, not server-side complexity.
+
+## Workflow Array Optimization
+
+### Problem Identified
+The `phase-6-prepare-steps` was creating an `implementationSteps` array that agents would send back on every call, defeating our optimization efforts.
+
+### Solution Implemented
+Replaced the array preparation with a simple step counter:
+- Old: Create array of steps → forEach loop over array
+- New: Count steps → for loop with index
+
+### Benefits
+- No large arrays in context (saves ~5-10KB per call)
+- Agents read steps directly from plan
+- Context only contains: `currentStepNumber`, `totalImplementationSteps`
+- Aligns perfectly with our optimization goals
