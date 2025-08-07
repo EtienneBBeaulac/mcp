@@ -61,6 +61,7 @@ import { createListWorkflows } from './use-cases/list-workflows';
 import { createGetWorkflow } from './use-cases/get-workflow';
 import { createGetNextStep } from './use-cases/get-next-step';
 import { createValidateStepOutput } from './use-cases/validate-step-output';
+import { SimpleOutputDecorator } from './decorators/simple-output-decorator';
 
 export const METHOD_NAMES = {
   WORKFLOW_LIST: 'workflow_list',
@@ -74,10 +75,18 @@ export const METHOD_NAMES = {
 
 export type MethodName = typeof METHOD_NAMES[keyof typeof METHOD_NAMES];
 
+// Create a minimal interface for what we need from ApplicationMediator
+export interface IApplicationMediator {
+  execute(method: string, params: any): Promise<any>;
+  register(method: string, handler: any): void;
+  setResponseValidator(fn: (method: string, result: any) => void): void;
+}
+
 export function buildWorkflowApplication(
   workflowService: WorkflowService,
-  validator: MethodValidator = requestValidator
-): ApplicationMediator {
+  validator: MethodValidator = requestValidator,
+  enableOutputOptimization: boolean = true
+): IApplicationMediator {
   const app = new ApplicationMediator(validator);
 
   // Attach response validator
@@ -142,6 +151,11 @@ export function buildWorkflowApplication(
       await shutdownHandler({ id: 0, params, method: 'shutdown', jsonrpc: '2.0' } as any)
     ).result;
   });
+
+  // Apply output optimization decorator if enabled
+  if (enableOutputOptimization) {
+    return new SimpleOutputDecorator(app);
+  }
 
   return app;
 } 
