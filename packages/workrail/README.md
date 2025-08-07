@@ -3,7 +3,7 @@
 > **Transform chaotic AI interactions into structured, reliable workflows**
 
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)]()
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)]()
 
 ---
 
@@ -122,6 +122,15 @@ WorkRail supports powerful iteration patterns for complex tasks:
 - **`forEach`** - Process items in an array
 
 Perfect for batch operations, retries, polling, and iterative refinement.
+
+### 🚀 v0.2.0: Optimized Loop Execution
+
+- **60-80% smaller context** after first iteration
+- **Progressive disclosure** pattern for loop information
+- **Native function DSL** to reduce duplication
+- **Automatic empty loop detection** and skipping
+
+See [Loop Optimization Guide](docs/features/loop-optimization.md) for details.
 
 ---
 

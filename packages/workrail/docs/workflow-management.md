@@ -166,6 +166,41 @@ workrail validate my-workflow.json
 find ~/.workrail/workflows -name "*.json" -exec workrail validate {} \;
 ```
 
+## Loop Optimization (v0.2.0+)
+
+WorkRail automatically optimizes loop execution to reduce context size:
+
+### Progressive Context Disclosure
+
+- **First iteration**: Full loop overview + first step details
+- **Subsequent iterations**: Minimal context with current item only
+- **Context reduction**: 60-80% smaller responses after first iteration
+
+### Function DSL
+
+Define reusable functions to reduce duplication:
+
+```json
+{
+  "functionDefinitions": [
+    {
+      "name": "processItem",
+      "definition": "Validates and transforms item data"
+    }
+  ],
+  "steps": [{
+    "prompt": "Use processItem() to handle the current item",
+    "functionReferences": ["processItem()"]
+  }]
+}
+```
+
+### Empty Loop Detection
+
+Loops with no items are automatically skipped, improving performance.
+
+For detailed information, see [Loop Optimization Guide](features/loop-optimization.md).
+
 ## Advanced Configuration
 
 ### Disable Specific Sources
