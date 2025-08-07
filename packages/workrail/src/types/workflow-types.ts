@@ -16,6 +16,7 @@ export interface Workflow {
   clarificationPrompts?: string[];
   steps: (WorkflowStep | LoopStep)[];
   metaGuidance?: string[];
+  functionDefinitions?: FunctionDefinition[];
 }
 
 export interface WorkflowStep {
@@ -27,6 +28,8 @@ export interface WorkflowStep {
   askForFiles?: boolean;
   requireConfirmation?: boolean;
   runCondition?: object;
+  functionDefinitions?: FunctionDefinition[];
+  functionReferences?: string[];
 }
 
 // Loop-related types
@@ -72,9 +75,59 @@ export interface EnhancedContext extends ConditionContext {
   };
 }
 
+// Optimized context for loops with progressive disclosure
+export interface OptimizedLoopContext extends ConditionContext {
+  _loopState?: LoopState;
+  _warnings?: {
+    loops?: {
+      [loopId: string]: string[];
+    };
+  };
+  _contextSize?: number;
+  _currentLoop?: {
+    loopId: string;
+    loopType: 'for' | 'forEach' | 'while' | 'until';
+    iteration: number;
+    isFirstIteration: boolean;
+    phaseReference?: LoopPhaseReference;
+  };
+  _loopPhaseReference?: LoopPhaseReference;
+}
+
+// Reference to loop phase for subsequent iterations
+export interface LoopPhaseReference {
+  loopId: string;
+  phaseTitle: string;
+  totalSteps: number;
+  functionDefinitions?: FunctionDefinition[];
+}
+
+// Function DSL support
+export interface FunctionDefinition {
+  name: string;
+  definition: string;
+  scope?: 'workflow' | 'loop' | 'step';
+}
+
 // Type guard for loop steps
 export function isLoopStep(step: WorkflowStep | LoopStep): step is LoopStep {
   return 'type' in step && step.type === 'loop';
+}
+
+// Type guard for first loop iteration
+export function isFirstLoopIteration(context: EnhancedContext | OptimizedLoopContext): boolean {
+  if ('isFirstIteration' in (context._currentLoop || {})) {
+    return (context as OptimizedLoopContext)._currentLoop?.isFirstIteration === true;
+  }
+  // For legacy EnhancedContext, check if it's in a loop state
+  const loopState = context._loopState;
+  if (loopState) {
+    const currentLoopId = context._currentLoop?.loopId;
+    if (currentLoopId && loopState[currentLoopId]) {
+      return loopState[currentLoopId].iteration === 0;
+    }
+  }
+  return false;
 }
 
 // =============================================================================
