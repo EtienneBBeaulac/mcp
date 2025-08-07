@@ -33,8 +33,8 @@ describe('SimpleOutputDecorator', () => {
 
       // Assert
       expect(result.guidance.prompt).toContain('Original prompt text');
-      expect(result.guidance.prompt).toContain('CONTEXT OPTIMIZATION');
-      expect(result.guidance.prompt).toContain('send ONLY the fields you\'ve modified');
+      expect(result.guidance.prompt).toContain('CONTEXT OPTIMIZATION REQUIREMENTS');
+      expect(result.guidance.prompt).toContain('The MCP server is STATELESS');
       expect(mockMediator.execute).toHaveBeenCalledWith('workflow_next', { workflowId: 'test' });
     });
 

@@ -3,26 +3,65 @@ import { IApplicationMediator } from '../app';
 // Context optimization instructions to inject
 const CONTEXT_OPTIMIZATION_TEXT = `
 
-**CONTEXT OPTIMIZATION**:
-When calling workflow_next, send ONLY the fields you've modified or created:
-- DO NOT echo back unchanged arrays (implementationSteps, _loopState, etc.)
-- Remove internal fields starting with underscore (_)
-- Send only what changed from the previous context
-- Expected context size: < 5KB
+**CONTEXT OPTIMIZATION REQUIREMENTS**:
 
-Example of optimized context:
+The MCP server is STATELESS. You MUST send required data with each request:
+
+**ALWAYS INCLUDE:**
+1. \`workflowId\` - Required for all calls
+2. \`completedSteps\` - Full array of completed step IDs
+3. **Condition Variables** - ANY variable used in step \`runCondition\` fields
+4. **Template Variables** - ANY variable referenced in {{templates}} in prompts/titles
+5. **Your New/Modified Variables** - Variables you created or changed in this step
+
+**CONDITIONALLY INCLUDE:**
+- **Loop Variables** (when in a loop): \`currentIteration\`, \`currentItem\`, \`currentIndex\`
+- **Active Loop State**: Only \`_loopState[currentLoopId]\` if currently in a loop
+- **Referenced Variables**: Any variable that future steps might need
+
+**NEVER INCLUDE:**
+- Large arrays that aren't being actively iterated (e.g., \`implementationSteps\` array)
+- Stale loop states from completed loops
+- Unreferenced historical data
+- Variables only used in completed steps
+
+**SIZE TARGETS:**
+- Normal steps: < 2KB
+- Loop iterations: < 5KB
+- Complex state: < 10KB
+
+**EXAMPLE - Loop Context:**
 \`\`\`json
 {
-  "workflowId": "...",
-  "completedSteps": [...],
+  "workflowId": "coding-task-workflow",
+  "completedSteps": ["phase-1", "phase-2", "loop-step-1"],
   "context": {
-    // Only include fields you created or modified:
-    "newVariable": "value",
-    "modifiedField": "updated value"
-    // DO NOT include: arrays, _fields, unchanged data
+    // Required: condition/template variables
+    "taskComplexity": "Medium",
+    "totalImplementationSteps": 8,
+    "currentStepNumber": 3,
+    
+    // Required: your changes
+    "stepCompleted": true,
+    "testResults": "passed",
+    
+    // Required: active loop state only
+    "_loopState": {
+      "phase-6-loop": { "iteration": 3 }
+    },
+    
+    // DON'T include:
+    // - implementationSteps: [...] // Large array
+    // - analysisResults: {...} // From phase 1
+    // - _loopState.oldLoop: {...} // Completed loop
   }
 }
-\`\`\``;
+\`\`\`
+
+**VALIDATION CHECK**: Before sending, verify you have ALL variables referenced in:
+- The next step's \`runCondition\`
+- Any {{variable}} in the next step's prompts
+- Variables needed for loop control`;
 
 /**
  * Decorator that adds context optimization instructions to workflow_next responses.
