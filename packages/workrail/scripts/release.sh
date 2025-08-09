@@ -25,23 +25,45 @@ show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo
     echo "Options:"
+    echo "  --interactive                      Run in interactive mode (prompts for all values)"
     echo "  --type <patch|minor|major|custom>  Specify version bump type"
     echo "  --version <x.y.z>                  Custom version (required if type=custom)"
     echo "  --desc <description>               Release description"
-    echo "  --features <features>              Key features (newline-separated)"
-    echo "  --push                             Automatically push to origin (non-interactive)"
+    echo "  --features <features>              Key features (use config file for multi-line)"
+    echo "  --push                             Automatically push to origin"
     echo "  --no-push                          Skip pushing to origin"
-    echo "  --publish                          Automatically publish to npm (non-interactive)"
+    echo "  --publish                          Automatically publish to npm"
     echo "  --no-publish                       Skip publishing to npm"
     echo "  --access <public|restricted>       NPM access level (default: public)"
     echo "  --force                            Continue even with uncommitted changes"
+    echo "  --migrate                          Convert current command to .releaserc format"
     echo "  --help                             Show this help message"
     echo
-    echo "If no options are provided, the script runs in interactive mode."
+    echo "Config File:"
+    echo "  Create a .releaserc file to set defaults. See .releaserc.example for format."
+    echo
+    echo "Mode Selection:"
+    echo "  Default: Batch mode (fails if required arguments missing)"
+    echo "  Use --interactive for interactive mode with prompts"
+    echo
+    echo "Examples:"
+    echo "  $0 --type minor --desc \"Bug fixes\" --push --publish"
+    echo "  $0 --interactive"
+    echo "  $0  # Uses .releaserc if present"
+    echo
     exit 0
 }
 
-# Parse arguments
+# Detect mode from arguments
+MODE="batch"  # default to batch mode
+for arg in "$@"; do
+    if [ "$arg" = "--interactive" ]; then
+        MODE="interactive"
+        break
+    fi
+done
+
+# Initialize variables with defaults
 TYPE=""
 CUSTOM_VERSION=""
 DESC=""
@@ -51,22 +73,82 @@ PUBLISH=""
 ACCESS="public"
 FORCE=false
 
+# Load config file if it exists
+if [ -f ".releaserc" ]; then
+    print_color "$BLUE" "📋 Loading configuration from .releaserc"
+    source .releaserc
+    
+    # Map config variables to script variables
+    TYPE="${RELEASE_TYPE:-}"
+    CUSTOM_VERSION="${RELEASE_VERSION:-}"
+    DESC="${RELEASE_DESC:-}"
+    FEATURES="${RELEASE_FEATURES:-}"
+    [ "${RELEASE_PUSH:-}" = "true" ] && PUSH=true
+    [ "${RELEASE_PUSH:-}" = "false" ] && PUSH=false
+    [ "${RELEASE_PUBLISH:-}" = "true" ] && PUBLISH=true
+    [ "${RELEASE_PUBLISH:-}" = "false" ] && PUBLISH=false
+    ACCESS="${RELEASE_ACCESS:-public}"
+    [ "${RELEASE_FORCE:-}" = "true" ] && FORCE=true || FORCE=false
+fi
+
+# Parse command line arguments (these override config file)
+CMD_TYPE=""
+CMD_CUSTOM_VERSION=""
+CMD_DESC=""
+CMD_FEATURES=""
+CMD_PUSH=""
+CMD_PUBLISH=""
+CMD_ACCESS=""
+CMD_FORCE=false
+SHOW_MIGRATE=false
+
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --type) TYPE="$2"; shift 2 ;;
-        --version) CUSTOM_VERSION="$2"; shift 2 ;;
-        --desc) DESC="$2"; shift 2 ;;
-        --features) FEATURES="$2"; shift 2 ;;
-        --push) PUSH=true; shift ;;
-        --no-push) PUSH=false; shift ;;
-        --publish) PUBLISH=true; shift ;;
-        --no-publish) PUBLISH=false; shift ;;
-        --access) ACCESS="$2"; shift 2 ;;
-        --force) FORCE=true; shift ;;
+        --interactive) shift ;; # Already processed above
+        --type) CMD_TYPE="$2"; shift 2 ;;
+        --version) CMD_CUSTOM_VERSION="$2"; shift 2 ;;
+        --desc) CMD_DESC="$2"; shift 2 ;;
+        --features) CMD_FEATURES="$2"; shift 2 ;;
+        --push) CMD_PUSH=true; shift ;;
+        --no-push) CMD_PUSH=false; shift ;;
+        --publish) CMD_PUBLISH=true; shift ;;
+        --no-publish) CMD_PUBLISH=false; shift ;;
+        --access) CMD_ACCESS="$2"; shift 2 ;;
+        --force) CMD_FORCE=true; shift ;;
+        --migrate) SHOW_MIGRATE=true; shift ;;
         --help) show_help ;;
         *) print_color "$RED" "Unknown option: $1"; show_help ;;
     esac
 done
+
+# Command line arguments override config file
+[ -n "$CMD_TYPE" ] && TYPE="$CMD_TYPE"
+[ -n "$CMD_CUSTOM_VERSION" ] && CUSTOM_VERSION="$CMD_CUSTOM_VERSION"
+[ -n "$CMD_DESC" ] && DESC="$CMD_DESC"
+[ -n "$CMD_FEATURES" ] && FEATURES="$CMD_FEATURES"
+[ -n "$CMD_PUSH" ] && PUSH="$CMD_PUSH"
+[ -n "$CMD_PUBLISH" ] && PUBLISH="$CMD_PUBLISH"
+[ -n "$CMD_ACCESS" ] && ACCESS="$CMD_ACCESS"
+[ "$CMD_FORCE" = true ] && FORCE=true
+
+# Handle --migrate flag
+if [ "$SHOW_MIGRATE" = true ]; then
+    print_color "$BLUE" "🔄 Generating .releaserc from current arguments..."
+    cat > .releaserc <<EOF
+# Generated by release.sh --migrate
+RELEASE_TYPE="${TYPE:-minor}"
+RELEASE_VERSION="${CUSTOM_VERSION:-}"
+RELEASE_DESC="${DESC:-}"
+RELEASE_FEATURES="${FEATURES:-}"
+RELEASE_PUSH=${PUSH:-true}
+RELEASE_PUBLISH=${PUBLISH:-true}
+RELEASE_ACCESS="${ACCESS:-public}"
+RELEASE_FORCE=${FORCE:-false}
+EOF
+    print_color "$GREEN" "✅ Created .releaserc file"
+    print_color "$YELLOW" "📝 Please review and edit .releaserc as needed"
+    exit 0
+fi
 
 # Main script
 print_color "$BLUE" "🚀 Workrail Release Script"
@@ -82,8 +164,60 @@ fi
 # Check if in git repo
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { print_color "$RED" "❌ Not a git repository. Initialize git first."; exit 1; }
 
-# Check for uncommitted changes
-if ! $FORCE && ! git diff-index --quiet HEAD --; then
+# Get current version
+CURRENT_VERSION=$(get_current_version)
+print_color "$GREEN" "Current version: $CURRENT_VERSION"
+print_color "$GREEN" "Mode: $MODE"
+echo
+
+# Batch mode validation - fail fast if required arguments are missing
+if [ "$MODE" = "batch" ]; then
+    ERRORS=()
+    
+    # Check required arguments
+    if [ -z "$TYPE" ]; then
+        ERRORS+=("❌ Missing required argument: --type (or RELEASE_TYPE in .releaserc)")
+    fi
+    
+    if [ "$TYPE" = "custom" ] && [ -z "$CUSTOM_VERSION" ]; then
+        ERRORS+=("❌ Missing required argument: --version (required when --type=custom)")
+    fi
+    
+    # If we have errors, display them and exit
+    if [ ${#ERRORS[@]} -gt 0 ]; then
+        print_color "$RED" "Batch mode validation failed:"
+        for error in "${ERRORS[@]}"; do
+            print_color "$RED" "  $error"
+        done
+        echo
+        print_color "$YELLOW" "Options:"
+        print_color "$YELLOW" "  1. Create a .releaserc file with required values"
+        print_color "$YELLOW" "  2. Provide missing arguments on command line"
+        print_color "$YELLOW" "  3. Use --interactive mode for prompts"
+        echo
+        print_color "$BLUE" "Example .releaserc:"
+        cat <<EOF
+RELEASE_TYPE="minor"
+RELEASE_DESC="Bug fixes and improvements"
+RELEASE_FEATURES="- Fixed authentication bug
+- Improved performance"
+EOF
+        exit 1
+    fi
+    
+    # In batch mode, check for uncommitted changes
+    if ! $FORCE && ! git diff-index --quiet HEAD --; then
+        print_color "$RED" "❌ Error: Uncommitted changes detected in batch mode."
+        print_color "$YELLOW" "Options:"
+        print_color "$YELLOW" "  1. Commit your changes first"
+        print_color "$YELLOW" "  2. Use --force to proceed anyway"
+        print_color "$YELLOW" "  3. Use --interactive mode"
+        exit 1
+    fi
+fi
+
+# Check for uncommitted changes (only prompt in interactive mode)
+if ! $FORCE && ! git diff-index --quiet HEAD -- && [ "$MODE" = "interactive" ]; then
     print_color "$YELLOW" "⚠️  Warning: You have uncommitted changes."
     read -p "Do you want to continue anyway? (y/N) " -n 1 -r < /dev/tty
     echo
@@ -93,13 +227,8 @@ if ! $FORCE && ! git diff-index --quiet HEAD --; then
     fi
 fi
 
-# Get current version
-CURRENT_VERSION=$(get_current_version)
-print_color "$GREEN" "Current version: $CURRENT_VERSION"
-echo
-
 # Determine version bump type
-if [ -z "$TYPE" ]; then
+if [ -z "$TYPE" ] && [ "$MODE" = "interactive" ]; then
     print_color "$BLUE" "What type of version bump?"
     echo "1) patch (x.x.X) - Bug fixes"
     echo "2) minor (x.X.0) - New features (backward compatible)"
@@ -116,20 +245,22 @@ if [ -z "$TYPE" ]; then
         5) print_color "$YELLOW" "Release cancelled."; exit 0 ;;
         *) print_color "$RED" "Invalid option. Release cancelled."; exit 1 ;;
     esac
-else
-    case $TYPE in
-        patch|minor|major|custom) ;;
-        *) print_color "$RED" "Invalid type: $TYPE"; exit 1 ;;
-    esac
 fi
+
+# Validate type
+case $TYPE in
+    patch|minor|major|custom) ;;
+    *) print_color "$RED" "Invalid type: $TYPE"; exit 1 ;;
+esac
 
 # Handle custom version
 if [ "$TYPE" = "custom" ]; then
     if [ -z "$CUSTOM_VERSION" ]; then
-        if [ -t 0 ]; then  # Interactive
+        if [ "$MODE" = "interactive" ]; then
             read -p "Enter new version (e.g., 1.2.3): " CUSTOM_VERSION < /dev/tty
         else
-            print_color "$RED" "❌ --version required for custom type in non-interactive mode."
+            print_color "$RED" "❌ --version required for custom type in batch mode."
+            print_color "$YELLOW" "Provide it via --version or RELEASE_VERSION in .releaserc"
             exit 1
         fi
     fi
@@ -149,19 +280,32 @@ print_color "$GREEN" "✅ Version bumped to: $NEW_VERSION"
 echo
 
 # Get release description
-if [ -z "$DESC" ]; then
+if [ -z "$DESC" ] && [ "$MODE" = "interactive" ]; then
     print_color "$BLUE" "Enter a brief description of this release (or press Enter to skip):"
     read -r DESC < /dev/tty
 fi
 
 # Get features
-if [ -z "$FEATURES" ]; then
+if [ -z "$FEATURES" ] && [ "$MODE" = "interactive" ]; then
     print_color "$BLUE" "List key features/changes (one per line, empty line to finish):"
     FEATURES=""
     while IFS= read -r line < /dev/tty; do
         [ -z "$line" ] && break
         FEATURES="${FEATURES}- ${line}\n"
     done
+fi
+
+# In batch mode, show what will be committed
+if [ "$MODE" = "batch" ]; then
+    print_color "$BLUE" "📋 Release Configuration:"
+    echo "  Type: $TYPE"
+    echo "  Version: $CURRENT_VERSION → $NEW_VERSION"
+    [ -n "$DESC" ] && echo "  Description: $DESC"
+    if [ -n "$FEATURES" ]; then
+        echo "  Features:"
+        echo -e "$FEATURES" | sed 's/^/    /'
+    fi
+    echo
 fi
 
 # Build release notes
@@ -215,17 +359,22 @@ fi
 
 # Handle push
 if [ -z "$PUSH" ]; then
-    echo
-    read -p "Push commits and tags to origin? (y/N) " -n 1 -r < /dev/tty
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        PUSH=true
+    if [ "$MODE" = "interactive" ]; then
+        echo
+        read -p "Push commits and tags to origin? (y/N) " -n 1 -r < /dev/tty
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            PUSH=true
+        else
+            PUSH=false
+        fi
     else
+        # In batch mode, default to not pushing unless explicitly set
         PUSH=false
     fi
 fi
 
-if $PUSH; then
+if [ "$PUSH" = true ]; then
     print_color "$BLUE" "📤 Pushing to origin..."
     git push origin main --tags
     if [ $? -eq 0 ]; then
@@ -237,24 +386,27 @@ fi
 
 # Handle publish
 if [ -z "$PUBLISH" ]; then
-    echo
-    # Clear any leftover input and read from terminal
-    while read -t 0.1 -n 1000 2>/dev/null; do :; done
-    read -p "Publish to npm? (y/N) " -n 1 -r < /dev/tty
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        PUBLISH=true
+    if [ "$MODE" = "interactive" ]; then
+        echo
+        read -p "Publish to npm? (y/N) " -n 1 -r REPLY < /dev/tty
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            PUBLISH=true
+        else
+            PUBLISH=false
+        fi
     else
+        # In batch mode, default to not publishing unless explicitly set
         PUBLISH=false
     fi
 fi
 
-if $PUBLISH; then
+if [ "$PUBLISH" = true ]; then
     # Check npm login
     npm whoami >/dev/null 2>&1 || { print_color "$RED" "❌ Not logged into npm. Run 'npm login' first."; exit 1; }
 
-    # If access not specified in args, ask
-    if [ -z "$ACCESS" ]; then
+    # If access not specified, ask (only in interactive mode)
+    if [ -z "$ACCESS" ] && [ "$MODE" = "interactive" ]; then
         print_color "$BLUE" "Select npm access level:"
         echo "1) public (default)"
         echo "2) restricted"
@@ -291,10 +443,10 @@ print_color "$BLUE" "📋 Summary:"
 print_color "$GREEN" "  - Version: $CURRENT_VERSION → $NEW_VERSION"
 print_color "$GREEN" "  - Commit: ✅"
 print_color "$GREEN" "  - Tag: ✅"
-if $PUSH; then
+if [ "$PUSH" = true ]; then
     print_color "$GREEN" "  - Pushed: ✅"
 fi
-if $PUBLISH; then
+if [ "$PUBLISH" = true ]; then
     print_color "$GREEN" "  - Published: ✅"
 fi
 

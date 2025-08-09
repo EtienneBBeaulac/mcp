@@ -69,4 +69,4 @@ yarn.lock
 .prettier*
 
 # Husky
-.husky/_ 
+.husky/_ .releaserc
