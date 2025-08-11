@@ -1,0 +1,23 @@
+# WorkRail Release Configuration
+RELEASE_TYPE="minor"
+RELEASE_VERSION=""
+RELEASE_DESC="Fixed dual-mode CLI interface bugs"
+RELEASE_FEATURES="### Bug Fixes
+- Fixed multi-line --features argument parsing issue
+- Resolved unexpected interactive mode fallback  
+- Fixed publish prompt not waiting for user input
+
+### New Features
+- Added explicit --interactive flag for interactive mode
+- Added .releaserc config file support
+- Added --migrate flag to convert commands to config
+- Default to batch mode for better CI/CD compatibility
+
+### Improvements
+- Clear mode separation between batch and interactive
+- Better error messages in batch mode
+- No stdin pollution in batch mode"
+RELEASE_PUSH=false
+RELEASE_PUBLISH=false
+RELEASE_ACCESS="public"
+RELEASE_FORCE=false

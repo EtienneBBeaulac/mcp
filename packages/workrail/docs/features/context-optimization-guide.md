@@ -207,6 +207,12 @@ You can add similar instructions to your workflows:
    - Symptom: Loop restarts or skips
    - Fix: Preserve `_loopState[activeLoopId]`
 
+4. **Loop Count Variable Missing** 
+   - Symptom: Loop exits immediately, jumps to next major phase
+   - Error: "Invalid count value for 'for' loop: variableName"
+   - Fix: Ensure count variable (e.g., `totalImplementationSteps`) is preserved
+   - Common cause: Workflow step instructions override general template variable rules
+
 ### Validation Checklist
 
 Before each `workflow_next` call, agents should verify:
@@ -215,6 +221,7 @@ Before each `workflow_next` call, agents should verify:
 - [ ] `completedSteps` array is complete
 - [ ] All condition variables are present
 - [ ] All template variables are included
+- [ ] Loop count variables are preserved (e.g., `totalImplementationSteps`)
 - [ ] New/modified variables are added
 - [ ] Active loop state is preserved
 - [ ] Context size is reasonable (<10KB)
