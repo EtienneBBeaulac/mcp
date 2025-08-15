@@ -354,6 +354,71 @@ export class DefaultWorkflowService implements WorkflowService {
       return this.getNextStep(workflowId, completedSteps, loopStartSizeCheck.context);
     }
     
+    // If no next step is eligible, determine whether we're actually complete
+    // or blocked due to unmet runCondition variables. This avoids false
+    // "Workflow complete" responses when context is missing or mismatched.
+    if (!nextStep) {
+      const remainingConditionalSteps = workflow.steps.filter((step) => {
+        if (completed.includes(step.id)) return false;
+        if (loopBodySteps.has(step.id)) return false;
+        return !!(step as any).runCondition;
+      });
+
+      if (remainingConditionalSteps.length > 0) {
+        // Collect variables referenced by remaining step conditions and any
+        // enumerated equals values to provide actionable guidance.
+        const requiredVars = new Set<string>();
+        const allowedValues: Record<string, Set<string>> = {};
+
+        for (const step of remainingConditionalSteps) {
+          const condition = (step as any).runCondition as any;
+          this.collectConditionVars(condition, requiredVars);
+          this.collectEqualsValues(condition, allowedValues);
+        }
+
+        // Build guidance message indicating what is missing or mismatched
+        const issues: string[] = [];
+        for (const variableName of requiredVars) {
+          const currentValue = (enhancedContext as any)[variableName];
+          const allowed = allowedValues[variableName]
+            ? Array.from(allowedValues[variableName])
+            : [];
+
+          if (currentValue === undefined || currentValue === null || currentValue === '') {
+            if (allowed.length > 0) {
+              issues.push(`Set '${variableName}' to one of: ${allowed.map(v => `'${v}'`).join(', ')}`);
+            } else {
+              issues.push(`Provide a value for '${variableName}'`);
+            }
+          } else if (allowed.length > 0) {
+            // If we have an allowed set and the current value does not match any exactly,
+            // provide corrective guidance. Also hint if it only differs by case.
+            const matchesExactly = allowed.some(v => v === String(currentValue));
+            const matchesCaseInsensitive = allowed.some(v => v.toLowerCase() === String(currentValue).toLowerCase());
+            if (!matchesExactly) {
+              if (matchesCaseInsensitive) {
+                issues.push(`Normalize casing for '${variableName}': use one of ${allowed.map(v => `'${v}'`).join(', ')} (current '${currentValue}')`);
+              } else {
+                issues.push(`Adjust '${variableName}' to one of: ${allowed.map(v => `'${v}'`).join(', ')} (current '${currentValue}')`);
+              }
+            }
+          }
+        }
+
+        // If we identified any issues, return a blocked response, not complete
+        if (issues.length > 0) {
+          return {
+            step: null,
+            guidance: {
+              prompt: `No eligible step due to unmet conditions. Please update context:\n- ${issues.join('\n- ')}`
+            },
+            isComplete: false,
+            context: enhancedContext
+          };
+        }
+      }
+    }
+
     const isComplete = !nextStep;
 
     let finalPrompt = 'Workflow complete.';
@@ -414,6 +479,46 @@ export class DefaultWorkflowService implements WorkflowService {
     }
     
     return finalPrompt;
+  }
+
+  /**
+   * Recursively collect variable names referenced in a condition tree.
+   */
+  private collectConditionVars(condition: any, sink: Set<string>): void {
+    if (!condition || typeof condition !== 'object') return;
+    if (typeof condition.var === 'string' && condition.var.length > 0) {
+      sink.add(condition.var);
+    }
+    if (Array.isArray(condition.and)) {
+      for (const sub of condition.and) this.collectConditionVars(sub, sink);
+    }
+    if (Array.isArray(condition.or)) {
+      for (const sub of condition.or) this.collectConditionVars(sub, sink);
+    }
+    if (condition.not) this.collectConditionVars(condition.not, sink);
+  }
+
+  /**
+   * Recursively collect enumerated equals values per variable from conditions.
+   * Only simple { var: 'x', equals: value } pairs are captured.
+   */
+  private collectEqualsValues(condition: any, sink: Record<string, Set<string>>): void {
+    if (!condition || typeof condition !== 'object') return;
+    if (typeof condition.var === 'string' && Object.prototype.hasOwnProperty.call(condition, 'equals')) {
+      const variableName = condition.var;
+      const value = condition.equals;
+      if (value !== undefined && value !== null) {
+        if (!sink[variableName]) sink[variableName] = new Set<string>();
+        sink[variableName].add(String(value));
+      }
+    }
+    if (Array.isArray(condition.and)) {
+      for (const sub of condition.and) this.collectEqualsValues(sub, sink);
+    }
+    if (Array.isArray(condition.or)) {
+      for (const sub of condition.or) this.collectEqualsValues(sub, sink);
+    }
+    if (condition.not) this.collectEqualsValues(condition.not, sink);
   }
 
 
