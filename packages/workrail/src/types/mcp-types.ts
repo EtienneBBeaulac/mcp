@@ -157,6 +157,27 @@ export interface WorkflowGetRequest extends MCPToolCallRequest {
   };
 }
 
+export interface FunctionParameter {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required?: boolean;
+  description?: string;
+  enum?: Array<string | number | boolean>;
+  default?: unknown;
+}
+
+export interface FunctionDefinition {
+  name: string;
+  definition: string;
+  parameters?: FunctionParameter[];
+  scope?: 'workflow' | 'loop' | 'step';
+}
+
+export interface FunctionCall {
+  name: string;
+  args: Record<string, unknown>;
+}
+
 export interface WorkflowStep {
   id: string;
   title: string;
@@ -166,6 +187,9 @@ export interface WorkflowStep {
   askForFiles?: boolean;
   requireConfirmation?: boolean;
   runCondition?: object;
+  functionDefinitions?: FunctionDefinition[];
+  functionCalls?: FunctionCall[];
+  functionReferences?: string[];
 }
 
 export interface Workflow {
@@ -177,6 +201,7 @@ export interface Workflow {
   clarificationPrompts?: string[];
   steps: WorkflowStep[];
   metaGuidance?: string[];
+  functionDefinitions?: FunctionDefinition[];
 }
 
 export interface WorkflowGetResponse extends MCPToolCallResponse {

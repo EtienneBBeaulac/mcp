@@ -31,9 +31,13 @@ export class MultiDirectoryWorkflowStorage implements IWorkflowStorage {
     
     // 1. Always include bundled workflows (unless explicitly disabled)
     if (!options.excludeBundled) {
-      const bundledDir = path.resolve(__dirname, '../../../workflows');
-      if (existsSync(bundledDir)) {
-        directories.push(bundledDir);
+      // Prefer source workflows when running in workspace; fallback to dist
+      const bundledSrcDir = path.resolve(__dirname, '../../../../workflows');
+      const bundledDistDir = path.resolve(__dirname, '../../../workflows');
+      if (existsSync(bundledSrcDir)) {
+        directories.push(bundledSrcDir);
+      } else if (existsSync(bundledDistDir)) {
+        directories.push(bundledDistDir);
       }
     }
     

@@ -1,7 +1,7 @@
 import { ValidationError } from '../../core/error-handler';
 import { evaluateCondition, Condition, ConditionContext } from '../../utils/condition-evaluator';
 import Ajv from 'ajv';
-import { WorkflowStep, LoopStep, Workflow, isLoopStep } from '../../types/workflow-types';
+import { WorkflowStep, LoopStep, Workflow, isLoopStep, FunctionDefinition, FunctionParameter } from '../../types/workflow-types';
 import { EnhancedLoopValidator } from './enhanced-loop-validator';
 
 export interface ValidationRule {
@@ -480,6 +480,17 @@ export class ValidationEngine {
             issues.push(`Nested loops are not currently supported. Inline step '${inlineStep.id}' is a loop`);
             suggestions.push('Refactor to avoid nested loops');
           }
+
+          // Validate function calls for inline steps using workflow + loop + step scopes
+          const callValidation = this.validateStepFunctionCalls(
+            inlineStep as WorkflowStep,
+            workflow.functionDefinitions || [],
+            step.functionDefinitions || []
+          );
+          if (!callValidation.valid) {
+            issues.push(...callValidation.issues.map(i => `Step '${inlineStep.id}': ${i}`));
+            if (callValidation.suggestions) suggestions.push(...callValidation.suggestions);
+          }
         }
       }
     }
@@ -558,6 +569,16 @@ export class ValidationEngine {
         if (!step.prompt) {
           issues.push(`Step '${step.id}' missing required prompt`);
         }
+
+        // Validate function calls for standard steps using workflow + step scopes
+        const callValidation = this.validateStepFunctionCalls(
+          step as WorkflowStep,
+          workflow.functionDefinitions || []
+        );
+        if (!callValidation.valid) {
+          issues.push(...callValidation.issues.map(i => `Step '${step.id}': ${i}`));
+          if (callValidation.suggestions) suggestions.push(...callValidation.suggestions);
+        }
       }
     }
 
@@ -601,5 +622,75 @@ export class ValidationEngine {
    */
   private isValidVariableName(name: string): boolean {
     return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name);
+  }
+
+  /**
+   * Validates step.functionCalls against available function definitions.
+   * availableScopes: workflow-level defs (required), plus optionally loop/step-level defs.
+   */
+  private validateStepFunctionCalls(
+    step: WorkflowStep,
+    workflowDefs: FunctionDefinition[],
+    loopDefs: FunctionDefinition[] = []
+  ): ValidationResult {
+    const allDefs: Record<string, FunctionDefinition> = {};
+    const addDefs = (defs?: FunctionDefinition[]) => {
+      (defs || []).forEach(d => { allDefs[d.name] = d; });
+    };
+    addDefs(workflowDefs);
+    addDefs(loopDefs);
+    addDefs(step.functionDefinitions);
+
+    const issues: string[] = [];
+    const suggestions: string[] = [];
+
+    const calls = (step as any).functionCalls as Array<{ name: string; args: Record<string, unknown> }> | undefined;
+    if (!calls || calls.length === 0) {
+      return { valid: true, issues: [], suggestions: [] };
+    }
+
+    for (const call of calls) {
+      const def = allDefs[call.name];
+      if (!def) {
+        issues.push(`Unknown function '${call.name}' in functionCalls`);
+        continue;
+      }
+      if (def.parameters && def.parameters.length > 0) {
+        // Validate required params
+        const args = call.args || {};
+        for (const param of def.parameters) {
+          if (param.required && !(param.name in args)) {
+            issues.push(`Missing required parameter '${param.name}' for function '${call.name}'`);
+          }
+        }
+        // Validate argument types and enums
+        for (const [argName, argValue] of Object.entries(args)) {
+          const spec = def.parameters.find(p => p.name === argName);
+          if (!spec) {
+            suggestions.push(`Unknown argument '${argName}' for function '${call.name}'`);
+            continue;
+          }
+          if (!this.isArgTypeValid(argValue, spec)) {
+            issues.push(`Invalid type for '${call.name}.${argName}': expected ${spec.type}`);
+          }
+          if (spec.enum && !spec.enum.includes(argValue as any)) {
+            issues.push(`Invalid value for '${call.name}.${argName}': must be one of ${spec.enum.join(', ')}`);
+          }
+        }
+      }
+    }
+
+    return { valid: issues.length === 0, issues, suggestions };
+  }
+
+  private isArgTypeValid(value: unknown, spec: FunctionParameter): boolean {
+    switch (spec.type) {
+      case 'string': return typeof value === 'string';
+      case 'number': return typeof value === 'number' && Number.isFinite(value as number);
+      case 'boolean': return typeof value === 'boolean';
+      case 'array': return Array.isArray(value);
+      case 'object': return value !== null && typeof value === 'object' && !Array.isArray(value);
+      default: return true;
+    }
   }
 } 

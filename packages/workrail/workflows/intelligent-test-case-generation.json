@@ -36,13 +36,19 @@
     "fun adaptToUserLevel(level=Junior|Mixed|Senior) = 'Deliver content adapted to the selected user level.'",
     "fun scoreConfidence(weights) = 'Calculate confidence (1-10) using: requirements clarity, system context, evidence quality, coverage completeness.'",
     "fun validateCoverage(minScore=7) = 'Assess coverage completeness; identify gaps; score coverage 1-10; suggest additional scenarios if needed.'",
-    "fun formatDualOutput(human=true, machine=true) = 'Generate both human-readable (Gherkin/Markdown) and machine-readable (JSON/structured) formats simultaneously.'"
+    "fun formatDualOutput(human=true, machine=true) = 'Generate both human-readable (Gherkin/Markdown) and machine-readable (JSON/structured) formats simultaneously.'",
+    "fun buildTicketSignature() = 'Extract entities, acceptance criteria, identifiers (ticket ID), impacted modules, user flows; output tokens/phrases and canonical signature.'",
+    "fun scoreDocRelevance(chunk, signature) = 'Compute lexical+semantic relevance; detect explicit mentions of ticket ID/criteria; return relevanceScore 0–1 with rationale.'",
+    "fun extractCitations(criteria) = 'For each acceptance criterion, locate explicit quotes/snippets with {doc, section, quote, relevanceScore}.'",
+    "fun computeCriteriaCoverage() = 'Compute fraction (0–1) of acceptance criteria with ≥1 strong citation.'",
+    "fun computeTicketSpecificEvidenceScore() = 'Aggregate evidence quality emphasizing ticket specificity; scale 1–10.'",
+    "fun computeDocNoiseRatio() = 'Compute proportion (0–1) of cited text that is generic/non-ticket; lower is better.'"
   ],
   "steps": [
     {
       "id": "phase-0-intelligent-triage",
       "title": "Phase 0: Intelligent Ticket Triage & Context Setup",
-      "prompt": "**SYSTEMATIC TEST GENERATION BEGINS** - Transform ticket requirements into comprehensive test cases through evidence-driven analysis.\n\nanalyzeTicket(depth=3) to establish foundation:\n\n**STEP 1: Ticket Analysis & Classification**\n- **Ticket Information**: Please provide the complete ticket details (title, description, acceptance criteria, labels, etc.)\n- **System Context**: What system/component does this ticket affect?\n- **Change Type**: Is this a new feature, bug fix, enhancement, or refactoring?\n- **Risk Assessment**: What's the business impact if this functionality fails?\n\n**STEP 2: Complexity & Scope Assessment**\nBased on the ticket analysis, I'll classify the testing complexity:\n- **Simple**: Single component, clear requirements, minimal integration\n- **Standard**: Multiple components, moderate integration, some unknowns\n- **Complex**: Cross-system changes, high integration, significant risk\n\n**STEP 3: User Experience Level**\nWhat's your experience level with test case creation?\n- **Junior**: Need detailed guidance and explanations\n- **Mixed**: Team has varying skill levels\n- **Senior**: Prefer efficient, advanced patterns\n\n**STEP 4: Automation Preferences**\nWhat automation level do you prefer?\n- **High**: Auto-approve confidence >8.0, minimal confirmations\n- **Medium**: Standard confirmations for key decisions\n- **Low**: Extra validation for comprehensive coverage\n\n**OUTPUTS**: Set context variables for adaptive workflow execution.",
+      "prompt": "**SYSTEMATIC TEST GENERATION BEGINS** - Transform ticket requirements into comprehensive test cases through evidence-driven analysis.\n\nanalyzeTicket(depth=3) and buildTicketSignature() to establish foundation:\n\n**STEP 1: Ticket Analysis & Classification**\n- **Ticket Information**: Please provide the complete ticket details (title, description, acceptance criteria, labels, etc.)\n- **System Context**: What system/component does this ticket affect?\n- **Change Type**: Is this a new feature, bug fix, enhancement, or refactoring?\n- **Risk Assessment**: What's the business impact if this functionality fails?\n\n**STEP 2: Complexity & Scope Assessment**\nBased on the ticket analysis, I'll classify the testing complexity:\n- **Simple**: Single component, clear requirements, minimal integration\n- **Standard**: Multiple components, moderate integration, some unknowns\n- **Complex**: Cross-system changes, high integration, significant risk\n\n**STEP 3: User Experience Level**\nWhat's your experience level with test case creation?\n- **Junior**: Need detailed guidance and explanations\n- **Mixed**: Team has varying skill levels\n- **Senior**: Prefer efficient, advanced patterns\n\n**STEP 4: Automation Preferences**\nWhat automation level do you prefer?\n- **High**: Auto-approve confidence >8.0, minimal confirmations\n- **Medium**: Standard confirmations for key decisions\n- **Low**: Extra validation for comprehensive coverage\n\n**OUTPUTS**: Set context variables for adaptive workflow execution, including ticketSignature.",
       "agentRole": "You are a senior test strategy specialist with expertise in analyzing software requirements and determining optimal testing approaches. Your role is to quickly assess ticket complexity, understand system context, and set up the workflow for systematic test case generation.",
       "guidance": [
         "THOROUGH ANALYSIS: Extract all relevant information from ticket details",
@@ -92,8 +98,8 @@
           { "var": "evidenceScore", "gte": 7.5 }
         ]
       },
-      "title": "Phase 1: Evidence Gathering & Document Discovery",
-      "prompt": "collectEvidence(ticket requirements) and discoverDocuments(system context)\n\n**SYSTEMATIC EVIDENCE COLLECTION**\nGather requirements evidence, system context, and discover missing documentation through semantic search.\n\nscoreAndValidate(evidence completeness, 7/10 threshold)\n\nupdateTestContext(evidence-analysis, comprehensive evidence base)\n\n**QUALITY GATE**: Minimum 7/10 evidence score required before proceeding to hypothesis formation.",
+      "title": "Phase 1: Evidence Gathering & Ticket-Specific Scoring",
+      "prompt": "collectEvidence(ticket requirements) and discoverDocuments(system context)\n\n**TICKET-SPECIFIC EVIDENCE COLLECTION**\n- scoreDocRelevance(each document chunk, ticketSignature)\n- extractCitations(acceptance criteria) and build evidenceMap: criterion -> [{doc, section, quote, relevanceScore}]\n- computeCriteriaCoverage()\n- computeTicketSpecificEvidenceScore()\n- computeDocNoiseRatio()\n\nscoreAndValidate(evidence completeness, 7/10 threshold)\n\nupdateTestContext(evidence-analysis, evidenceMap, criteriaCoverage, ticketSpecificEvidenceScore, docNoiseRatio)\n\n**QUALITY GATE**: Require criteriaCoverage ≥ 0.7, ticketSpecificEvidenceScore ≥ 7.0, docNoiseRatio ≤ 0.3 before proceeding.",
       "agentRole": "You are a systematic evidence analyst specializing in gathering comprehensive context for test case generation. Your expertise lies in identifying information gaps, discovering relevant documentation, and building complete evidence bases for reliable test design.",
       "guidance": [
         "SYSTEMATIC COLLECTION: Use structured approach to gather all relevant evidence",
@@ -102,9 +108,23 @@
         "QUALITY THRESHOLD: Don't proceed without sufficient evidence foundation"
       ],
       "validationCriteria": [
-        { "type": "length", "min": 200, "message": "Evidence collection must be comprehensive (minimum 200 characters of analysis)" }
+        { "type": "length", "min": 200, "message": "Evidence collection must be comprehensive (minimum 200 characters of analysis)" },
+        { "type": "regex", "pattern": "criteriaCoverage|coverage", "flags": "i", "message": "Include criteriaCoverage metric" },
+        { "type": "regex", "pattern": "docNoiseRatio", "flags": "i", "message": "Include docNoiseRatio metric" },
+        { "type": "regex", "pattern": "evidenceMap|citation|quote", "flags": "i", "message": "Provide explicit citations/quotes per criterion" }
       ],
       "hasValidation": true
+    },
+    {
+      "id": "phase-1b-evidence-audit",
+      "title": "Phase 1b: Evidence Audit (Ticket-Specific)",
+      "prompt": "Audit the ticket-specific evidence before hypothesis formation.\n\n**Produce:**\n- evidenceMap (acceptance criterion -> citations with {doc, section, quote, relevanceScore})\n- criteriaCoverage (0–1), ticketSpecificEvidenceScore (1–10), docNoiseRatio (0–1)\n- Brief rationale for any low-coverage criteria and targeted follow-up actions\n\nConfirm metrics and highlight gaps. Do not proceed if coverage/noise thresholds are not met.",
+      "validationCriteria": [
+        { "type": "regex", "pattern": "evidenceMap|criterion", "flags": "i", "message": "Include evidenceMap mapping criteria to citations" },
+        { "type": "regex", "pattern": "criteriaCoverage|ticketSpecificEvidenceScore|docNoiseRatio", "flags": "i", "message": "Report ticket-specific metrics" }
+      ],
+      "hasValidation": true,
+      "requireConfirmation": true
     },
     {
       "id": "phase-2-gap-check",
@@ -117,7 +137,10 @@
       "runCondition": {
         "and": [
           { "or": [ { "var": "completenessScore", "gte": 0.7 }, { "var": "assumptionAccepted", "equals": true } ] },
-          { "var": "evidenceScore", "gte": 7.5 }
+          { "var": "evidenceScore", "gte": 7.5 },
+          { "var": "criteriaCoverage", "gte": 0.7 },
+          { "var": "docNoiseRatio", "lte": 0.3 },
+          { "var": "ticketSpecificEvidenceScore", "gte": 7.0 }
         ]
       },
       "title": "Phase 2: Dual-Brain Processing & Hypothesis Formation",
@@ -145,7 +168,10 @@
       "runCondition": {
         "and": [
           { "or": [ { "var": "completenessScore", "gte": 0.7 }, { "var": "assumptionAccepted", "equals": true } ] },
-          { "var": "evidenceScore", "gte": 7.5 }
+          { "var": "evidenceScore", "gte": 7.5 },
+          { "var": "criteriaCoverage", "gte": 0.7 },
+          { "var": "docNoiseRatio", "lte": 0.3 },
+          { "var": "ticketSpecificEvidenceScore", "gte": 7.0 }
         ]
       },
       "title": "Phase 3: Progressive Test Scenario Generation",
@@ -163,7 +189,10 @@
       "runCondition": {
         "and": [
           { "or": [ { "var": "completenessScore", "gte": 0.7 }, { "var": "assumptionAccepted", "equals": true } ] },
-          { "var": "evidenceScore", "gte": 7.5 }
+          { "var": "evidenceScore", "gte": 7.5 },
+          { "var": "criteriaCoverage", "gte": 0.7 },
+          { "var": "docNoiseRatio", "lte": 0.3 },
+          { "var": "ticketSpecificEvidenceScore", "gte": 7.0 }
         ]
       },
       "title": "Phase 4: Confidence Scoring & Quality Validation",
@@ -185,7 +214,10 @@
       "runCondition": {
         "and": [
           { "or": [ { "var": "completenessScore", "gte": 0.7 }, { "var": "assumptionAccepted", "equals": true } ] },
-          { "var": "evidenceScore", "gte": 7.5 }
+          { "var": "evidenceScore", "gte": 7.5 },
+          { "var": "criteriaCoverage", "gte": 0.7 },
+          { "var": "docNoiseRatio", "lte": 0.3 },
+          { "var": "ticketSpecificEvidenceScore", "gte": 7.0 }
         ]
       },
       "title": "Phase 5: Dual-Format Output Generation",

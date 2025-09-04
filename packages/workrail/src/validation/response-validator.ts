@@ -14,6 +14,27 @@ const workflowSummarySchema = z.object({
   version: z.string()
 });
 
+const functionParameterSchema = z.object({
+  name: z.string(),
+  type: z.enum(['string', 'number', 'boolean', 'array', 'object']),
+  required: z.boolean().optional(),
+  description: z.string().optional(),
+  enum: z.array(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  default: z.any().optional()
+});
+
+const functionDefinitionSchema = z.object({
+  name: z.string(),
+  definition: z.string(),
+  parameters: z.array(functionParameterSchema).optional(),
+  scope: z.enum(['workflow', 'loop', 'step']).optional()
+});
+
+const functionCallSchema = z.object({
+  name: z.string(),
+  args: z.record(z.any())
+});
+
 const workflowStepSchema = z.object({
   id: z.string().regex(idRegex),
   title: z.string(),
@@ -22,7 +43,10 @@ const workflowStepSchema = z.object({
   guidance: z.array(z.string()).optional(),
   askForFiles: z.boolean().optional(),
   requireConfirmation: z.boolean().optional(),
-  runCondition: z.object({}).optional()
+  runCondition: z.object({}).optional(),
+  functionDefinitions: z.array(functionDefinitionSchema).optional(),
+  functionCalls: z.array(functionCallSchema).optional(),
+  functionReferences: z.array(z.string()).optional()
 });
 
 const workflowSchema = z.object({
@@ -33,7 +57,8 @@ const workflowSchema = z.object({
   preconditions: z.array(z.string()).optional(),
   clarificationPrompts: z.array(z.string()).optional(),
   steps: z.array(workflowStepSchema),
-  metaGuidance: z.array(z.string()).optional()
+  metaGuidance: z.array(z.string()).optional(),
+  functionDefinitions: z.array(functionDefinitionSchema).optional()
 });
 
 // Mode parameter response schemas

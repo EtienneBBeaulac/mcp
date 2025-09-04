@@ -90,6 +90,13 @@
             "type": "string",
             "description": "The function definition explaining what it does"
           },
+          "parameters": {
+            "type": "array",
+            "description": "Optional machine-readable parameter specifications for this function.",
+            "items": {
+              "$ref": "#/$defs/functionParameter"
+            }
+          },
           "scope": {
             "type": "string",
             "enum": ["workflow", "loop", "step"],
@@ -117,23 +124,34 @@
       "minLength": 3,
       "maxLength": 64
     },
+    "functionParameter": {
+      "type": "object",
+      "description": "Specification for a single function parameter.",
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$" },
+        "type": { "type": "string", "enum": ["string", "number", "boolean", "array", "object"] },
+        "required": { "type": "boolean" },
+        "description": { "type": "string" },
+        "enum": {
+          "type": "array",
+          "items": { "oneOf": [ {"type": "string"}, {"type": "number"}, {"type": "boolean"} ] },
+          "minItems": 1
+        },
+        "default": {}
+      },
+      "required": ["name", "type"],
+      "additionalProperties": false
+    },
     "functionDefinition": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
-          "description": "Function name following JavaScript identifier rules"
+        "name": { "type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$" },
+        "definition": { "type": "string" },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/functionParameter" }
         },
-        "definition": {
-          "type": "string",
-          "description": "The function definition explaining what it does"
-        },
-        "scope": {
-          "type": "string",
-          "enum": ["workflow", "loop", "step"],
-          "description": "Scope where this function is available"
-        }
+        "scope": { "type": "string", "enum": ["workflow", "loop", "step"] }
       },
       "required": ["name", "definition"],
       "additionalProperties": false
@@ -141,87 +159,21 @@
     "standardStep": {
       "type": "object",
       "properties": {
-        "id": {
-          "$ref": "#/$defs/stepId",
-          "description": "Unique identifier for the step"
-        },
-        "title": {
-          "type": "string",
-          "description": "Human-friendly title of the step",
-          "minLength": 1,
-          "maxLength": 128
-        },
-        "prompt": {
-          "type": "string",
-          "description": "The detailed instructions or prompt for this step.",
-          "minLength": 1,
-          "maxLength": 2048
-        },
-        "agentRole": {
-          "type": "string",
-          "description": "Optional behavioral instructions for AI agents defining how they should approach and execute this step. This content is not shown to users.",
-          "minLength": 10,
-          "maxLength": 1024
-        },
-        "guidance": {
-          "type": "array",
-          "description": "Optional array of strings providing tactical advice for this step.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "askForFiles": {
-          "type": "boolean",
-          "description": "Whether the agent should ask for relevant files before executing the step.",
-          "default": false
-        },
-        "hasValidation": {
-          "type": "boolean",
-          "description": "Whether this step has validation logic that should be called. Set to true for steps with validationCriteria to optimize execution performance.",
-          "default": false
-        },
-        "requireConfirmation": {
-          "$ref": "#/$defs/confirmationRule"
-        },
-        "runCondition": {
-          "$ref": "#/$defs/condition"
-        },
-        "validationCriteria": {
-          "description": "Optional validation rules to check step output quality. Can be an array of rules (all must pass) or a composition object with logical operators.",
-          "oneOf": [
-            {
-              "type": "array",
-              "description": "Array of validation rules (all must pass)",
-              "items": {
-                "$ref": "#/$defs/validationRule"
-              }
-            },
-            {
-              "$ref": "#/$defs/validationComposition"
-            }
-          ]
-        },
-        "functionDefinitions": {
-          "type": "array",
-          "description": "Function definitions specific to this step. Agents can reference these for understanding step-specific patterns.",
-          "items": {
-            "$ref": "#/$defs/functionDefinition"
-          }
-        },
-        "functionReferences": {
-          "type": "array",
-          "description": "References to functions defined at workflow or loop level that this step uses.",
-          "items": {
-            "type": "string",
-            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*\\(\\)$"
-          }
-        }
+        "id": { "$ref": "#/$defs/stepId", "description": "Unique identifier for the step" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "prompt": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "agentRole": { "type": "string", "minLength": 10, "maxLength": 1024 },
+        "guidance": { "type": "array", "items": { "type": "string" } },
+        "askForFiles": { "type": "boolean", "default": false },
+        "hasValidation": { "type": "boolean", "default": false },
+        "requireConfirmation": { "$ref": "#/$defs/confirmationRule" },
+        "runCondition": { "$ref": "#/$defs/condition" },
+        "validationCriteria": { "oneOf": [ { "type": "array", "items": { "$ref": "#/$defs/validationRule" } }, { "$ref": "#/$defs/validationComposition" } ] },
+        "functionDefinitions": { "type": "array", "items": { "$ref": "#/$defs/functionDefinition" } },
+        "functionCalls": { "type": "array", "items": { "$ref": "#/$defs/functionCall" } },
+        "functionReferences": { "type": "array", "items": { "type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*\\(\\)$" } }
       },
-      "required": [
-        "id",
-        "title",
-        "prompt"
-      ],
+      "required": ["id", "title", "prompt"],
       "additionalProperties": false
     },
     "loopStep": {
@@ -563,6 +515,15 @@
           "$ref": "#/$defs/validationComposition"
         }
       ]
+    },
+    "functionCall": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$" },
+        "args": { "type": "object", "additionalProperties": true }
+      },
+      "required": ["name", "args"],
+      "additionalProperties": false
     }
   }
 }

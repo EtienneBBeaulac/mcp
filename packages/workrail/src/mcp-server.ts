@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
+import type {
   Tool,
   CallToolResult,
   ListToolsResult,
@@ -329,89 +325,100 @@ const WORKFLOW_GET_SCHEMA_TOOL: Tool = {
   }
 };
 
-// Create and configure the MCP server
-const server = new Server(
-  {
-    name: "workrail-server",
-    version: "0.1.0",
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-const workflowServer = new WorkflowOrchestrationServer();
-
-// Register request handlers
-server.setRequestHandler(ListToolsRequestSchema, async (): Promise<ListToolsResult> => ({
-  tools: [
-    WORKFLOW_LIST_TOOL,
-    WORKFLOW_GET_TOOL, 
-    WORKFLOW_NEXT_TOOL,
-    WORKFLOW_VALIDATE_TOOL,
-    WORKFLOW_VALIDATE_JSON_TOOL,
-    WORKFLOW_GET_SCHEMA_TOOL
-  ],
-}));
-
-server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-  const { name, arguments: args } = request.params;
-
-  switch (name) {
-    case "workflow_list":
-      return await workflowServer.listWorkflows();
-      
-    case "workflow_get":
-      if (!args?.['id']) {
-        return {
-          content: [{ type: "text", text: "Error: id parameter is required" }],
-          isError: true
-        };
-      }
-      return await workflowServer.getWorkflow(args['id'] as string, args['mode'] as string);
-      
-    case "workflow_next":
-      if (!args?.['workflowId']) {
-        return {
-          content: [{ type: "text", text: "Error: workflowId parameter is required" }],
-          isError: true
-        };
-      }
-      return await workflowServer.getNextStep(args['workflowId'] as string, args['completedSteps'] as string[] || [], args['context']);
-      
-    case "workflow_validate":
-      if (!args?.['workflowId'] || !args?.['stepId'] || !args?.['output']) {
-        return {
-          content: [{ type: "text", text: "Error: workflowId, stepId, and output parameters are required" }],
-          isError: true
-        };
-      }
-      return await workflowServer.validateStep(args['workflowId'] as string, args['stepId'] as string, args['output'] as string);
-      
-    case "workflow_validate_json":
-      if (!args?.['workflowJson']) {
-        return {
-          content: [{ type: "text", text: "Error: workflowJson parameter is required" }],
-          isError: true
-        };
-      }
-      return await workflowServer.validateWorkflowJson(args['workflowJson'] as string);
-      
-    case "workflow_get_schema":
-      return await workflowServer.getWorkflowSchema();
-      
-    default:
-      return {
-        content: [{ type: "text", text: `Unknown tool: ${name}` }],
-        isError: true
-      };
-  }
-});
-
 // Start the server
 async function runServer() {
+  // Dynamically import ESM-only SDK modules to avoid require() errors in CJS output
+  const [sdkServer, sdkStdio, sdkTypes] = await Promise.all([
+    import("@modelcontextprotocol/sdk/server/index.js"),
+    import("@modelcontextprotocol/sdk/server/stdio.js"),
+    import("@modelcontextprotocol/sdk/types.js"),
+  ]);
+
+  const { Server } = sdkServer as any;
+  const { StdioServerTransport } = sdkStdio as any;
+  const { CallToolRequestSchema, ListToolsRequestSchema } = sdkTypes as any;
+
+  // Create and configure the MCP server
+  const server = new Server(
+    {
+      name: "workrail-server",
+      version: "0.1.0",
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
+
+  const workflowServer = new WorkflowOrchestrationServer();
+
+  // Register request handlers
+  server.setRequestHandler(ListToolsRequestSchema, async (): Promise<ListToolsResult> => ({
+    tools: [
+      WORKFLOW_LIST_TOOL,
+      WORKFLOW_GET_TOOL, 
+      WORKFLOW_NEXT_TOOL,
+      WORKFLOW_VALIDATE_TOOL,
+      WORKFLOW_VALIDATE_JSON_TOOL,
+      WORKFLOW_GET_SCHEMA_TOOL
+    ],
+  }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request: any): Promise<CallToolResult> => {
+    const { name, arguments: args } = request.params;
+
+    switch (name) {
+      case "workflow_list":
+        return await workflowServer.listWorkflows();
+        
+      case "workflow_get":
+        if (!args?.['id']) {
+          return {
+            content: [{ type: "text", text: "Error: id parameter is required" }],
+            isError: true
+          };
+        }
+        return await workflowServer.getWorkflow(args['id'] as string, args['mode'] as string);
+        
+      case "workflow_next":
+        if (!args?.['workflowId']) {
+          return {
+            content: [{ type: "text", text: "Error: workflowId parameter is required" }],
+            isError: true
+          };
+        }
+        return await workflowServer.getNextStep(args['workflowId'] as string, args['completedSteps'] as string[] || [], args['context']);
+        
+      case "workflow_validate":
+        if (!args?.['workflowId'] || !args?.['stepId'] || !args?.['output']) {
+          return {
+            content: [{ type: "text", text: "Error: workflowId, stepId, and output parameters are required" }],
+            isError: true
+          };
+        }
+        return await workflowServer.validateStep(args['workflowId'] as string, args['stepId'] as string, args['output'] as string);
+        
+      case "workflow_validate_json":
+        if (!args?.['workflowJson']) {
+          return {
+            content: [{ type: "text", text: "Error: workflowJson parameter is required" }],
+            isError: true
+          };
+        }
+        return await workflowServer.validateWorkflowJson(args['workflowJson'] as string);
+        
+      case "workflow_get_schema":
+        return await workflowServer.getWorkflowSchema();
+        
+      default:
+        return {
+          content: [{ type: "text", text: `Unknown tool: ${name}` }],
+          isError: true
+        };
+    }
+  });
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Workflow Orchestration MCP Server running on stdio");
@@ -420,4 +427,4 @@ async function runServer() {
 runServer().catch((error) => {
   console.error("Fatal error running server:", error);
   process.exit(1);
-}); 
+});
