@@ -19,6 +19,88 @@
     "Maintain the persona of a helpful, collaborative senior engineer.",
     "If at any point you determine that a crucial piece of information is missing, you must pause and ask the user to provide it."
   ],
+  "functionDefinitions": [
+    {
+      "name": "collectNits",
+      "definition": "From the current analysis pass, extract items labeled 'Nit:' or clearly Minor suggestions. Append them to a running array `nitFindings` with entries: { title, details, filePath, line, analysisDepth }. Maintain `nitsCount`.",
+      "scope": "workflow"
+    },
+    {
+      "name": "prepareNitAppendix",
+      "definition": "Aggregate `nitFindings` into a concise appendix grouped by file. Format each bullet as: `filePath:line - short description`. Produce markdown in `nitAppendix` and set `nitAppendixReady = true`.",
+      "scope": "workflow"
+    },
+    {
+      "name": "discoverModulePatterns",
+      "definition": "Determine `moduleRoot` as the nearest common ancestor of changed files (clamped to the package or src subtree). Scan only within `moduleRoot` to build `patternCatalog` and `patternExamples` (naming, dependency injection, error handling, logging, test style, file layout).",
+      "scope": "workflow"
+    },
+    {
+      "name": "consolidatePatternFindings",
+      "definition": "Compare MR changes against `patternCatalog` scoped to `moduleRoot`. Produce `patternFindings` and a grouped `patternAppendix` (by directory/file), and set `patternAppendixReady = true`.",
+      "scope": "workflow"
+    },
+    {
+      "name": "initReviewDoc",
+      "definition": "Create a live Markdown report at project root. Determine filename as `<YYYY-MM-DD>--<ticket-or-branch>--mr-review.md` (ticket preferred, else branch, else `mr-unknown`). Initialize sections with stable markers and write header metadata. Set `reviewDocPath`.",
+      "scope": "workflow"
+    },
+    {
+      "name": "upsertSection",
+      "definition": "Upsert content under a known section marker in the Markdown doc without duplicating sections. Maintain concise, scannable formatting.",
+      "scope": "workflow"
+    },
+    {
+      "name": "appendChangedFileRow",
+      "definition": "Append or update a row in the Changed Files table with columns: File | +/- | Summary | Risk.",
+      "scope": "workflow"
+    },
+    {
+      "name": "appendFinding",
+      "definition": "Append a finding grouped by severity (Critical/Major/Minor). Each entry includes path:line, 1–2 lines rationale, optional tiny diff.",
+      "scope": "workflow"
+    },
+    {
+      "name": "appendPatternResult",
+      "definition": "Append a Pattern Adherence row (Check | Result | Note) and brief per-file deviations.",
+      "scope": "workflow"
+    },
+    {
+      "name": "appendNit",
+      "definition": "Append a Nit entry grouped by file: `path:line — nit text`.",
+      "scope": "workflow"
+    },
+    {
+      "name": "appendMRComment",
+      "definition": "Append a copy-ready MR comment block with file:line, short title, rationale, and optional tiny diff snippet.",
+      "scope": "workflow"
+    },
+    {
+      "name": "logRevision",
+      "definition": "Append a timestamped line to the Revision Log describing the update (e.g., 'Added Depth 1 results').",
+      "scope": "workflow"
+    },
+    {
+      "name": "discoverHygieneSignals",
+      "definition": "Within `moduleRoot`, scan changed files and immediate neighbors for generic hygiene signals: disabled/skipped/focused tests; tests with no assertions; commented-out code; stale/misleading comments; TODO/FIXME/HACK/BUG without ticket/reference or clearly stale; high-density TODOs; naming/DI/logging/error handling inconsistencies vs local `patternCatalog`; ad-hoc debug prints; obvious unused identifiers/unreachable code.",
+      "scope": "workflow"
+    },
+    {
+      "name": "consolidateHygieneFindings",
+      "definition": "Consolidate hygiene signals with caps: total ≤10, per-category ≤3; dedupe similar items; group by file; elevate severity to Major only for clearly risky cases (e.g., focused tests, tests with no assertions). Produce category counts and a capped item list.",
+      "scope": "workflow"
+    },
+    {
+      "name": "appendHygieneFinding",
+      "definition": "Append a hygiene bullet to the live doc grouped by file: `path:line — short note (≤ 2 lines)`. Avoid duplication with Nit items; reference '(linked in Nits)' instead of repeating if needed.",
+      "scope": "workflow"
+    },
+    {
+      "name": "finalizeReviewDocument",
+      "definition": "Finalize the live review document. If `complexity == 'Trivial'`: write a brief executive summary (approve), do light hygiene (≤2) and quick nit sweep, set status=Final, log revision. Otherwise: write full executive summary (3 positives, 3 risks, recommendation), dedupe/sort findings, ensure sections (patterns, deviations, tests/docs, ideas, nits, MR comments), ensure Critical/Major coverage with curated MR comments, set status=Final, log revision.",
+      "scope": "workflow"
+    }
+  ],
   "steps": [
     {
       "id": "phase-0-triage",
@@ -29,18 +111,20 @@
         "**[Trivial]:** For minor fixes (typos, docs). This will run a condensed, single-phase review.",
         "**[Standard]:** For typical features or bug fixes. This uses the full, multi-phase review process.",
         "**[High-Risk]:** For major architectural changes or features touching sensitive code. This follows the full process with maximum diligence."
-      ]
+      ],
+      "functionReferences": ["initReviewDoc()", "logRevision()"]
     },
     {
       "id": "phase-1-context",
       "title": "Phase 1: Contextual Understanding & Confirmation",
-      "prompt": "My goal is to ensure I fully understand the MR before the deep analysis. Based on the context you provided, I will perform the following tasks:\n\n1.  **Summarize Goal:** Briefly summarize what I understand to be the primary goal and scope of this MR.\n2.  **File Overview:** List all changed files (added, modified, deleted) and provide a one-sentence summary of the changes for each.\n3.  **Initial Questions:** Formulate any immediate questions I have about the MR's purpose or requirements.\n4.  **Confirmation Gate:** Does my summary accurately reflect the MR's goal? Please confirm before I proceed.",
+      "prompt": "My goal is to ensure I fully understand the MR before the deep analysis. Based on the context you provided, I will perform the following tasks:\n\n1.  **Summarize Goal:** Briefly summarize what I understand to be the primary goal and scope of this MR.\n2.  **File Overview:** List all changed files (added, modified, deleted) and provide a one-sentence summary of the changes for each.\n3.  **Initial Questions:** Formulate any immediate questions I have about the MR's purpose or requirements.\n4.  **Confirmation Gate:** Does my summary accurately reflect the MR's goal? Please confirm before I proceed.\n\nI will also update the live review document with the Changed Files table and the Context summary.",
       "agentRole": "You are a thorough code review analyst specializing in requirement comprehension and change impact assessment. Your strength is quickly understanding the intent and scope of code changes while identifying potential gaps in understanding early in the review process.",
       "guidance": [
         "This is a critical sanity check. If the agent's summary is incorrect, correct it now to prevent a flawed review. This step is skipped for 'Trivial' reviews."
       ],
       "runCondition": { "var": "complexity", "not_equals": "Trivial" },
-      "requireConfirmation": true
+      "requireConfirmation": true,
+      "functionReferences": ["upsertSection()", "appendChangedFileRow()", "logRevision()"]
     },
     {
       "id": "phase-1-context-setup",
@@ -48,12 +132,12 @@
       "prompt": "Initializing state for progressive depth analysis. Setting analysisDepth = 1, analysisComplete = false, and majorIssuesFound = false.",
       "agentRole": "You are a state manager preparing the workflow for an iterative review process.",
       "guidance": ["This is an automated step to prepare for the analysis loop."],
-      "runCondition": { "var": "complexity", "not_equals": "Trivial" }
+      "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] }
     },
     {
       "id": "phase-1a-llm-context-gathering",
       "title": "Phase 1a: Comprehensive Context Gathering",
-      "prompt": "To perform a thorough review, I need more than just the code diff. Please provide the following:\n\n1. **Business Context:** Paste the full text of the associated Jira/GitHub ticket, including the requirements and acceptance criteria. This helps me validate the 'why' behind the change.\n2. **Technical Context:** If this change relies on other parts of the codebase, please provide the relevant code snippets or file contents. Also, include any relevant architectural diagrams or coding standards documents.\n\nI will synthesize this information to build a comprehensive context for my review.",
+      "prompt": "To perform a thorough review, I need more than just the code diff. Please provide the following:\n\n1. **Business Context:** Paste the full text of the associated Jira/GitHub ticket, including the requirements and acceptance criteria. This helps me validate the 'why' behind the change.\n2. **Technical Context:** If this change relies on other parts of the codebase, please provide the relevant code snippets or file contents. Also, include any relevant architectural diagrams or coding standards documents.\n\nI will synthesize this information to build a comprehensive context for my review.\n\n**Confirmation & Gating:**\n- After you confirm that I have the right context (or explicitly instruct me to skip), I will set `contextGatheringComplete = true` or `skipContextGathering = true` accordingly.\n- I will not proceed to deeper analysis until one of these is set.",
       "agentRole": "You are a context-aware analyst ensuring you have all necessary information before starting a deep review.",
       "guidance": ["A high-quality review depends on high-quality context. The more information provided here, the more accurate the review will be."],
       "runCondition": { "var": "complexity", "not_equals": "Trivial" },
@@ -63,7 +147,7 @@
       "id": "phase-2-depth-analysis-loop",
       "type": "loop",
       "title": "Phase 2: Progressive Depth Analysis",
-      "runCondition": { "var": "complexity", "not_equals": "Trivial" },
+      "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
       "loop": {
         "type": "until",
         "condition": { "var": "analysisComplete", "equals": true },
@@ -72,6 +156,18 @@
       },
       "body": [
         {
+          "id": "discover-module-patterns",
+          "title": "Discover Module Patterns (Depth 1)",
+          "prompt": "Compute `moduleRoot` as the nearest common ancestor of changed files, clamped to the package or `src/` subtree. Scan only within `moduleRoot` to gather exemplars (naming, DI, error handling, logging, test style, file layout). Produce `patternCatalog` and `patternExamples` in context. Do not block or require confirmation.",
+          "agentRole": "You are a codebase pattern scout building a concise pattern catalog for the current module.",
+          "guidance": [
+            "Scope strictly to `moduleRoot` discovered from changed files.",
+            "Cap exemplars (e.g., 3–5 per concern) for speed."
+          ],
+          "runCondition": { "var": "analysisDepth", "equals": 1 },
+          "functionReferences": ["discoverModulePatterns()"]
+        },
+        {
           "id": "perform-analysis-pass",
           "title": "Analysis Pass {{analysisDepth}} of 3",
           "prompt": "Act as a Senior Staff Engineer. Your task is to review the code based on the checklist for the current analysis depth. Think step-by-step.\n\n**Current Depth: {{analysisDepth}}**\n\n**Checklist:**\n* **Depth 1 (Basic Scan):** Check for style guide violations, simple bugs (e.g., typos, unused variables), and common security vulnerabilities (OWASP Top 10).\n* **Depth 2 (Standard Review):** Check for logical errors, edge cases, adherence to SOLID principles, and maintainability issues.\n* **Depth 3 (Deep Architectural Review):** Check for alignment with system architecture, long-term impact, performance bottlenecks, and dependency risks.\n\n**Instructions:**\n1.  **Summarize Focus:** State which depth level you are on and what you will focus on.\n2.  **Analyze:** Perform the review based on the checklist for depth {{analysisDepth}}.\n3.  **List Findings:** Document your findings, categorizing them as 'Critical', 'Major', or 'Minor'.\n4.  **Set Flag:** If you find any 'Critical' or 'Major' issues, set the context variable `majorIssuesFound = true`.",
@@ -79,7 +175,8 @@
           "guidance": [
             "At each depth, focus only on the items in that checklist.",
             "Use Chain-of-Thought reasoning to explain your findings."
-          ]
+          ],
+          "functionReferences": ["collectNits()", "appendFinding()", "appendMRComment()", "logRevision()"]
         },
         {
           "id": "check-analysis-completion",
@@ -91,6 +188,18 @@
       ]
     },
     {
+      "id": "consolidate-patterns",
+      "title": "Consolidate Pattern Findings",
+      "prompt": "Using `moduleRoot` and `patternCatalog`, compare the MR changes to local conventions. Summarize adherence and deviations, and generate a grouped `patternAppendix` (by directory/file). Set `patternAppendixReady = true`.",
+      "agentRole": "You are a senior engineer consolidating pattern adherence findings for clear reporting.",
+      "guidance": [
+        "Restrict to the module of the MR (`moduleRoot`).",
+        "Avoid re-scanning if `patternCatalog` already exists; reuse it."
+      ],
+      "runCondition": { "var": "complexity", "not_equals": "Trivial" },
+      "functionReferences": ["consolidatePatternFindings()", "appendPatternResult()", "upsertSection()", "logRevision()"]
+    },
+    {
       "id": "phase-3-impact-analysis",
       "title": "Phase 3: Testing, Documentation & Impact Analysis",
       "prompt": "My goal is to assess the secondary impacts of this change.\n\n1.  **Testing:** Based on the code changes, what tests would be expected (unit, integration, etc.)? Are new tests included? Are existing tests updated? Are there obvious gaps in test coverage for the new logic?\n2.  **Documentation:** Is new or complex logic adequately commented? Could any external documentation (e.g., READMEs) be affected by this change?\n3.  **Breaking Changes:** Are there any changes that could break backward compatibility for APIs or other parts of the codebase?",
@@ -98,38 +207,41 @@
       "guidance": [
         "Assessing test coverage is critical. A lack of tests for new logic is often a 'Major' or 'Critical' concern."
       ],
-      "runCondition": { "var": "complexity", "not_equals": "Trivial" }
+      "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] }
     },
     {
-      "id": "phase-4-refinement-loop",
-      "type": "loop",
-      "title": "Phase 4: Iterative Summary & Refinement",
-      "runCondition": { "var": "complexity", "not_equals": "Trivial" },
-      "loop": {
-        "type": "until",
-        "condition": { "var": "critiqueComplete", "equals": true },
-        "maxIterations": 2,
-        "iterationVar": "critiquePass"
-      },
-      "body": [
-        {
-          "id": "generate-summary-and-critique",
-          "title": "Generate Summary & Self-Critique (Pass {{critiquePass}})",
-          "prompt": "Consolidate all findings into a final, actionable report.\n\n**1. Devil's Advocate Self-Critique:**\nReview your own findings. Are any of your 'Major' concerns actually minor preferences? Is there a pattern among 'Minor' suggestions that points to a larger problem? Does this critique reveal a fundamental flaw in your analysis that requires another pass?\n\n**2. Final Report:**\n* **Overall Assessment:** A 2-3 sentence summary.\n* **Key Positive Aspects:** Highlights of what was done well.\n* **Concerns (Categorized):** Critical, Major, and Minor/Nit.\n* **Questions for Author:** Clarifying questions.\n* **Actionable Recommendations:** Concrete suggestions.\n\n**3. Set Flag:** Based on your self-critique, set `critiqueComplete = true` if the summary is robust, or `critiqueComplete = false` if you need one more pass to refine it.",
-          "agentRole": "You are a facilitator synthesizing feedback and performing a self-critique to ensure the final report is balanced and high-quality.",
-          "guidance": ["Use 'Nit:' for minor issues. Balance criticism with praise. The goal is a collaborative and constructive report."]
-        }
-      ]
-    },
-    {
-      "id": "phase-5-trivial-review-summary",
-      "title": "Phase 5: Trivial Review Summary",
-      "prompt": "Based on the trivial nature of this MR, I have performed a quick check for obvious errors. The change appears to correctly address the stated purpose without any clear side effects. I recommend approval.",
-      "agentRole": "You are an efficient code reviewer specializing in rapid assessment of low-risk changes. Your role is to quickly validate that trivial changes are safe and appropriate while avoiding over-analysis of simple modifications.",
+      "id": "hygiene-and-inconsistencies",
+      "title": "Hygiene & Inconsistencies Sweep",
+      "prompt": "Perform a platform-agnostic hygiene sweep scoped to the current module and changed files. Surface concise, actionable findings across categories:\n\n- Tests: disabled/skipped/focused tests; tests with no assertions; mismatched or overly generic names\n- Comments: commented-out code blocks; stale/misleading comments; suppression directives without justification\n- TODO/FIXME/HACK/BUG: missing ticket/reference or clearly stale; high density in an area\n- Inconsistencies: naming/DI/logging/error handling divergences from local patterns; ad-hoc debug prints; obvious unused identifiers/unreachable code\n\nConstraints:\n- Total ≤10 items; ≤3 per category; dedupe similar items; group by file; keep each note ≤2 lines\n- Elevate to Major only when clearly risky (e.g., focused tests, tests with no assertions)\n\nWrite results to the live doc under 'Hygiene & Inconsistencies' with category counts and bullets grouped by file. For the top 2–3 actionable items, add Ready-to-Copy MR comments. Log the revision.",
+      "agentRole": "You are a pragmatic reviewer catching small but valuable quality issues without adding noise.",
       "guidance": [
-        "This is the condensed summary for 'Trivial' reviews. The agent skips all other analytical steps and provides a simple confirmation for straightforward changes."
+        "Scope strictly to moduleRoot and changed files plus immediate neighbors.",
+        "Write full details to the live doc; in chat, report counts and the doc path."
       ],
-      "runCondition": { "var": "complexity", "equals": "Trivial" }
+      "runCondition": { "var": "complexity", "not_equals": "Trivial" },
+      "functionReferences": ["discoverHygieneSignals()", "consolidateHygieneFindings()", "appendHygieneFinding()", "appendMRComment()", "upsertSection()", "logRevision()"]
+    },
+    {
+      "id": "prepare-nit-appendix",
+      "title": "Prepare Nit Appendix",
+      "prompt": "Consolidate all non-blocking 'Nit:' items found so far into a clean appendix.\n\nTasks:\n1. Aggregate `nitFindings` by file.\n2. Format each entry as: `filePath:line - short description` with one-line context if helpful.\n3. Produce markdown in `nitAppendix`.\n4. Set `nitAppendixReady = true` and `nitsCount` accordingly.",
+      "agentRole": "You are a meticulous note-taker consolidating non-blocking suggestions for clarity and follow-through.",
+      "guidance": [
+        "This step is non-blocking and purely for documentation quality.",
+        "Keep items concise; avoid repeating Major concerns."
+      ],
+      "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
+      "functionReferences": ["prepareNitAppendix()", "appendNit()", "upsertSection()", "logRevision()"]
+    },
+    {
+      "id": "finalize-review-document",
+      "title": "Finalize Review Document",
+      "prompt": "Finalize the live review document (no new analysis).\n\nBranching:\n- If `complexity == 'Trivial'`:\n  1) Upsert a brief Executive Summary (1–2 lines) with 'Recommendation: Approve'.\n  2) Perform light hygiene (≤2 items) on changed files; write concise bullets under 'Hygiene & Inconsistencies'.\n  3) Quick Nit sweep; write bullets under 'Nit Appendix'.\n  4) Update Header: set status=Final; include final counts.\n  5) Append 'Finalized trivial review' to the Revision Log.\n\n- Otherwise (non-trivial):\n  1) Upsert Executive Summary (3 positives, 3 risks, final recommendation).\n  2) Dedupe and sort Findings (Severity → File → Line).\n  3) Ensure sections exist: Patterns, Pattern Deviations, Tests & Docs, Ideas & Alternatives, Nits, MR Comments.\n  4) Ensure every Critical/Major finding has a curated MR comment; add minimal ones if missing.\n  5) Update Header: set status=Final; include final counts and decision.\n  6) Append 'Finalized document' to the Revision Log.\n\nChat: Provide a concise recap (Trivial: 2–3 lines; Non-trivial: ≤10 lines) with decision and the doc path.",
+      "agentRole": "You are a facilitator ensuring the final document is complete, accurate, and consumable.",
+      "guidance": [
+        "Write full details to the live doc; keep chat to a concise recap with the doc path."
+      ],
+      "functionReferences": ["finalizeReviewDocument()", "ensureSectionMarkers()", "upsertSection()", "curateMRComments()", "discoverHygieneSignals()", "consolidateHygieneFindings()", "appendHygieneFinding()", "logRevision()"]
     }
   ]
 } 

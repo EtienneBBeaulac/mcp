@@ -26,7 +26,8 @@ show_help() {
     echo
     echo "Options:"
     echo "  --interactive                      Run in interactive mode (prompts for all values)"
-    echo "  --type <patch|minor|major|custom>  Specify version bump type"
+    echo "  --type <patch|minor|major|prerelease|custom>  Specify version bump type"
+    echo "  --preid <identifier>               Pre-release id (e.g., beta, rc) when type=prerelease"
     echo "  --version <x.y.z>                  Custom version (required if type=custom)"
     echo "  --desc <description>               Release description"
     echo "  --features <features>              Key features (use config file for multi-line)"
@@ -35,6 +36,7 @@ show_help() {
     echo "  --publish                          Automatically publish to npm"
     echo "  --no-publish                       Skip publishing to npm"
     echo "  --access <public|restricted>       NPM access level (default: public)"
+    echo "  --tag <dist-tag>                   NPM dist-tag (e.g., beta, next). Defaults to preid for prerelease"
     echo "  --force                            Continue even with uncommitted changes"
     echo "  --migrate                          Convert current command to .releaserc format"
     echo "  --help                             Show this help message"
@@ -72,6 +74,8 @@ PUSH=""
 PUBLISH=""
 ACCESS="public"
 FORCE=false
+PREID=""
+DIST_TAG=""
 
 # Load config file if it exists
 if [ -f ".releaserc" ]; then
@@ -89,6 +93,8 @@ if [ -f ".releaserc" ]; then
     [ "${RELEASE_PUBLISH:-}" = "false" ] && PUBLISH=false
     ACCESS="${RELEASE_ACCESS:-public}"
     [ "${RELEASE_FORCE:-}" = "true" ] && FORCE=true || FORCE=false
+    PREID="${RELEASE_PREID:-}"
+    DIST_TAG="${RELEASE_TAG:-}"
 fi
 
 # Parse command line arguments (these override config file)
@@ -101,6 +107,8 @@ CMD_PUBLISH=""
 CMD_ACCESS=""
 CMD_FORCE=false
 SHOW_MIGRATE=false
+CMD_PREID=""
+CMD_DIST_TAG=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -114,6 +122,8 @@ while [[ $# -gt 0 ]]; do
         --publish) CMD_PUBLISH=true; shift ;;
         --no-publish) CMD_PUBLISH=false; shift ;;
         --access) CMD_ACCESS="$2"; shift 2 ;;
+        --preid) CMD_PREID="$2"; shift 2 ;;
+        --tag) CMD_DIST_TAG="$2"; shift 2 ;;
         --force) CMD_FORCE=true; shift ;;
         --migrate) SHOW_MIGRATE=true; shift ;;
         --help) show_help ;;
@@ -130,6 +140,8 @@ done
 [ -n "$CMD_PUBLISH" ] && PUBLISH="$CMD_PUBLISH"
 [ -n "$CMD_ACCESS" ] && ACCESS="$CMD_ACCESS"
 [ "$CMD_FORCE" = true ] && FORCE=true
+[ -n "$CMD_PREID" ] && PREID="$CMD_PREID"
+[ -n "$CMD_DIST_TAG" ] && DIST_TAG="$CMD_DIST_TAG"
 
 # Handle --migrate flag
 if [ "$SHOW_MIGRATE" = true ]; then
@@ -233,23 +245,25 @@ if [ -z "$TYPE" ] && [ "$MODE" = "interactive" ]; then
     echo "1) patch (x.x.X) - Bug fixes"
     echo "2) minor (x.X.0) - New features (backward compatible)"
     echo "3) major (X.0.0) - Breaking changes"
-    echo "4) custom - Specify version manually"
-    echo "5) cancel"
+    echo "4) prerelease (x.y.z-<preid>.<n>) - Beta/RC"
+    echo "5) custom - Specify version manually"
+    echo "6) cancel"
     echo
     read -p "Select option (1-5): " VERSION_CHOICE < /dev/tty
     case $VERSION_CHOICE in
         1) TYPE="patch" ;;
         2) TYPE="minor" ;;
         3) TYPE="major" ;;
-        4) TYPE="custom" ;;
-        5) print_color "$YELLOW" "Release cancelled."; exit 0 ;;
+        4) TYPE="prerelease" ;;
+        5) TYPE="custom" ;;
+        6) print_color "$YELLOW" "Release cancelled."; exit 0 ;;
         *) print_color "$RED" "Invalid option. Release cancelled."; exit 1 ;;
     esac
 fi
 
 # Validate type
 case $TYPE in
-    patch|minor|major|custom) ;;
+    patch|minor|major|prerelease|custom) ;;
     *) print_color "$RED" "Invalid type: $TYPE"; exit 1 ;;
 esac
 
@@ -270,7 +284,12 @@ fi
 if [ "$TYPE" = "custom" ]; then
     npm version "$CUSTOM_VERSION" --no-git-tag-version --silent || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
 else
-    npm version "$TYPE" --no-git-tag-version --silent || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
+    if [ "$TYPE" = "prerelease" ]; then
+        if [ -z "$PREID" ]; then PREID="beta"; fi
+        npm version prerelease --preid "$PREID" --no-git-tag-version --silent || { print_color "$RED" "❌ Failed to bump prerelease version."; exit 1; }
+    else
+        npm version "$TYPE" --no-git-tag-version --silent || { print_color "$RED" "❌ Failed to bump version."; exit 1; }
+    fi
 fi
 
 # Get the new version from package.json
@@ -418,15 +437,27 @@ if [ "$PUBLISH" = true ]; then
     fi
 
     ACCESS_FLAG="--access $ACCESS"
+    if [ -z "$DIST_TAG" ] && [ "$TYPE" = "prerelease" ]; then
+        DIST_TAG="$PREID"
+    fi
+    TAG_FLAG=""
+    if [ -n "$DIST_TAG" ]; then
+        TAG_FLAG="--tag $DIST_TAG"
+    fi
     print_color "$BLUE" "📦 Publishing to npm..."
-    npm publish $ACCESS_FLAG
+    npm publish $ACCESS_FLAG $TAG_FLAG
     
     if [ $? -eq 0 ]; then
         print_color "$GREEN" "✅ Successfully published to npm!"
         print_color "$GREEN" "🎉 Release v$NEW_VERSION complete!"
         echo
         print_color "$BLUE" "Users can now install with:"
-        print_color "$YELLOW" "npm install @exaudeus/workrail@$NEW_VERSION"
+        if [ -n "$DIST_TAG" ]; then
+            print_color "$YELLOW" "npm install @exaudeus/workrail@$DIST_TAG"
+            print_color "$YELLOW" "npx -y @exaudeus/workrail@$DIST_TAG"
+        else
+            print_color "$YELLOW" "npm install @exaudeus/workrail@$NEW_VERSION"
+        fi
     else
         print_color "$RED" "❌ Failed to publish to npm"
         print_color "$YELLOW" "You can publish manually later with: npm publish $ACCESS_FLAG"
