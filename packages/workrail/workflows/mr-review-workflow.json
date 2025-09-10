@@ -117,10 +117,13 @@
         {
           "id": "discover-module-patterns",
           "title": "Discover Module Patterns (Depth 1)",
-          "prompt": "Compute `moduleRoot` as the nearest common ancestor of changed files, clamped to the package or `src/` subtree. Scan only within `moduleRoot` to gather exemplars (naming, DI, error handling, logging, test style, file layout). Produce `patternCatalog` and `patternExamples` in context. Do not block or require confirmation.",
+          "prompt": "Compute `moduleRoot` as the nearest common ancestor of changed files, clamped to the package or `src/` subtree. Scan only within `moduleRoot` to gather exemplars (naming, DI, error handling, logging, test style, file layout). Exclude changed files from discovery so they cannot define patterns. Only elevate a rule to a 'pattern' when observed ≥2 times across distinct files; record singletons as 'candidate conventions'. Produce `patternCatalog` (validated patterns) and `patternExamples` (1–3 exemplars per pattern) in context. Do not block or require confirmation.",
           "agentRole": "You are a codebase pattern scout building a concise pattern catalog for the current module.",
           "guidance": [
             "Scope strictly to `moduleRoot` discovered from changed files.",
+            "Exclude changed files from discovery; use them only later for comparison.",
+            "Require ≥2 occurrences across distinct files to qualify as a pattern; otherwise mark as 'candidate convention'.",
+            "Capture 1–3 exemplars per validated pattern with file:line for the doc.",
             "Cap exemplars (e.g., 3–5 per concern) for speed."
           ],
           "runCondition": { "var": "analysisDepth", "equals": 1 },
@@ -162,11 +165,14 @@
     {
       "id": "consolidate-patterns",
       "title": "Consolidate Pattern Findings",
-      "prompt": "Using `moduleRoot` and `patternCatalog`, compare the MR changes to local conventions. Summarize adherence and deviations, and generate a grouped `patternAppendix` (by directory/file). Set `patternAppendixReady = true`.",
+      "prompt": "Using `moduleRoot` and `patternCatalog`, compare the MR changes to validated patterns (patterns observed ≥2 times across distinct files). Do not use changed code to define patterns. Summarize adherence and deviations, and generate a grouped `patternAppendix` (by directory/file). If no patterns meet the threshold, state this and list 'candidate conventions' separately as informative only. Set `patternAppendixReady = true`.",
       "agentRole": "You are a senior engineer consolidating pattern adherence findings for clear reporting.",
       "guidance": [
         "Restrict to the module of the MR (`moduleRoot`).",
-        "Avoid re-scanning if `patternCatalog` already exists; reuse it."
+        "Avoid re-scanning if `patternCatalog` already exists; reuse it.",
+        "Do not treat changed code as patterns; match only against validated patterns from `patternCatalog` (≥2 distinct occurrences).",
+        "Produce 'Patterns' and 'Pattern Deviations' sections: adherence table with confidence + counts; deviation ledger with file:line, rationale, and suggested alignment.",
+        "Include per-pattern occurrence counts in the module (excluding changed files)."
       ],
       "runCondition": { "var": "complexity", "not_equals": "Trivial" },
       "functionReferences": ["consolidatePatternFindings()", "appendPatternResult()", "upsertSection()", "logRevision()"],
