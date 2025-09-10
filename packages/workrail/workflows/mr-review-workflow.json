@@ -20,92 +20,27 @@
     "If at any point you determine that a crucial piece of information is missing, you must pause and ask the user to provide it.",
     "Auto-advance: after completing each step, immediately get the next step; only pause for explicit requireConfirmation or missing critical inputs.",
     "FunctionReferences are mandatory. When a step lists functionReferences, execute each in the listed order before producing chat output.",
+    "FunctionReferences are conceptual (not MCP tools). ‘Execute’ means: read the function’s definition and perform those actions using your available tools; do not look for tools with the same names.",
     "Use each function's definition as the authoritative checklist for how to perform the step and what to produce (doc updates, context vars).",
     "Document I/O: create/update the file at reviewDocPath using file-writing tools. If the agent cannot write files, output the exact doc content with the intended path so the user can save it.",
     "If a function requires inputs that are missing, state exactly what is missing and pause. Otherwise, do not ask for confirmation.",
-    "If prompt text and a function definition conflict, prefer the function definition for the how, and the step prompt for the what."
-  ],
-  "functionDefinitions": [
-    {
-      "name": "collectNits",
-      "definition": "From the current analysis pass, extract items labeled 'Nit:' or clearly Minor suggestions. Append them to a running array `nitFindings` with entries: { title, details, filePath, line, analysisDepth }. Maintain `nitsCount`.",
-      "scope": "workflow"
-    },
-    {
-      "name": "prepareNitAppendix",
-      "definition": "Aggregate `nitFindings` into a concise appendix grouped by file. Format each bullet as: `filePath:line - short description`. Produce markdown in `nitAppendix` and set `nitAppendixReady = true`.",
-      "scope": "workflow"
-    },
-    {
-      "name": "discoverModulePatterns",
-      "definition": "Determine `moduleRoot` as the nearest common ancestor of changed files (clamped to the package or src subtree). Scan only within `moduleRoot` to build `patternCatalog` and `patternExamples` (naming, dependency injection, error handling, logging, test style, file layout).",
-      "scope": "workflow"
-    },
-    {
-      "name": "consolidatePatternFindings",
-      "definition": "Compare MR changes against `patternCatalog` scoped to `moduleRoot`. Produce `patternFindings` and a grouped `patternAppendix` (by directory/file), and set `patternAppendixReady = true`.",
-      "scope": "workflow"
-    },
-    {
-      "name": "initReviewDoc",
-      "definition": "Create a live Markdown report at project root. Determine filename as `<YYYY-MM-DD>--<ticket-or-branch>--mr-review.md` (ticket preferred, else branch, else `mr-unknown`). Initialize sections with stable markers and write header metadata. Set `reviewDocPath`.",
-      "scope": "workflow"
-    },
-    {
-      "name": "upsertSection",
-      "definition": "Upsert content under a known section marker in the Markdown doc without duplicating sections. Maintain concise, scannable formatting.",
-      "scope": "workflow"
-    },
-    {
-      "name": "appendChangedFileRow",
-      "definition": "Append or update a row in the Changed Files table with columns: File | +/- | Summary | Risk.",
-      "scope": "workflow"
-    },
-    {
-      "name": "appendFinding",
-      "definition": "Append a finding grouped by severity (Critical/Major/Minor). Each entry includes path:line, 1–2 lines rationale, optional tiny diff.",
-      "scope": "workflow"
-    },
-    {
-      "name": "appendPatternResult",
-      "definition": "Append a Pattern Adherence row (Check | Result | Note) and brief per-file deviations.",
-      "scope": "workflow"
-    },
-    {
-      "name": "appendNit",
-      "definition": "Append a Nit entry grouped by file: `path:line — nit text`.",
-      "scope": "workflow"
-    },
-    {
-      "name": "appendMRComment",
-      "definition": "Append a copy-ready MR comment block with file:line, short title, rationale, and optional tiny diff snippet.",
-      "scope": "workflow"
-    },
-    {
-      "name": "logRevision",
-      "definition": "Append a timestamped line to the Revision Log describing the update (e.g., 'Added Depth 1 results').",
-      "scope": "workflow"
-    },
-    {
-      "name": "discoverHygieneSignals",
-      "definition": "Within `moduleRoot`, scan changed files and immediate neighbors for generic hygiene signals: disabled/skipped/focused tests; tests with no assertions; commented-out code; stale/misleading comments; TODO/FIXME/HACK/BUG without ticket/reference or clearly stale; high-density TODOs; naming/DI/logging/error handling inconsistencies vs local `patternCatalog`; ad-hoc debug prints; obvious unused identifiers/unreachable code.",
-      "scope": "workflow"
-    },
-    {
-      "name": "consolidateHygieneFindings",
-      "definition": "Consolidate hygiene signals with caps: total ≤10, per-category ≤3; dedupe similar items; group by file; elevate severity to Major only for clearly risky cases (e.g., focused tests, tests with no assertions). Produce category counts and a capped item list.",
-      "scope": "workflow"
-    },
-    {
-      "name": "appendHygieneFinding",
-      "definition": "Append a hygiene bullet to the live doc grouped by file: `path:line — short note (≤ 2 lines)`. Avoid duplication with Nit items; reference '(linked in Nits)' instead of repeating if needed.",
-      "scope": "workflow"
-    },
-    {
-      "name": "finalizeReviewDocument",
-      "definition": "Finalize the live review document. If `complexity == 'Trivial'`: write a brief executive summary (approve), do light hygiene (≤2) and quick nit sweep, set status=Final, log revision. Otherwise: write full executive summary (3 positives, 3 risks, recommendation), dedupe/sort findings, ensure sections (patterns, deviations, tests/docs, ideas, nits, MR comments), ensure Critical/Major coverage with curated MR comments, set status=Final, log revision.",
-      "scope": "workflow"
-    }
+    "If prompt text and a function definition conflict, prefer the function definition for the how, and the step prompt for the what.",
+    "collectNits(): From the current pass, extract 'Nit:' or Minor items; append to nitFindings {title, details, filePath, line, analysisDepth}; maintain nitsCount.",
+    "prepareNitAppendix(): Group nitFindings by file; format 'filePath:line - short desc'; write markdown to nitAppendix; set nitAppendixReady=true.",
+    "discoverModulePatterns(): Compute moduleRoot (nearest common ancestor of changed files, clamped to package/src); scan only moduleRoot to build patternCatalog + patternExamples (naming, DI, errors, logging, tests, layout).",
+    "consolidatePatternFindings(): Compare changes to patternCatalog (scoped to moduleRoot); produce patternFindings + grouped patternAppendix; set patternAppendixReady=true.",
+    "initReviewDoc(): Create live Markdown at project root; filename '<YYYY-MM-DD>--<ticket-or-branch>--mr-review.md'; insert section markers; set reviewDocPath; if no file I/O, output full doc and path.",
+    "upsertSection(): Upsert under a known section marker; never duplicate sections; keep formatting concise.",
+    "appendChangedFileRow(): Append/update Changed Files table row: File | +/- | Summary | Risk.",
+    "appendFinding(): Append finding under severity (Critical/Major/Minor) with path:line, 1–2-line rationale, optional tiny diff.",
+    "appendPatternResult(): Append Pattern Adherence row (Check | Result | Note); add brief per-file deviations.",
+    "appendNit(): Append Nit grouped by file: 'path:line — nit text'.",
+    "appendMRComment(): Append copy-ready MR comment: file:line, short title, rationale, optional tiny diff.",
+    "logRevision(): Append timestamped message to the Revision Log describing the update.",
+    "discoverHygieneSignals(): In moduleRoot, scan changed files + neighbors for: disabled/skipped/focused tests; no-assert tests; commented-out code; stale/misleading comments; TODO/FIXME/HACK/BUG w/o ticket or stale; pattern inconsistencies; ad-hoc debug prints; obvious unused/unreachable.",
+    "consolidateHygieneFindings(): Cap total ≤10 and ≤3 per category; dedupe; group by file; elevate Major only for clearly risky cases; produce category counts and capped items.",
+    "appendHygieneFinding(): Append hygiene bullet grouped by file: 'path:line — short note (≤2 lines)'; if duplicated in Nits, reference '(linked in Nits)'.",
+    "finalizeReviewDocument(): Trivial: brief summary approve, light hygiene (≤2), quick nits, status=Final, log. Non-trivial: exec summary (3 positives, 3 risks, recommendation), dedupe/sort findings, ensure sections + curated comments for Critical/Major, status=Final, log."
   ],
   "steps": [
     {
