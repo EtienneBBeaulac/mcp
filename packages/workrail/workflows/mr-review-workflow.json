@@ -137,12 +137,18 @@
           "agentRole": "You are a Senior Staff Engineer performing a structured, multi-pass code review with increasing levels of scrutiny.",
           "guidance": [
             "At each depth, focus only on the items in that checklist.",
-            "Use Chain-of-Thought reasoning to explain your findings.",
+            "Use Chain-of-Thought reasoning to explain your findings (keep chat concise; write full details to the doc).",
+            "Retrieval bias: Prefer reading files/functions from 'Neighborhood Map' and HOT paths before broader scans.",
             "Depth 2: Prefer Flow Anchors and HOT paths; walk 2–3 inbound/outbound traces; verify control/data flow vs invariants; record surprises.",
-            "Depth 3: On HOT paths, check module boundaries, DI patterns, performance, and consumer contracts; note potential breakages."
+            "Depth 3: On HOT paths, check module boundaries, DI patterns, performance, and consumer contracts; note potential breakages.",
+            "Propose tiny diffs (non-blocking) for the top 1–2 Major findings: fenced unified diff with file paths; ≤8 changed lines total and ≤2 hunks per patch; add one-line rationale; scope narrow; skip if ambiguous and state why.",
+            "For each proposed patch, add a matching ready-to-copy MR comment (file:line + rationale).",
+            "Append patches to the 'Proposed Patches' section; append MR comments and log the revision.",
+            "Caps per pass: ≤2 patches; ≤3 MR comments; ≤1200 chars of total patch text.",
+            "Self-critique: list 1–2 least-confident areas and what would increase confidence under 'Confidence & Follow-ups'."
           ],
           "runCondition": { "or": [ { "var": "analysisDepth", "equals": 1 }, { "var": "analysisDepth", "equals": 2 }, { "var": "analysisDepth", "equals": 3 } ] },
-          "functionReferences": ["appendFinding()", "appendMRComment()", "logRevision()"],
+          "functionReferences": ["upsertSection()", "appendFinding()", "appendMRComment()", "logRevision()"],
           "requireConfirmation": false
         },
         {
@@ -187,6 +193,7 @@
         "Assessing test coverage is critical. A lack of tests for new logic is often a 'Major' or 'Critical' concern.",
         "Derive Impacted User Flows from Flow Anchors and HOT paths (depth ≤2); cap ≤5 flows; prefer acceptance-criteria keywords.",
         "List Affected Consumers (importers/API clients/message consumers); cap ≤8; rank by usage frequency and proximity to changed code.",
+        "Test skeletons: for top-risk flows/consumers, add concise code fences (project test style if clear) with a suggested file path comment at top; ≤25 lines per sketch; ≤6 total sketches (≤2 per top risk).",
         "For data/schema/API changes, add at least one Contract test proposal; total test proposals cap ≤10.",
         "Add 2 ready-to-copy MR comments for the highest-risk gaps; log the revision."
       ],
@@ -226,7 +233,10 @@
       "prompt": "Finalize the live review document (no new analysis).\n\nBranching:\n- If `complexity == 'Trivial'`:\n  1) Upsert a brief Executive Summary (1–2 lines) with 'Recommendation: Approve'.\n  2) Perform light hygiene (≤2 items) on changed files; write concise bullets under 'Hygiene & Inconsistencies'.\n  3) Quick Nit sweep; write bullets under 'Nit Appendix'.\n  4) Update Header: set status=Final; include final counts.\n  5) Append 'Finalized trivial review' to the Revision Log.\n\n- Otherwise (non-trivial):\n  1) Upsert Executive Summary (3 positives, 3 risks, final recommendation).\n  2) Dedupe and sort Findings (Severity → File → Line).\n  3) Ensure sections exist: Patterns, Pattern Deviations, Tests & Docs, Ideas & Alternatives, Nits, MR Comments.\n  4) Ensure every Critical/Major finding has a curated MR comment; add minimal ones if missing.\n  5) Update Header: set status=Final; include final counts and decision.\n  6) Append 'Finalized document' to the Revision Log.\n\nChat: Provide a concise recap (Trivial: 2–3 lines; Non-trivial: ≤10 lines) with decision and the doc path.",
       "agentRole": "You are a facilitator ensuring the final document is complete, accurate, and consumable.",
       "guidance": [
-        "Write full details to the live doc; keep chat to a concise recap with the doc path."
+        "Write full details to the live doc; keep chat to a concise recap with the doc path.",
+        "Ensure sections exist: 'Proposed Patches', 'Test Gaps & Proposals', 'Confidence & Follow-ups'; create missing sections with stable anchors.",
+        "Dedupe patches and MR comments; ensure every Critical/Major has either a patch or an MR comment.",
+        "Executive Summary template: 3 positives; 3 risks; decision with rationale; link to doc sections for details."
       ],
       "functionReferences": ["finalizeReviewDocument()", "upsertSection()", "discoverHygieneSignals()", "consolidateHygieneFindings()", "appendHygieneFinding()", "logRevision()"],
       "requireConfirmation": false
