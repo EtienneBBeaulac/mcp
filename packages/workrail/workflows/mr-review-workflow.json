@@ -234,9 +234,12 @@
       "agentRole": "You are a facilitator ensuring the final document is complete, accurate, and consumable.",
       "guidance": [
         "Write full details to the live doc; keep chat to a concise recap with the doc path.",
-        "Ensure sections exist: 'Proposed Patches', 'Test Gaps & Proposals', 'Confidence & Follow-ups'; create missing sections with stable anchors.",
-        "Dedupe patches and MR comments; ensure every Critical/Major has either a patch or an MR comment.",
-        "Executive Summary template: 3 positives; 3 risks; decision with rationale; link to doc sections for details."
+        "Ensure sections exist: 'Executive Summary', 'Decision Criteria', 'Risk Heatmap', 'Proposed Patches', 'Test Gaps & Proposals', 'Confidence & Follow-ups'; create missing sections with stable anchors.",
+        "Executive Summary template: 3 positives (≤120 chars each); 3 risks (≤120 chars each); decision & rationale (≤2 lines); add links to Patterns, Deviations, Tests, Hygiene; total ≤12 lines.",
+        "Decision Criteria checklist: Scope fit; Tests adequate; Pattern adherence; Performance risk; Backwards compatibility; Security basics. Render as 'Criteria: [✓/✗] label — 1 phrase note' in fixed order.",
+        "Risk Heatmap table: rows 'Risk | Area | Likelihood(L/M/H) | Impact(L/M/H) | Mitigation(≤1 line)'; sort by Impact desc then Likelihood desc; cap ≤6 rows; add 'omitted due to caps' line if needed.",
+        "Dedupe patches and MR comments; ensure every Critical/Major has either a patch or a copy-ready MR comment.",
+        "Keep all caps deterministic; if any list exceeds its cap, add a single trailing 'More items omitted due to caps.' line."
       ],
       "functionReferences": ["finalizeReviewDocument()", "upsertSection()", "discoverHygieneSignals()", "consolidateHygieneFindings()", "appendHygieneFinding()", "logRevision()"],
       "requireConfirmation": false
