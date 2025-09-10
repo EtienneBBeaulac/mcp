@@ -92,7 +92,11 @@
         "Write full details to the live doc; in chat, keep output minimal.",
         "Render 'ASCII Call Graphs' under 'Bounded Call Graph': edges 'A -> B', width ≤100, highlight changed as [*name*], include tiny legend.",
         "Paths: for each changed symbol show top 2–3 inbound and outbound paths, depth ≤2, dedupe, shortest-first then alphabetical.",
-        "Caps: ≤12 nodes, ≤20 edges across graphs; if exceeded, fall back to an adjacency list with per-edge counts."
+        "Caps: ≤12 nodes, ≤20 edges across graphs; if exceeded, fall back to an adjacency list with per-edge counts.",
+        "Flow Anchors: map entrypoints to changed symbols; table 'Anchor | Type | Target Symbol | Notes'; cap ≤5 anchors.",
+        "Hot-Path ranking: score edges (diff touch, anchor, ticket keyword, test ref); tag HOT if score ≥ threshold; prefer HOT paths in ASCII output.",
+        "Legend in doc: [*name*]=changed; HOT=high-impact; 'A -> B'=calls; 'Route -> Handler'; 'Job -> Worker'.",
+        "If caps exceeded, write 'Adjacency Summary': 'Node | In | Out | Notes' (top-K by degree/frequency) and add 1–2 uncertainty questions."
       ],
       "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
       "functionReferences": ["upsertSection()", "logRevision()"],
@@ -131,8 +135,8 @@
           "guidance": [
             "At each depth, focus only on the items in that checklist.",
             "Use Chain-of-Thought reasoning to explain your findings.",
-            "Depth 2: Walk 2–3 inbound and outbound traces from the call graph; verify control/data flow against invariants; record surprises.",
-            "Depth 3: Check module boundaries, DI patterns, hot-path performance, and consumer contracts; note potential breakages."
+            "Depth 2: Prefer Flow Anchors and HOT paths; walk 2–3 inbound/outbound traces; verify control/data flow vs invariants; record surprises.",
+            "Depth 3: On HOT paths, check module boundaries, DI patterns, performance, and consumer contracts; note potential breakages."
           ],
           "runCondition": { "or": [ { "var": "analysisDepth", "equals": 1 }, { "var": "analysisDepth", "equals": 2 }, { "var": "analysisDepth", "equals": 3 } ] },
           "functionReferences": ["appendFinding()", "appendMRComment()", "logRevision()"],
