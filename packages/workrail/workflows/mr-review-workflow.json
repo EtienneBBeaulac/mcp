@@ -57,8 +57,7 @@
         "**[Trivial]:** For minor fixes (typos, docs). This will run a condensed, single-phase review.",
         "**[Standard]:** For typical features or bug fixes. This uses the full, multi-phase review process.",
         "**[High-Risk]:** For major architectural changes or features touching sensitive code. This follows the full process with maximum diligence."
-      ],
-      "functionReferences": ["initReviewDoc()", "logRevision()"]
+      ]
     },
     {
       "id": "phase-1-context",
@@ -69,10 +68,18 @@
         "This is a critical sanity check. If the agent's summary is incorrect, correct it now to prevent a flawed review. This step is skipped for 'Trivial' reviews."
       ],
       "runCondition": { "var": "complexity", "not_equals": "Trivial" },
-      "requireConfirmation": true,
-      "functionReferences": ["upsertSection()", "appendChangedFileRow()", "logRevision()"]
+      "requireConfirmation": true
     },
     
+    {
+      "id": "phase-1a-llm-context-gathering",
+      "title": "Phase 1a: Comprehensive Context Gathering",
+      "prompt": "To perform a thorough review, I need more than just the code diff. Please provide the following:\n\n1. **Business Context:** Paste the full text of the associated Jira/GitHub ticket, including the requirements and acceptance criteria. This helps me validate the 'why' behind the change.\n2. **Technical Context:** If this change relies on other parts of the codebase, please provide the relevant code snippets or file contents. Also, include any relevant architectural diagrams or coding standards documents.\n\nI will synthesize this information to build a comprehensive context for my review.\n\n**Confirmation & Gating:**\n- After you confirm that I have the right context (or explicitly instruct me to skip), I will set `contextGatheringComplete = true` or `skipContextGathering = true` accordingly.\n- I will not proceed to deeper analysis until one of these is set.",
+      "agentRole": "You are a context-aware analyst ensuring you have all necessary information before starting a deep review.",
+      "guidance": ["A high-quality review depends on high-quality context. The more information provided here, the more accurate the review will be."],
+      "runCondition": { "var": "complexity", "not_equals": "Trivial" },
+      "requireConfirmation": true
+    },
     {
       "id": "phase-1b-familiarization",
       "title": "Phase 1b: Neighborhood, Call Graph, and Contracts Familiarization",
@@ -90,15 +97,6 @@
       "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
       "functionReferences": ["upsertSection()", "logRevision()"],
       "requireConfirmation": false
-    },
-    {
-      "id": "phase-1a-llm-context-gathering",
-      "title": "Phase 1a: Comprehensive Context Gathering",
-      "prompt": "To perform a thorough review, I need more than just the code diff. Please provide the following:\n\n1. **Business Context:** Paste the full text of the associated Jira/GitHub ticket, including the requirements and acceptance criteria. This helps me validate the 'why' behind the change.\n2. **Technical Context:** If this change relies on other parts of the codebase, please provide the relevant code snippets or file contents. Also, include any relevant architectural diagrams or coding standards documents.\n\nI will synthesize this information to build a comprehensive context for my review.\n\n**Confirmation & Gating:**\n- After you confirm that I have the right context (or explicitly instruct me to skip), I will set `contextGatheringComplete = true` or `skipContextGathering = true` accordingly.\n- I will not proceed to deeper analysis until one of these is set.",
-      "agentRole": "You are a context-aware analyst ensuring you have all necessary information before starting a deep review.",
-      "guidance": ["A high-quality review depends on high-quality context. The more information provided here, the more accurate the review will be."],
-      "runCondition": { "var": "complexity", "not_equals": "Trivial" },
-      "requireConfirmation": true
     },
     {
       "id": "phase-2-depth-analysis-loop",
@@ -132,7 +130,9 @@
           "agentRole": "You are a Senior Staff Engineer performing a structured, multi-pass code review with increasing levels of scrutiny.",
           "guidance": [
             "At each depth, focus only on the items in that checklist.",
-            "Use Chain-of-Thought reasoning to explain your findings."
+            "Use Chain-of-Thought reasoning to explain your findings.",
+            "Depth 2: Walk 2–3 inbound and outbound traces from the call graph; verify control/data flow against invariants; record surprises.",
+            "Depth 3: Check module boundaries, DI patterns, hot-path performance, and consumer contracts; note potential breakages."
           ],
           "runCondition": { "or": [ { "var": "analysisDepth", "equals": 1 }, { "var": "analysisDepth", "equals": 2 }, { "var": "analysisDepth", "equals": 3 } ] },
           "functionReferences": ["appendFinding()", "appendMRComment()", "logRevision()"],
@@ -150,7 +150,7 @@
             "Append Nit grouped by file: 'path:line — nit text'."
           ],
           "runCondition": { "var": "analysisDepth", "equals": 4 },
-          "functionReferences": ["appendNit()", "appendMRComment()", "upsertSection()", "logRevision()"],
+          "functionReferences": ["appendMRComment()", "upsertSection()", "logRevision()"],
           "requireConfirmation": false
         }
       ]
@@ -202,7 +202,7 @@
         "Keep items concise; avoid repeating Major concerns."
       ],
       "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
-      "functionReferences": ["prepareNitAppendix()", "appendNit()", "upsertSection()", "logRevision()"],
+      "functionReferences": ["upsertSection()", "logRevision()"],
       "requireConfirmation": false
     },
     {
@@ -213,7 +213,7 @@
       "guidance": [
         "Write full details to the live doc; keep chat to a concise recap with the doc path."
       ],
-      "functionReferences": ["finalizeReviewDocument()", "ensureSectionMarkers()", "upsertSection()", "curateMRComments()", "discoverHygieneSignals()", "consolidateHygieneFindings()", "appendHygieneFinding()", "logRevision()"],
+      "functionReferences": ["finalizeReviewDocument()", "upsertSection()", "discoverHygieneSignals()", "consolidateHygieneFindings()", "appendHygieneFinding()", "logRevision()"],
       "requireConfirmation": false
     }
   ]
