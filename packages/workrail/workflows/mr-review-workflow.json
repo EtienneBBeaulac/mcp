@@ -72,13 +72,23 @@
       "requireConfirmation": true,
       "functionReferences": ["upsertSection()", "appendChangedFileRow()", "logRevision()"]
     },
+    
     {
-      "id": "phase-1-context-setup",
-      "title": "Phase 1: Initializing Analysis State",
-      "prompt": "Initializing state for progressive depth analysis. Setting analysisDepth = 1, analysisComplete = false, and majorIssuesFound = false.",
-      "agentRole": "You are a state manager preparing the workflow for an iterative review process.",
-      "guidance": ["This is an automated step to prepare for the analysis loop."],
+      "id": "phase-1b-familiarization",
+      "title": "Phase 1b: Neighborhood, Call Graph, and Contracts Familiarization",
+      "prompt": "Build a lightweight understanding of surrounding code to increase review accuracy.\n\nTasks:\n1) Neighborhood Map: For each changed file, list immediate neighbors in moduleRoot (imports/exports/same-folder), co-located tests, and closest entry points (routes/endpoints/commands). Cap neighbors per file.\n2) Bounded Call Graph: For changed functions/classes, gather callers and callees up to 2 hops within moduleRoot; cap nodes/edges; prioritize edges touching changed code.\n3) Contracts & Invariants: List public symbols, API endpoints, DB/tables/messages touched nearby. Capture any stated invariants or assumptions from comments.\n\nDoc-first: Upsert sections 'Neighborhood Map', 'Bounded Call Graph', and 'Contracts & Invariants' with concise tables/bullets. Include only the highest-signal items (apply caps).",
+      "agentRole": "You are a codebase navigator building context around the change to improve downstream analysis.",
+      "guidance": [
+        "Initialize majorIssuesFound = false.",
+        "Scope strictly to moduleRoot and changed files plus immediate neighbors.",
+        "Cap per-file neighbors and graph size to avoid noise; prefer edges directly related to the diff.",
+        "Write full details to the live doc; in chat, keep output minimal.",
+        "Render 'ASCII Call Graphs' under 'Bounded Call Graph': edges 'A -> B', width ≤100, highlight changed as [*name*], include tiny legend.",
+        "Paths: for each changed symbol show top 2–3 inbound and outbound paths, depth ≤2, dedupe, shortest-first then alphabetical.",
+        "Caps: ≤12 nodes, ≤20 edges across graphs; if exceeded, fall back to an adjacency list with per-edge counts."
+      ],
       "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
+      "functionReferences": ["upsertSection()", "logRevision()"],
       "requireConfirmation": false
     },
     {
@@ -96,8 +106,8 @@
       "title": "Phase 2: Progressive Depth Analysis",
       "runCondition": { "and": [ { "var": "complexity", "not_equals": "Trivial" }, { "or": [ { "var": "contextGatheringComplete", "equals": true }, { "var": "skipContextGathering", "equals": true } ] } ] },
       "loop": {
-        "type": "until",
-        "condition": { "var": "analysisComplete", "equals": true },
+        "type": "for",
+        "count": 4,
         "maxIterations": 4,
         "iterationVar": "analysisDepth"
       },
@@ -141,14 +151,6 @@
           ],
           "runCondition": { "var": "analysisDepth", "equals": 4 },
           "functionReferences": ["appendNit()", "appendMRComment()", "upsertSection()", "logRevision()"],
-          "requireConfirmation": false
-        },
-        {
-          "id": "check-analysis-completion",
-          "title": "Check Analysis Completion",
-          "prompt": "Checking if the analysis is complete. If we have reached the maximum depth (4), I will set `analysisComplete = true` to exit the loop. Otherwise, I will increment the `analysisDepth` and continue to the next level of review.",
-          "agentRole": "You are an automated process controller determining whether to deepen the analysis or conclude this phase.",
-          "guidance": ["This step determines the exit condition for the progressive depth loop."],
           "requireConfirmation": false
         }
       ]
