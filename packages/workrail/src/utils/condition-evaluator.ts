@@ -15,9 +15,69 @@ export interface Condition {
   gte?: number;
   lt?: number;
   lte?: number;
+  // String matching operators
+  contains?: string;
+  startsWith?: string;
+  endsWith?: string;
+  matches?: string; // regex pattern
+  // Logical operators
   and?: Condition[];
   or?: Condition[];
   not?: Condition;
+}
+
+/**
+ * Performs lenient equality comparison between two values.
+ * - Case-insensitive string comparison (after trimming whitespace)
+ * - Type coercion for compatible types (string numbers to numbers)
+ * - Treats null and undefined as equivalent
+ */
+function lenientEquals(a: any, b: any): boolean {
+  // Handle null/undefined equivalence
+  if (a == null && b == null) {
+    return true;
+  }
+  if (a == null || b == null) {
+    return false;
+  }
+
+  // If both are strings, do case-insensitive trimmed comparison
+  if (typeof a === 'string' && typeof b === 'string') {
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+  }
+
+  // Type coercion for string-number conversions
+  if ((typeof a === 'string' && typeof b === 'number') || 
+      (typeof a === 'number' && typeof b === 'string')) {
+    const numA = Number(a);
+    const numB = Number(b);
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA === numB;
+    }
+  }
+
+  // Boolean coercion for string boolean values
+  if (typeof a === 'string' && typeof b === 'boolean') {
+    const lowerA = a.trim().toLowerCase();
+    return (b === true && (lowerA === 'true' || lowerA === '1' || lowerA === 'yes')) ||
+           (b === false && (lowerA === 'false' || lowerA === '0' || lowerA === 'no'));
+  }
+  if (typeof b === 'string' && typeof a === 'boolean') {
+    return lenientEquals(b, a);
+  }
+
+  // Fall back to strict equality for other types
+  return a === b;
+}
+
+/**
+ * Normalizes a value to a string for string operations.
+ */
+function normalizeToString(value: any): string {
+  if (value == null) {
+    return '';
+  }
+  return String(value).trim();
 }
 
 /**
@@ -54,12 +114,12 @@ function evaluateConditionUnsafe(condition: Condition, context: ConditionContext
   if (condition.var !== undefined) {
     const value = context[condition.var];
     
-    // Comparison operators
-    if (condition.equals !== undefined) {
-      return value === condition.equals;
+    // Comparison operators (using lenient comparison)
+    if ('equals' in condition) {
+      return lenientEquals(value, condition.equals);
     }
-    if (condition.not_equals !== undefined) {
-      return value !== condition.not_equals;
+    if ('not_equals' in condition) {
+      return !lenientEquals(value, condition.not_equals);
     }
     if (condition.gt !== undefined) {
       return typeof value === 'number' && value > condition.gt;
@@ -72,6 +132,34 @@ function evaluateConditionUnsafe(condition: Condition, context: ConditionContext
     }
     if (condition.lte !== undefined) {
       return typeof value === 'number' && value <= condition.lte;
+    }
+    
+    // String matching operators
+    if (condition.contains !== undefined) {
+      const valueStr = normalizeToString(value).toLowerCase();
+      const searchStr = normalizeToString(condition.contains).toLowerCase();
+      return valueStr.includes(searchStr);
+    }
+    if (condition.startsWith !== undefined) {
+      const valueStr = normalizeToString(value).toLowerCase();
+      const searchStr = normalizeToString(condition.startsWith).toLowerCase();
+      return valueStr.startsWith(searchStr);
+    }
+    if (condition.endsWith !== undefined) {
+      const valueStr = normalizeToString(value).toLowerCase();
+      const searchStr = normalizeToString(condition.endsWith).toLowerCase();
+      return valueStr.endsWith(searchStr);
+    }
+    if (condition.matches !== undefined) {
+      const valueStr = normalizeToString(value);
+      try {
+        const regex = new RegExp(condition.matches, 'i'); // Case-insensitive by default
+        return regex.test(valueStr);
+      } catch (error) {
+        // Invalid regex - return false for safety
+        console.warn('Invalid regex pattern in condition:', condition.matches);
+        return false;
+      }
     }
     
     // If only var is specified, check for truthiness
@@ -111,7 +199,9 @@ export function validateCondition(condition: any): void {
   }
 
   const supportedKeys = [
-    'var', 'equals', 'not_equals', 'gt', 'gte', 'lt', 'lte', 'and', 'or', 'not'
+    'var', 'equals', 'not_equals', 'gt', 'gte', 'lt', 'lte', 
+    'contains', 'startsWith', 'endsWith', 'matches',
+    'and', 'or', 'not'
   ];
 
   const conditionKeys = Object.keys(condition);
