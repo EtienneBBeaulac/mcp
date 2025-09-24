@@ -1,0 +1,429 @@
+{
+    "id": "deep-documentation-workflow",
+    "name": "Comprehensive Codebase Documentation Creation Workflow",
+    "version": "1.0.0",
+    "description": "A systematic workflow for creating comprehensive documentation of any given codebase scope (modules, services, features, etc.). Performs multi-level codebase analysis, gathers existing documentation, asks intelligent clarifying questions, and produces thorough documentation that can serve as context for future agent work. Adapts output format and depth based on scope complexity and size.",
+    
+    "clarificationPrompts": [
+        "What is the specific scope you want documented? (e.g., 'Android authentication module', 'user management service', 'payment processing feature')",
+        "What type of system/codebase is this? (mobile app, web service, desktop application, library, etc.)",
+        "What is the primary purpose of this documentation? (agent context, team onboarding, technical reference, architectural overview)",
+        "Are there any specific aspects you want emphasized? (architecture, APIs, data flow, business logic, etc.)",
+        "Do you have any existing documentation that should be incorporated or referenced?",
+        "What level of technical detail is needed? (high-level overview, implementation details, or comprehensive coverage)"
+    ],
+    
+    "preconditions": [
+        "User has identified a specific codebase scope to document",
+        "Agent has access to codebase analysis tools (codebase_search, grep, read_file, etc.)",
+        "Agent can create and edit documentation files",
+        "The specified scope exists and is accessible in the codebase"
+    ],
+    
+    "metaGuidance": [
+        "**FUNCTION DEFINITIONS:**",
+        "fun analyzeScope(scope, depth) = 'Analyze {scope} at {depth} level using codebase_search and grep. Levels: surface (structure), detailed (implementation), comprehensive (dependencies + integration). Document findings in AnalysisResults/{scope}-{depth}.md.'",
+        "fun findExistingDocs(scope) = 'Search for documentation related to {scope}: README files, inline comments, API docs, architecture docs, design docs. Create inventory in ExistingDocs/{scope}.md.'",
+        "fun mapDependencies(component, direction) = 'Map {component} dependencies. Direction: incoming (what uses this), outgoing (what this uses), bidirectional. Create dependency graph in Dependencies/{component}.md.'",
+        "fun analyzeDataFlow(scope) = 'Trace data flow through {scope}: inputs, transformations, outputs, persistence, validation. Document in DataFlow/{scope}.md with flow diagrams.'",
+        "fun identifyPatterns(scope) = 'Find architectural patterns, design patterns, coding conventions in {scope}. Document in Patterns/{scope}.md with examples and rationale.'",
+        "fun assessComplexity(scope) = 'Evaluate {scope} complexity: lines of code, cyclomatic complexity, dependency count, integration points. Set scopeComplexity context variable.'",
+        "fun createDocStructure(scope, complexity) = 'Design documentation structure for {scope} based on {complexity}. Single doc for simple, multiple docs for complex. Set docStructure context variable.'",
+        "fun updateDocContext(section, content) = 'Update DOCUMENTATION_CONTEXT.md {section} with {content}. Track progress, decisions, and discoveries throughout workflow.'",
+        "fun askIntelligentQuestions(findings) = 'Based on codebase analysis {findings}, formulate 3-7 targeted questions about unclear aspects, business logic, design decisions, or missing context.'",
+        "fun synthesizeDocumentation(scope, structure) = 'Create comprehensive documentation for {scope} using {structure}. Include all analysis findings, patterns, dependencies, and clarifications.'",
+        "fun addResumptionJson(phase) = 'Update DOCUMENTATION_CONTEXT.md with workflow resumption: workflowId, completedSteps to {phase}, context variables for workflow_next.'",
+        "fun validateDocumentation(docs, scope) = 'Review {docs} for completeness, accuracy, clarity. Check against {scope} requirements and analysis findings.'",
+        "fun trackProgress(completed, current) = 'Update progress: ✅ {completed}, 🔄 {current}, ⏳ Remaining phases. Include scope analysis coverage and documentation completion percentage.'",
+        "**PROGRESS TRACKING FUNCTIONS:**",
+        "fun initProgressTracking(scope) = 'Create live progress doc: <YYYY-MM-DD>--<scope>--doc-progress.md. Initialize sections: Coverage Matrix, Analysis Log, Quality Gates, Component Registry, Validation Results. Set progressDocPath context variable.'",
+        "fun registerComponents(scope) = 'Discover all components in {scope} and populate Component Registry table: Component | Type | Files | LOC | Complexity | Status. Status starts as \"discovered\". Set totalComponents context variable.'",
+        "fun updateComponentStatus(component, status, depth, findings) = 'Update Coverage Matrix row: {component} | {status} | {depth}/10 | {findings} patterns | timestamp. Status: discovered/analyzing/analyzed/documented/validated.'",
+        "fun logAnalysisStep(phase, component, findings) = 'Append to Analysis Log: [{timestamp}] Phase {phase}: {component} - {findings}. Include: patterns found, dependencies mapped, quality issues, time invested.'",
+        "fun checkCoverageGate(gate) = 'Validate coverage gate: {gate}. Gates: discovery-complete, analysis-complete, documentation-complete, validation-complete. Update Quality Gates section with ✅/❌ status.'",
+        "fun enforceProgressGates() = 'Before proceeding, verify ALL required gates passed. Cannot advance if any ❌ status in Quality Gates. List specific blockers and required actions.'",
+        "fun calculateCompletionMetrics() = 'Compute and update: analysisComplete %, documentationComplete %, overallQualityScore, componentsAtRisk. Set context variables for validation.'",
+        "fun appendValidationEvidence(section, result, evidence) = 'Log validation result with evidence: {section} validation = {result}. Evidence: file paths checked, cross-references verified, quality score achieved.'",
+        "fun finalizeProgressReport() = 'Complete progress document with final metrics, lessons learned, maintenance recommendations, handoff checklist. Mark status=COMPLETE.'",
+        "**DOCUMENTATION STANDARDS:**",
+        "COMPREHENSIVE COVERAGE: Document architecture, implementation, dependencies, data flow, business logic, error handling, testing approach, and integration points.",
+        "AGENT-FRIENDLY FORMAT: Structure content for easy agent consumption with clear sections, code examples, and decision rationales.",
+        "MULTI-LEVEL DETAIL: Include high-level summaries and detailed implementation notes to serve different use cases.",
+        "LIVING DOCUMENTATION: Create documentation that can be easily updated and maintained as the codebase evolves.",
+        "CONTEXT PRESERVATION: Capture not just what the code does, but why decisions were made and how components fit together.",
+        "**SCOPE CLASSIFICATION:**",
+        "SIMPLE: Single component/class, clear boundaries, minimal dependencies (< 5 files, < 1000 LOC)",
+        "MODERATE: Multiple related components, some integration, moderate complexity (5-20 files, 1000-5000 LOC)", 
+        "COMPLEX: Large feature/module, multiple integration points, significant complexity (20+ files, 5000+ LOC)",
+        "MASSIVE: Entire service/application, cross-cutting concerns, architectural scope (100+ files, enterprise scale)",
+        "**OUTPUT ADAPTATION:**",
+        "Simple scope: Single comprehensive document with all sections",
+        "Moderate scope: Main document + 2-3 supporting documents (API reference, architecture diagrams)",
+        "Complex scope: Document suite with clear navigation (overview, architecture, implementation guides, API docs)",
+        "Massive scope: Structured documentation tree with multiple levels and cross-references",
+        "**QUALITY STANDARDS:**",
+        "All claims must be backed by code analysis evidence. No assumptions without verification.",
+        "Include specific file paths, line numbers, and code examples for all technical assertions.",
+        "Document both successful patterns and potential pitfalls discovered during analysis.",
+        "Provide clear navigation and cross-references for complex documentation suites.",
+        "**WORKFLOW PRINCIPLES:**",
+        "SYSTEMATIC ANALYSIS: Complete each analysis phase fully before proceeding to documentation creation.",
+        "EVIDENCE-BASED: All documentation content must be grounded in actual codebase analysis, not assumptions.",
+        "INTELLIGENT QUESTIONING: Use analysis findings to ask targeted, valuable clarifying questions.",
+        "ADAPTIVE STRUCTURE: Adjust documentation format and depth based on scope complexity and user needs.",
+        "CONTEXT PRESERVATION: Maintain detailed workflow context for seamless resumption across sessions.",
+        "COLLABORATIVE READY: Structure workflow for easy handoffs and team collaboration on large scopes."
+    ],
+    
+    "steps": [
+        {
+            "id": "phase-0-scope-triage",
+            "title": "Phase 0: Scope Analysis & Complexity Triage",
+            "prompt": "**SCOPE TRIAGE & CLASSIFICATION** - Systematically analyze the provided scope to determine documentation approach.\n\n**STEP 1: Scope Validation & Boundary Definition**\n- Verify the specified scope exists and is accessible\n- Define clear boundaries of what will be documented\n- Identify entry points and main components\n- Use codebase_search to locate primary scope elements\n\n**STEP 2: Initial Complexity Assessment** \nUse assessComplexity() to evaluate:\n- **File Count**: Number of files in scope\n- **Lines of Code**: Approximate total LOC\n- **Dependency Depth**: How many layers of dependencies\n- **Integration Points**: External services, APIs, databases\n- **Business Logic Complexity**: Domain rules, workflows, state management\n\n**STEP 3: Scope Classification**\nBased on analysis, classify as:\n- **Simple**: Single component/class, < 5 files, < 1000 LOC, minimal deps\n- **Moderate**: Related components, 5-20 files, 1000-5000 LOC, some integration  \n- **Complex**: Large feature/module, 20+ files, 5000+ LOC, multiple integrations\n- **Massive**: Service/application level, 100+ files, enterprise scale\n\n**STEP 4: Documentation Strategy Selection**\nSet context variables:\n- `scopeComplexity` = Simple/Moderate/Complex/Massive\n- `documentationPurpose` = based on user clarification\n- `technicalDepth` = overview/detailed/comprehensive\n- `estimatedTimeframe` = based on complexity\n\n**STEP 5: User Confirmation**\nPresent classification and ask:\n- \"I've classified this as a {scopeComplexity} scope requiring {estimatedTimeframe}. Does this align with your expectations?\"\n- \"What automation level would you prefer? High (auto-proceed with confidence >8), Medium (standard confirmations), or Low (extra confirmations)?\"\n\n**OUTPUT**: Set all context variables and confirm documentation approach before proceeding.",
+            "agentRole": "You are a technical documentation architect with expertise in scoping and planning comprehensive documentation projects. Your strength lies in accurately assessing codebase complexity and designing appropriate documentation strategies that match the scope and user needs.",
+            "guidance": [
+                "Be thorough in scope boundary definition - unclear boundaries lead to incomplete documentation",
+                "Use multiple indicators for complexity assessment, not just file count",
+                "Consider the user's stated purpose when determining documentation depth",
+                "Always validate scope existence before proceeding with classification",
+                "Set clear expectations about time and effort required"
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-0a-user-context-gathering", 
+            "title": "Phase 0a: User Context & Documentation Preferences",
+            "prompt": "**GATHER USER CONTEXT** - Identify user preferences and organizational standards that should guide documentation creation.\n\n**CHECK FOR EXISTING PREFERENCES:**\n1. **Documentation Standards**: Search for existing style guides, templates, or documentation conventions\n2. **Organizational Patterns**: Check for established documentation structures in the codebase\n3. **Tool Preferences**: Markdown, wiki formats, diagram tools, etc.\n4. **Audience Considerations**: Developer focus, business stakeholders, external teams\n\n**IDENTIFY PROJECT-SPECIFIC CONTEXT:**\n- **Domain Knowledge**: Business domain, technical domain, industry context\n- **Architectural Philosophy**: Microservices, monolith, event-driven, etc.\n- **Team Structure**: How many teams interact with this scope\n- **Maintenance Patterns**: How often does this area change\n\n**SET USER PREFERENCES:**\n- `documentationStyle` = formal/conversational/technical\n- `diagramPreference` = text-based/visual/mixed\n- `detailLevel` = high-level/implementation-focused/comprehensive\n- `updateFrequency` = one-time/periodic/living-document\n\n**OUTPUT**: Complete user context profile for documentation customization.",
+            "agentRole": "You are gathering contextual information that will influence all documentation decisions throughout the workflow.",
+            "guidance": [
+                "Look for existing documentation patterns in the codebase to maintain consistency", 
+                "Consider the long-term maintenance of the documentation being created",
+                "Adapt to organizational culture and existing practices",
+                "Document any conflicts between user preferences and discovered patterns"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-0b-initialize-progress-tracking",
+            "title": "Phase 0b: Initialize Progress Tracking System",
+            "prompt": "**INITIALIZE PROGRESS TRACKING** - Set up systematic progress monitoring and enforcement.\n\n**STEP 1: Create Live Progress Document**\nUse initProgressTracking(scope) to create timestamped progress file:\n- File: `<YYYY-MM-DD>--<scope>--doc-progress.md`\n- Sections: Component Registry, Coverage Matrix, Quality Gates, Analysis Log, Validation Results\n- Set `progressDocPath` context variable\n\n**STEP 2: Discover and Register All Components**\nUse registerComponents(scope) to:\n- Systematically discover all components in scope\n- Create Component Registry table with: Component | Type | Files | LOC | Complexity | Status\n- Set `totalComponents` context variable for tracking\n- Initialize all components with status 'discovered'\n\n**STEP 3: Initialize Quality Gates**\nSet up enforcement checkpoints:\n- **Analysis Gates**: Discovery Complete, Analysis Coverage, Depth Threshold, Pattern Identification\n- **Documentation Gates**: Content Creation, Cross-References, Agent Optimization, Final Validation\n- **Completion Gates**: Quality Standards, Handoff Ready\n\n**STEP 4: Set Baseline Metrics**\nUse calculateCompletionMetrics() to establish:\n- `analysisComplete` = 0%\n- `documentationComplete` = 0%\n- `overallQualityScore` = 0/10\n- `averageDepthScore` = 0/10\n\n**OUTPUT**: Live progress document created with systematic tracking ready",
+            "agentRole": "You are setting up a comprehensive progress tracking and enforcement system that will ensure systematic coverage and prevent incomplete analysis.",
+            "guidance": [
+                "This creates the enforcement mechanism for thorough documentation",
+                "All components must be registered before analysis can begin",
+                "Progress document will be updated throughout the workflow",
+                "Quality gates will block progression until requirements are met"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-0c-create-documentation-context",
+            "title": "Phase 0c: Initialize Documentation Context",
+            "prompt": "**CREATE DOCUMENTATION CONTEXT** - Set up the central tracking document for this documentation project.\n\nCreate DOCUMENTATION_CONTEXT.md with:\n\n## 1. PROJECT SUMMARY\n- **Scope**: {specified scope and boundaries}\n- **Complexity**: {scopeComplexity classification}\n- **Purpose**: {documentationPurpose}\n- **Timeline**: {estimatedTimeframe}\n- **Automation Level**: {user preference}\n\n## 2. USER PREFERENCES & CONTEXT\n- **Style**: {documentationStyle}\n- **Detail Level**: {detailLevel}  \n- **Organizational Standards**: {discovered patterns}\n- **Target Audience**: {primary users of documentation}\n\n## 3. SCOPE ANALYSIS SUMMARY\n- **Boundaries**: {clear definition of what's included/excluded}\n- **Entry Points**: {main components identified}\n- **Complexity Indicators**: {file count, LOC, dependencies, etc.}\n- **Integration Points**: {external connections identified}\n\n## 4. DOCUMENTATION PLAN\n- **Structure**: {planned document organization}\n- **Key Sections**: {anticipated content areas}\n- **Supporting Materials**: {diagrams, examples, references needed}\n\n## 5. WORKFLOW PROGRESS\n- trackProgress('Phase 0', 'Phase 1')\n- ✅ Completed: Triage, Context Gathering\n- 🔄 Current: Multi-Phase Analysis\n- ⏳ Remaining: Discovery, Documentation Creation, Review\n\n## 6. FUNCTION DEFINITIONS\n{Include all function definitions from metaGuidance}\n\n## 7. RESUMPTION INSTRUCTIONS  \n**How to Resume:**\n1. Call workflow_get with id: \"deep-documentation-workflow\", mode: \"preview\"\n2. Call workflow_next with JSON from addResumptionJson(phase-0b)\n\n**Set contextInitialized = true**",
+            "agentRole": "You are creating the central coordination document that will track all progress and enable seamless workflow continuation.",
+            "guidance": [
+                "Make this document comprehensive enough to enable handoffs",
+                "Include specific context variables and their values", 
+                "Set up structure for tracking analysis findings and decisions",
+                "Ensure resumption instructions are clear and complete"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-0d-discovery-completion-gate",
+            "title": "Phase 0d: Discovery Completion Gate",
+            "prompt": "**DISCOVERY COMPLETION GATE** - Verify all components are discovered and registered before proceeding to analysis.\n\n**GATE VALIDATION**:\nUse checkCoverageGate('discovery-complete') to verify:\n- ✅ All components in scope have been identified and registered\n- ✅ Component Registry table is complete with all required fields\n- ✅ `totalComponents` context variable is set\n- ✅ All components have initial status 'discovered'\n\n**ENFORCEMENT**:\nUse enforceProgressGates() - Cannot proceed to analysis until:\n- Component discovery is 100% complete\n- No components have status 'unknown' or 'missing'\n- Quality gate shows ✅ Discovery Complete\n\n**METRICS UPDATE**:\nUse calculateCompletionMetrics() to update baseline:\n- Total components discovered: {totalComponents}\n- Analysis readiness: ✅/❌\n- Ready for Phase 1: ✅/❌\n\n**OUTPUT**: Discovery gate validation with clear proceed/block decision",
+            "agentRole": "You are enforcing systematic discovery completion before allowing analysis to begin. No component can be missed.",
+            "guidance": [
+                "This gate prevents incomplete discovery from propagating through analysis",
+                "All components must be registered with proper classification",
+                "Cannot proceed until discovery is verified complete",
+                "Update progress document with gate status"
+            ],
+            "validationCriteria": [
+                {
+                    "type": "contains",
+                    "value": "Discovery Complete: ✅",
+                    "message": "Cannot proceed until discovery completion gate passes"
+                }
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-1a-structural-analysis",
+            "title": "Phase 1a: Structural Analysis",
+            "prompt": "**STRUCTURAL ANALYSIS** - Map the high-level structure of the scope.\n\nUse analyzeScope(scope, 'surface') to examine:\n\n1. **File Organization**:\n   - Directory structure and naming conventions\n   - File types and their purposes (configs, tests, docs, etc.)\n   - Module/package organization patterns\n\n2. **Component Identification**:\n   - Main classes, interfaces, services\n   - Entry points and public APIs\n   - Configuration files and settings\n\n3. **Architectural Patterns**:\n   - Design patterns in use (MVC, Repository, Factory, etc.)\n   - Layered architecture evidence\n   - Separation of concerns approach\n\n4. **Code Organization Principles**:\n   - Naming conventions\n   - Code structure patterns\n   - Testing organization\n\n**PROGRESS TRACKING**:\n- Call updateComponentStatus(components, 'analyzing', 3, 'structural analysis in progress')\n- Call logAnalysisStep('1a-Structural', 'scope', 'high-level structure mapped')\n\n**OUTPUT**: Create StructuralAnalysis.md with organized findings and updateDocContext('Structural Analysis', summary)",
+            "agentRole": "You are performing systematic structural analysis to understand the overall organization and architecture of the codebase scope.",
+            "guidance": [
+                "Focus on structure and organization, not implementation details",
+                "Use codebase_search and file listing tools extensively", 
+                "Document patterns that will help organize the final documentation",
+                "Note any unusual or interesting structural decisions",
+                "Update progress tracking systematically"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-1b-implementation-analysis",
+            "title": "Phase 1b: Implementation Analysis", 
+            "prompt": "**IMPLEMENTATION ANALYSIS** - Dive deep into how the scope actually works.\n\nUse analyzeScope(scope, 'detailed') to examine:\n\n1. **Core Functionality**:\n   - Key algorithms and business logic\n   - Data processing and transformation\n   - State management approaches\n   - Error handling patterns\n\n2. **API Analysis**:\n   - Public interfaces and their contracts\n   - Input/output specifications\n   - Parameter validation approaches\n   - Return value patterns\n\n3. **Implementation Patterns**:\n   - How complex operations are implemented\n   - Reusable utility functions\n   - Common code patterns and idioms\n   - Performance considerations visible in code\n\n4. **Business Logic Mapping**:\n   - Domain rules encoded in the implementation\n   - Workflow implementations\n   - Decision trees and conditional logic\n\n**PROGRESS TRACKING**:\n- Call updateComponentStatus(components, 'analyzing', 5, 'implementation details analyzed')\n- Call logAnalysisStep('1b-Implementation', 'scope', 'detailed implementation analysis complete')\n\n**OUTPUT**: Create ImplementationAnalysis.md with detailed findings and code examples",
+            "agentRole": "You are performing deep implementation analysis to understand how the code actually implements functionality and business logic.",
+            "guidance": [
+                "Deep dive into implementation details and actual code",
+                "Read actual implementation files, don't just look at interfaces",
+                "Document specific algorithms and approaches found",
+                "Include code examples that illustrate key patterns",
+                "Track analysis progress systematically"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-1c-dependency-analysis",
+            "title": "Phase 1c: Dependency Analysis",
+            "prompt": "**DEPENDENCY & INTEGRATION ANALYSIS** - Map how the scope connects to the rest of the system.\n\nUse mapDependencies(scope, 'bidirectional') and analyzeDataFlow(scope):\n\n1. **Dependency Mapping**:\n   - Direct dependencies (what this scope uses)\n   - Reverse dependencies (what uses this scope)\n   - Transitive dependencies and their impact\n   - Version constraints and compatibility issues\n\n2. **Integration Points**:\n   - External services and APIs\n   - Database interactions\n   - File system access\n   - Network communications\n   - Inter-service communications\n\n3. **Data Flow Analysis**:\n   - How data enters the scope\n   - Data transformations within scope\n   - How data leaves the scope\n   - Data persistence patterns\n   - Data validation boundaries\n\n4. **System Boundaries**:\n   - What's internal vs external to this scope\n   - Security boundaries and access controls\n   - Performance bottlenecks and scaling considerations\n\n**PROGRESS TRACKING**:\n- Call updateComponentStatus(components, 'analyzing', 7, 'dependencies and integrations mapped')\n- Call logAnalysisStep('1c-Dependencies', 'scope', 'dependency and integration analysis complete')\n\n**OUTPUT**: Create DependencyAnalysis.md and DataFlowAnalysis.md with comprehensive mappings",
+            "agentRole": "You are performing systematic dependency analysis to understand how components connect and interact within the system.",
+            "guidance": [
+                "Map all connections and data flows comprehensively",
+                "Use import analysis and call-site analysis heavily",
+                "Create visual representations where possible (text-based diagrams)",
+                "Document both technical and logical dependencies",
+                "Update progress metrics with dependency complexity"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-1d-quality-analysis",
+            "title": "Phase 1d: Quality & Pattern Analysis",
+            "prompt": "**QUALITY & PATTERN ANALYSIS** - Identify quality attributes and contextual information.\n\nUse identifyPatterns(scope) and quality assessment:\n\n1. **Quality Attributes**:\n   - Testing coverage and approaches\n   - Error handling completeness\n   - Logging and monitoring patterns\n   - Performance considerations\n   - Security patterns\n\n2. **Design Patterns & Conventions**:\n   - Established patterns in use\n   - Coding conventions followed\n   - Architecture decision records\n   - Design rationale visible in code\n\n3. **Evolution Context**:\n   - Git history analysis for major changes\n   - TODO comments and future plans\n   - Deprecated patterns or legacy code\n   - Recent modifications and their rationale\n\n4. **Operational Context**:\n   - Configuration patterns\n   - Deployment considerations\n   - Runtime behavior patterns\n   - Maintenance and troubleshooting aspects\n\n**PROGRESS TRACKING**:\n- Call updateComponentStatus(components, 'analyzed', 8, 'quality and pattern analysis complete')\n- Call logAnalysisStep('1d-Quality', 'scope', 'quality attributes and patterns identified')\n- Use calculateCompletionMetrics() to update analysis completion percentage\n\n**PHASE COMPLETION**:\nCall trackProgress('Phase 1 Complete', 'Moving to Documentation Discovery')\n\n**OUTPUT**: Create QualityAnalysis.md and PatternsAnalysis.md with comprehensive findings",
+            "agentRole": "You are performing the final analysis phase to capture quality, patterns, and contextual understanding that will inform documentation.",
+            "guidance": [
+                "This is the final analysis phase - capture quality and context information",
+                "Look for both positive patterns and potential improvements",
+                "Document the 'why' behind design decisions where visible",
+                "Consider operational and maintenance aspects",
+                "Complete all progress tracking for Phase 1"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-1e-analysis-completion-gate",
+            "title": "Phase 1e: Analysis Completion Gate",
+            "prompt": "**ANALYSIS COMPLETION GATE** - Systematic verification that analysis phase is complete before proceeding.\n\n**COVERAGE VALIDATION**:\nUse checkCoverageGate('analysis-complete') to verify:\n- ✅ Analysis Coverage: ≥90% of components have status 'analyzed'\n- ✅ Depth Threshold: Average depth score ≥7.0 across all components\n- ✅ Pattern Identification: Minimum patterns found per component type\n- ✅ Quality Assessment: No components have critical analysis gaps\n\n**ENFORCEMENT CHECK**:\nUse enforceProgressGates() to ensure:\n- No components remain in 'discovering' or 'analyzing' status\n- All components meet minimum depth score requirements\n- Critical patterns identified for system understanding\n- Analysis log shows complete coverage\n\n**METRICS CALCULATION**:\nUse calculateCompletionMetrics() to update:\n- `analysisComplete` = percentage of components fully analyzed\n- `averageDepthScore` = mean quality across all components\n- `componentsAtRisk` = count of components below threshold\n\n**BLOCKING CONDITIONS**:\nCannot proceed if:\n- Analysis coverage < 90%\n- Average depth score < 7.0\n- Any component has status other than 'analyzed'\n- Critical patterns missing\n\n**OUTPUT**: Analysis completion gate status with specific blockers if any",
+            "agentRole": "You are enforcing systematic analysis completion with quantitative thresholds. No shortcuts allowed.",
+            "guidance": [
+                "This gate prevents incomplete analysis from affecting documentation quality",
+                "All metrics must meet thresholds before proceeding",
+                "Specific component-level issues must be addressed",
+                "Progress document must show ✅ for all analysis gates"
+            ],
+            "validationCriteria": [
+                {
+                    "type": "contains",
+                    "value": "Analysis Coverage: ✅",
+                    "message": "Cannot proceed until analysis coverage gate passes (≥90%)"
+                },
+                {
+                    "type": "contains",
+                    "value": "Depth Threshold: ✅",
+                    "message": "Cannot proceed until depth threshold gate passes (avg ≥7.0)"
+                }
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-2-documentation-discovery",
+            "title": "Phase 2: Existing Documentation Discovery & Analysis",
+            "prompt": "**DOCUMENTATION DISCOVERY** - Find and analyze all existing documentation related to the scope.\n\nUse findExistingDocs(scope) to systematically search for:\n\n**1. Code Documentation**:\n- README files in scope directories\n- Inline code comments and docstrings\n- API documentation comments\n- Architecture decision records (ADRs)\n- Changelog entries related to scope\n\n**2. External Documentation**:\n- Wiki pages or confluence docs\n- Design documents\n- Specification documents  \n- User guides or manuals\n- Troubleshooting guides\n\n**3. Test Documentation**:\n- Test descriptions and comments\n- Integration test scenarios\n- Performance test specifications\n- Test data documentation\n\n**4. Configuration Documentation**:\n- Config file comments\n- Environment setup guides\n- Deployment documentation\n- Infrastructure as code docs\n\n**ANALYSIS TASKS**:\n1. **Quality Assessment**: Rate existing docs (1-10) for completeness, accuracy, currency\n2. **Gap Identification**: What aspects are undocumented or poorly documented?\n3. **Contradiction Detection**: Where do docs conflict with actual implementation?\n4. **Integration Planning**: How can existing good docs be incorporated?\n\n**DECISION MATRIX**:\n```\n| Document Type | Quality | Currency | Coverage | Action |\n|---------------|---------|----------|----------|---------|\n| API Docs      | 8/10    | Recent   | 80%     | Integrate |\n| README        | 4/10    | Old      | 30%     | Replace |\n```\n\n**OUTPUT**: Create ExistingDocumentationAnalysis.md with findings, gaps, and integration plan",
+            "agentRole": "You are a documentation archaeologist, systematically discovering and evaluating all existing documentation to understand what exists, what's missing, and what can be leveraged.",
+            "guidance": [
+                "Search thoroughly - docs may be in unexpected locations",
+                "Be objective in quality assessment - don't dismiss docs just because they're old",
+                "Look for documentation in code comments, not just separate files",
+                "Consider the perspective of different audiences when assessing completeness"
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-3-intelligent-clarification", 
+            "title": "Phase 3: Intelligent Clarification Questions",
+            "prompt": "**INTELLIGENT CLARIFICATION** - Based on comprehensive analysis, ask targeted questions to fill knowledge gaps.\n\nUsing all analysis findings from Phases 1-2, use askIntelligentQuestions(findings) to formulate:\n\n**ANALYSIS-DRIVEN QUESTIONS** (3-7 questions):\n\n1. **Architecture & Design Clarifications**:\n   - \"I found pattern X in the implementation, but couldn't determine the design rationale. What drove the decision to use this approach?\"\n   - \"The dependency on Y seems significant - what's the relationship and why was this dependency chosen?\"\n\n2. **Business Logic & Domain Questions**:\n   - \"The code handles scenario A in a complex way - what business requirement does this address?\"\n   - \"I see multiple validation approaches - are these for different use cases or historical reasons?\"\n\n3. **Integration & Context Questions**:\n   - \"The service integrates with external system Z - what's the expected behavior when Z is unavailable?\"\n   - \"There are multiple data transformation steps - what's the business meaning of each transformation?\"\n\n4. **Quality & Operational Questions**:\n   - \"I noticed error handling pattern X - are there specific operational scenarios this addresses?\"\n   - \"The caching strategy seems sophisticated - what performance requirements drove this design?\"\n\n5. **Evolution & Future Questions**:\n   - \"There are TODO comments about feature Y - is this planned work that should be documented?\"\n   - \"I see deprecated patterns alongside new ones - what's the migration strategy?\"\n\n**QUESTION QUALITY CRITERIA**:\n- Based on concrete code analysis findings\n- Cannot be answered by further code analysis alone\n- Will significantly improve documentation completeness\n- Addresses gaps identified in existing documentation\n- Considers different stakeholder perspectives\n\n**OUTPUT**: Present 3-7 well-formulated questions that will enhance documentation quality and completeness",
+            "agentRole": "You are a senior technical consultant who uses deep codebase understanding to ask precisely targeted questions that reveal crucial context not visible in the code alone.",
+            "guidance": [
+                "Questions should only be askable after thorough code analysis",
+                "Focus on 'why' and context questions, not 'what' questions answerable by code reading",
+                "Consider questions that would help future maintainers understand design decisions",
+                "Address gaps that would be critical for agent context or team onboarding"
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-4-documentation-planning",
+            "title": "Phase 4: Documentation Structure Planning",  
+            "prompt": "**DOCUMENTATION STRUCTURE PLANNING** - Design the optimal documentation structure based on analysis and clarifications.\n\nUse createDocStructure(scope, scopeComplexity) considering:\n\n**STRUCTURE DECISION FACTORS**:\n- **Scope Complexity**: {scopeComplexity} determines baseline structure\n- **User Preferences**: {documentationStyle}, {detailLevel}, {diagramPreference}\n- **Analysis Findings**: Complexity areas that need detailed coverage\n- **Existing Documentation**: What can be integrated vs replaced\n- **Target Audience**: Primary consumers and their needs\n\n**STRUCTURE OPTIONS BY COMPLEXITY**:\n\n**Simple Scope** → Single Comprehensive Document:\n```\n# {Scope} Documentation\n## Overview & Architecture  \n## Implementation Guide\n## API Reference\n## Dependencies & Integration\n## Troubleshooting & FAQ\n```\n\n**Moderate Scope** → Main Document + Specialized Docs:\n```\n# Main: {Scope} Overview\n# Supporting: API Reference\n# Supporting: Architecture Deep Dive  \n# Supporting: Integration Guide\n```\n\n**Complex Scope** → Document Suite:\n```\n# Index: {Scope} Documentation Hub\n# Core: Architecture Overview\n# Core: Implementation Guide  \n# Core: API Documentation\n# Specialized: Data Flow Analysis\n# Specialized: Integration Patterns\n# Specialized: Troubleshooting Guide\n```\n\n**Massive Scope** → Documentation Tree:\n```\n# Root: {Scope} Documentation Portal\n## Architecture/\n   - Overview.md, Components.md, Patterns.md\n## Implementation/\n   - Core-Logic.md, APIs.md, Data-Models.md\n## Operations/\n   - Deployment.md, Monitoring.md, Troubleshooting.md\n## References/\n   - Dependencies.md, External-APIs.md, Glossary.md\n```\n\n**CONTENT PLANNING**:\nFor each document in the structure:\n1. **Primary Sections**: What major sections will it contain?\n2. **Key Content**: What specific information from analysis will be included?\n3. **Supporting Materials**: Diagrams, code examples, references needed\n4. **Interconnections**: How does it link to other documents?\n\n**OUTPUT**: \n- Set `documentationStructure` context variable with planned structure\n- Create DocumentationPlan.md with detailed content outline\n- Estimate effort required for each document",
+            "agentRole": "You are a documentation architect designing the optimal structure to serve user needs while organizing complex information logically and maintainably.",
+            "guidance": [
+                "Structure should serve the user's stated purpose and audience", 
+                "Balance comprehensiveness with usability - avoid overwhelming single documents",
+                "Plan for maintainability - structure should support future updates",
+                "Consider how agents will consume this documentation when designing navigation"
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-5-comprehensive-documentation",
+            "type": "loop",
+            "title": "Phase 5: Comprehensive Documentation Creation",
+            "loop": {
+                "type": "forEach", 
+                "items": "documentationStructure",
+                "itemVar": "currentDocument",
+                "indexVar": "docIndex",
+                "maxIterations": 15
+            },
+            "body": [
+                {
+                    "id": "setup-document-structure",
+                    "title": "Setup Document Structure",
+                    "prompt": "**SETUP DOCUMENT STRUCTURE** - Initialize the documentation framework.\n\n**STRUCTURE SETUP**:\n- Create document header with navigation links\n- Set up main section framework from plan\n- Include table of contents for longer documents\n- Initialize document metadata and context\n\n**PROGRESS TRACKING**:\n- Call updateComponentStatus(documentComponents, 'documenting', 0, 'structure initialized')\n- Call logAnalysisStep('5-Creation', currentDocument.name, 'document structure created')\n\n**OUTPUT**: Document framework ready for content synthesis",
+                    "agentRole": "You are setting up the foundational structure for comprehensive technical documentation.",
+                    "guidance": [
+                        "Focus on creating a clear, navigable document framework",
+                        "Use the planned structure from Phase 4",
+                        "Ensure structure supports both human and agent consumption",
+                        "Initialize progress tracking for this document"
+                    ],
+                    "requireConfirmation": false
+                },
+                
+                {
+                    "id": "synthesize-analysis-content",
+                    "title": "Synthesize Analysis Content",
+                    "prompt": "**SYNTHESIZE ANALYSIS CONTENT** - Integrate all analysis findings into the document.\n\n**CONTENT SYNTHESIS**: Use synthesizeDocumentation(scope, currentDocument)\n- **Analysis Integration**: Incorporate relevant findings from all 4 analysis phases\n- **Clarification Integration**: Weave in user answers to intelligent questions  \n- **Existing Doc Integration**: Include/reference valuable existing documentation\n- **Code Example Integration**: Include specific code snippets with file references\n\n**QUALITY STANDARDS**:\n- All technical claims backed by specific code references\n- Include file paths and line numbers for key assertions\n- Provide context for architectural decisions\n\n**OUTPUT**: Content-rich sections with integrated analysis findings",
+                    "agentRole": "You are synthesizing complex analysis findings into coherent, valuable documentation content.",
+                    "guidance": [
+                        "Draw from all previous analysis phases systematically",
+                        "Maintain technical accuracy with specific code references",
+                        "Integrate user clarifications naturally",
+                        "Balance depth with clarity for the intended audience"
+                    ],
+                    "requireConfirmation": false
+                },
+                
+                {
+                    "id": "create-sections-systematically",
+                    "title": "Create Sections Systematically",
+                    "prompt": "**CREATE SECTIONS SYSTEMATICALLY** - Build each planned section with comprehensive content.\n\n**SECTION CREATION**:\n- Create each planned section systematically\n- Include content requirements from planning phase\n- Reference analysis sources for each section\n- Meet expected length and depth requirements\n- Add cross-references to related documents\n- Include troubleshooting information where relevant\n\n**PROGRESS TRACKING**:\n- Update progress for each completed section\n- Track content depth and coverage metrics\n\n**OUTPUT**: Complete sections meeting planned requirements",
+                    "agentRole": "You are methodically creating comprehensive sections that fulfill the documentation plan.",
+                    "guidance": [
+                        "Work through sections in logical order",
+                        "Ensure each section meets its planned requirements",
+                        "Reference specific analysis sources for credibility",
+                        "Maintain consistency across all sections"
+                    ],
+                    "requireConfirmation": false
+                },
+                
+                {
+                    "id": "optimize-for-agent-consumption",
+                    "title": "Optimize for Agent Consumption",
+                    "prompt": "**OPTIMIZE FOR AGENT CONSUMPTION** - Structure and format the document for optimal AI agent usage.\n\n**AGENT-FRIENDLY FORMATTING**:\n- Clear section headers for easy navigation\n- Bullet points and lists for scannability  \n- Code blocks with syntax highlighting\n- Consistent terminology and linking\n- Decision rationales prominently displayed\n- Metadata tags for search and organization\n\n**FINAL PROGRESS TRACKING**:\n- Call updateComponentStatus(documentComponents, 'documented', qualityScore, 'documentation completed')\n- Call logAnalysisStep('5-Creation', currentDocument.name, 'documentation file completed')\n- Use calculateCompletionMetrics() to update documentation completion percentage\n\n**OUTPUT**: Documentation optimized for both human and AI agent consumption",
+                    "agentRole": "You are finalizing documentation with optimal structure and formatting for agent consumption.",
+                    "guidance": [
+                        "Prioritize agent-friendly formatting without sacrificing human readability",
+                        "Include clear decision rationales and context",
+                        "Ensure consistent terminology throughout",
+                        "Complete all progress tracking requirements"
+                    ],
+                    "requireConfirmation": false
+                },
+                
+                {
+                    "id": "document-internal-review",
+                    "title": "Internal Quality Review", 
+                    "prompt": "**INTERNAL QUALITY REVIEW** - Review the created documentation for quality and completeness.\n\n**REVIEW CRITERIA**:\n\n1. **Content Completeness**:\n   - ✅ All planned sections present and substantive?\n   - ✅ Analysis findings appropriately integrated?\n   - ✅ User clarifications incorporated?\n   - ✅ Code examples relevant and accurate?\n\n2. **Technical Accuracy**:\n   - ✅ All code references verified against actual files?\n   - ✅ File paths and line numbers accurate?\n   - ✅ Technical descriptions match implementation?\n   - ✅ Architecture descriptions consistent with code?\n\n3. **Documentation Quality**:\n   - ✅ Clear section organization and flow?\n   - ✅ Appropriate level of detail for audience?\n   - ✅ Good use of formatting (headers, lists, code blocks)?\n   - ✅ Cross-references working and helpful?\n\n4. **Agent Usability**:\n   - ✅ Easy for AI agents to parse and understand?\n   - ✅ Clear decision rationales provided?\n   - ✅ Sufficient context for future work?\n   - ✅ Good navigation and structure?\n\n**IMPROVEMENT IDENTIFICATION**:\n- Note any content gaps or unclear sections\n- Identify areas needing additional code examples\n- Check for inconsistencies with other documents\n- Assess overall value for intended purpose\n\n**QUALITY SCORE**: Rate document 1-10 on completeness and utility\n\n**OUTPUT**: \n- Document quality assessment with specific improvement recommendations\n- Set `documentQualityScore` for tracking\n- Update DOCUMENTATION_CONTEXT.md with review results",
+                    "agentRole": "You are conducting a thorough quality review to ensure the created documentation meets professional standards and serves its intended purpose effectively.",
+                    "guidance": [
+                        "Be thorough but practical in review - focus on significant issues",
+                        "Consider the document's role in the overall documentation suite",  
+                        "Verify technical accuracy by checking against code analysis",
+                        "Assess value from both human and agent user perspectives"
+                    ],
+                    "requireConfirmation": {
+                        "or": [
+                            {"var": "documentQualityScore", "lt": 8},
+                            {"var": "automationLevel", "equals": "Low"}
+                        ]
+                    }
+                }
+            ],
+            "requireConfirmation": false
+        },
+        
+        {
+            "id": "phase-5a-documentation-completion-gate",
+            "title": "Phase 5a: Documentation Completion Gate",
+            "prompt": "**DOCUMENTATION COMPLETION GATE** - Verify all components are fully documented before final integration.\n\n**COMPLETION VALIDATION**:\nUse checkCoverageGate('documentation-complete') to verify:\n- ✅ Documentation Coverage: 100% of components have status 'documented'\n- ✅ Quality Threshold: All documents scored ≥8/10 in quality review\n- ✅ Cross-Reference Integrity: All internal links and references valid\n- ✅ Agent Optimization: All documents structured for agent consumption\n\n**COMPREHENSIVE CHECK**:\nUse enforceProgressGates() to ensure:\n- No components remain undocumented\n- All planned documents created and validated\n- Quality scores meet minimum thresholds\n- Documentation structure complete\n\n**FINAL METRICS**:\nUse calculateCompletionMetrics() to compute:\n- `documentationComplete` = 100% (required)\n- `overallQualityScore` = weighted average across all documents\n- `documentsAtRisk` = count of documents below quality threshold\n\n**BLOCKING CONDITIONS**:\nCannot proceed if:\n- Any component lacks documentation\n- Any document scored <8/10 in quality review\n- Cross-references broken or incomplete\n- Agent optimization requirements not met\n\n**OUTPUT**: Documentation completion gate status with specific requirements if blocked",
+            "agentRole": "You are enforcing complete documentation coverage with quality standards before allowing final integration.",
+            "guidance": [
+                "No component can remain undocumented",
+                "Quality standards must be met across all documents",
+                "Agent optimization is mandatory, not optional",
+                "Progress document must show 100% completion"
+            ],
+            "validationCriteria": [
+                {
+                    "type": "contains",
+                    "value": "Documentation Coverage: ✅",
+                    "message": "Cannot proceed until all components are documented"
+                },
+                {
+                    "type": "contains",
+                    "value": "Quality Threshold: ✅",
+                    "message": "Cannot proceed until all documents meet quality standards (≥8/10)"
+                }
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-6-final-integration",
+            "title": "Phase 6: Final Integration & Navigation Setup",
+            "prompt": "**FINAL INTEGRATION** - Create navigation, cross-references, and final documentation package.\n\n**INTEGRATION TASKS**:\n\n1. **Create Master Index** (for multi-document suites):\n   - Overview of the entire documentation set\n   - Clear navigation to all documents\n   - Quick reference section with key information\n   - Links to most important sections across documents\n\n2. **Cross-Reference Validation**:\n   - Verify all inter-document links work\n   - Add missing cross-references between related sections  \n   - Create bidirectional linking where appropriate\n   - Add \"See also\" sections for related topics\n\n3. **Consistency Pass**:\n   - Standardize terminology across all documents\n   - Ensure consistent formatting and style\n   - Align section numbering and heading styles\n   - Verify code example formatting consistency\n\n4. **Completeness Verification**:\n   - Check all analysis findings are incorporated somewhere\n   - Verify all user clarifications are addressed\n   - Ensure all planned content areas are covered\n   - Validate against original scope boundaries\n\n5. **Agent Optimization**:\n   - Add summary sections for quick agent consumption\n   - Include key decision rationales prominently  \n   - Structure for easy chunking and retrieval\n   - Add metadata tags for search and organization\n\n**CREATE DOCUMENTATION PACKAGE**:\n- Master README or index file\n- All individual documentation files\n- Supporting diagrams or examples\n- Change log for future updates\n\n**FINAL VALIDATION**: Use validateDocumentation(docs, scope)\n- Completeness against original scope\n- Accuracy of all technical content  \n- Utility for stated documentation purpose\n- Maintainability and update process\n\n**OUTPUT**: Complete, integrated documentation package ready for use",
+            "agentRole": "You are finalizing the documentation package, ensuring it works as a cohesive whole and serves its intended purpose effectively.",
+            "guidance": [
+                "Focus on the user experience of consuming this documentation",
+                "Ensure the package works well for both human and AI consumption",
+                "Verify nothing important from the analysis was lost",
+                "Consider how this will be maintained and updated over time"
+            ],
+            "requireConfirmation": true
+        },
+        
+        {
+            "id": "phase-7-delivery-handoff",
+            "title": "Phase 7: Documentation Delivery & Handoff",
+            "prompt": "**DOCUMENTATION DELIVERY** - Finalize and deliver the complete documentation package.\n\n**DELIVERY PACKAGE CREATION**:\n\n1. **Final Documentation Update**:\n   - Update DOCUMENTATION_CONTEXT.md with final status\n   - Add completion summary and metrics\n   - Include maintenance recommendations\n   - Document lessons learned and improvement suggestions\n\n2. **Package Organization**:\n   ```\n   {scope}-documentation/\n   ├── README.md (main entry point)\n   ├── DOCUMENTATION_CONTEXT.md (workflow context)\n   ├── docs/\n   │   ├── [all documentation files]\n   │   └── diagrams/ (if applicable)\n   ├── analysis/\n   │   ├── [all analysis files created during workflow]\n   │   └── existing-docs-analysis.md\n   └── metadata/\n       ├── document-structure.json\n       └── update-guide.md\n   ```\n\n3. **Quality Metrics Summary**:\n   - Total scope covered (files, components, LOC)\n   - Documentation completeness score\n   - Analysis depth achieved\n   - User clarifications integrated\n   - Time invested and efficiency metrics\n\n4. **Usage Guidelines**:\n   - How to navigate the documentation\n   - Best practices for agents using this context\n   - Update and maintenance procedures  \n   - Contact points for clarifications\n\n5. **Future Considerations**:\n   - Recommendations for keeping documentation current\n   - Identified areas for potential expansion\n   - Suggestions for related documentation projects\n   - Integration opportunities with existing docs\n\n**FINAL VALIDATION**:\n- All promised deliverables completed\n- Documentation serves stated purpose\n- Package is self-contained and navigable\n- Quality standards met across all documents\n\n**HANDOFF INFORMATION**:\n- Clear explanation of what was created and why\n- Guidance on how to use the documentation effectively\n- Recommendations for future updates or extensions\n- Summary of key insights gained during analysis\n\n**OUTPUT**: \n- Complete documentation package ready for immediate use\n- Clear handoff summary with usage recommendations\n- Update DOCUMENTATION_CONTEXT.md with final status and metrics\n\n**FINAL PROGRESS COMPLETION**:\n- Call finalizeProgressReport() to complete progress document\n- Mark all Quality Gates as ✅ COMPLETE\n- Set final context variables: analysisComplete=100%, documentationComplete=100%\n- Generate final metrics summary for handoff",
+            "agentRole": "You are delivering a professional documentation package with clear guidance on usage and maintenance, ensuring maximum value for the user's investment.",
+            "guidance": [
+                "Ensure the package is self-explanatory and immediately usable",
+                "Provide clear value summary - what was accomplished and why it matters",
+                "Include practical guidance for maintaining and using the documentation",
+                "Demonstrate the comprehensiveness and quality of the work delivered"
+            ],
+            "requireConfirmation": true
+        }
+    ]
+}

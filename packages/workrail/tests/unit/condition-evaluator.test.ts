@@ -73,6 +73,87 @@ describe('Condition Evaluator', () => {
       expect(evaluateCondition({ var: 'empty' }, context)).toBe(false);
       expect(evaluateCondition({ var: 'value' }, context)).toBe(true);
     });
+
+    it('should perform case-insensitive string comparisons', () => {
+      const context = { status: 'Active', mode: '  PRODUCTION  ' };
+      
+      // Case-insensitive equals
+      expect(evaluateCondition({ var: 'status', equals: 'active' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'status', equals: 'ACTIVE' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'status', equals: 'inactive' }, context)).toBe(false);
+      
+      // Whitespace trimming
+      expect(evaluateCondition({ var: 'mode', equals: 'production' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'mode', equals: 'PRODUCTION' }, context)).toBe(true);
+    });
+
+    it('should perform type coercion for compatible types', () => {
+      const context = { 
+        stringNumber: '42',
+        actualNumber: 42,
+        stringBoolean: 'true',
+        actualBoolean: true,
+        stringFalse: 'false',
+        zeroString: '0'
+      };
+      
+      // String-number coercion
+      expect(evaluateCondition({ var: 'stringNumber', equals: 42 }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'actualNumber', equals: '42' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'stringNumber', equals: 41 }, context)).toBe(false);
+      
+      // String-boolean coercion
+      expect(evaluateCondition({ var: 'stringBoolean', equals: true }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'stringFalse', equals: false }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'zeroString', equals: false }, context)).toBe(true);
+    });
+
+    it('should handle null and undefined equivalence', () => {
+      const context = { nullValue: null, undefinedValue: undefined, emptyString: '' };
+      
+      expect(evaluateCondition({ var: 'nullValue', equals: null }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'nullValue', equals: undefined }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'undefinedValue', equals: null }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'emptyString', equals: null }, context)).toBe(false);
+    });
+
+    it('should evaluate string matching operators', () => {
+      const context = { 
+        description: '  This is a Test Description  ',
+        filename: 'example.json',
+        status: 'IN_PROGRESS'
+      };
+      
+      // Contains (case-insensitive)
+      expect(evaluateCondition({ var: 'description', contains: 'test' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'description', contains: 'TEST' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'description', contains: 'missing' }, context)).toBe(false);
+      
+      // StartsWith (case-insensitive, trimmed)
+      expect(evaluateCondition({ var: 'description', startsWith: 'this' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'description', startsWith: 'THIS IS' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'description', startsWith: 'description' }, context)).toBe(false);
+      
+      // EndsWith (case-insensitive, trimmed)
+      expect(evaluateCondition({ var: 'description', endsWith: 'description' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'description', endsWith: 'DESCRIPTION' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'filename', endsWith: '.json' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'filename', endsWith: '.txt' }, context)).toBe(false);
+      
+      // Regex matches (case-insensitive by default)
+      expect(evaluateCondition({ var: 'status', matches: '^in_.*' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'filename', matches: '\\.(json|txt)$' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'description', matches: 'test.*description' }, context)).toBe(true);
+      expect(evaluateCondition({ var: 'status', matches: '^completed' }, context)).toBe(false);
+    });
+
+    it('should handle invalid regex patterns safely', () => {
+      const context = { value: 'test' };
+      
+      // Invalid regex should return false
+      expect(evaluateCondition({ var: 'value', matches: '[invalid' }, context)).toBe(false);
+      expect(evaluateCondition({ var: 'value', matches: '*invalid' }, context)).toBe(false);
+    });
   });
 
   describe('validateCondition', () => {
@@ -80,6 +161,13 @@ describe('Condition Evaluator', () => {
       expect(() => validateCondition({ var: 'test', equals: 'value' })).not.toThrow();
       expect(() => validateCondition({ and: [{ var: 'a', equals: 1 }] })).not.toThrow();
       expect(() => validateCondition({ or: [{ var: 'a', gt: 0 }, { var: 'b', lt: 10 }] })).not.toThrow();
+    });
+
+    it('should accept new string matching operators', () => {
+      expect(() => validateCondition({ var: 'test', contains: 'value' })).not.toThrow();
+      expect(() => validateCondition({ var: 'test', startsWith: 'prefix' })).not.toThrow();
+      expect(() => validateCondition({ var: 'test', endsWith: 'suffix' })).not.toThrow();
+      expect(() => validateCondition({ var: 'test', matches: '^pattern.*' })).not.toThrow();
     });
 
     it('should reject invalid operators', () => {

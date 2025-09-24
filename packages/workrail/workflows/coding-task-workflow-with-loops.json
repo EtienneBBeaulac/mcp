@@ -43,7 +43,8 @@
         "Maintain existing coding conventions and architectural patterns found in the codebase.",
         "COMMIT STRATEGY: Auto-commit after successful steps for High automation; suggest for Medium/Low. Use conventional format: type(scope): description. Commit at milestones and after verification passes.",
         "When you see function calls like updateDecisionLog() or createFile(spec.md), refer to the function definitions above for full instructions.",
-        "For resumption: Include function definitions in CONTEXT.md so new sessions understand these references. Always provide explicit workflow_get and workflow_next instructions."
+        "For resumption: Include function definitions in CONTEXT.md so new sessions understand these references. Always provide explicit workflow_get and workflow_next instructions.",
+        "Auto-advance: after completing each step, immediately get the next step; only pause for explicit requireConfirmation or missing critical inputs."
     ],
     "steps": [
         {
