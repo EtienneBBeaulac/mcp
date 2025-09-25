@@ -72,7 +72,28 @@
         "INTELLIGENT QUESTIONING: Use analysis findings to ask targeted, valuable clarifying questions.",
         "ADAPTIVE STRUCTURE: Adjust documentation format and depth based on scope complexity and user needs.",
         "CONTEXT PRESERVATION: Maintain detailed workflow context for seamless resumption across sessions.",
-        "COLLABORATIVE READY: Structure workflow for easy handoffs and team collaboration on large scopes."
+        "COLLABORATIVE READY: Structure workflow for easy handoffs and team collaboration on large scopes.",
+        "**VERTICAL SLICE FUNCTIONS:**",
+        "fun findSliceCandidates(scope, analysis) = 'Propose slice candidates grouped by feature/aspect (e.g., Realtime, Sending, Notifications, Storage, API). Use dependency clusters, call graphs, and data-flow boundaries. Return sliceCandidates[].'",
+        "fun chooseSliceHeuristics(preferences) = 'Select grouping heuristics: user-journey, bounded-context, subsystem, data-flow, interface-surface. Set sliceHeuristics context variable.'",
+        "fun deriveSlices(candidates, heuristics, components) = 'Generate slice definitions with: name, rationale, includedComponents[], entryPoints[], dependencies[], dataFlows[], risks[], plannedDocSections[]. Set sliceDocuments context variable.'",
+        "fun mapComponentsToSlices(components, slices) = 'Assign each component to ≥1 slice (allow overlaps if justified). Produce coverage map and set orphanComponents[]. Update Coverage Matrix by slice.'",
+        "fun checkSliceCoverageGate() = 'Ensure 100% component coverage across slices; no orphanComponents; overlaps have rationale. Update Quality Gates with status.'",
+        "fun optimizeSliceDocStructure(slices) = 'For each slice, create doc skeleton: Overview, Responsibilities, Public APIs, Data Flow, Dependencies, Error Handling, Edge Cases, Troubleshooting, Quality Signals.'",
+        "**DIVIO/TEMPLATE & QUALITY FUNCTIONS:**",
+        "fun createSliceTemplates(slices) = 'Create per-slice pages: Tutorial.md, HowTo.md, Concepts.md, Reference.md with standard headers and placeholders.'",
+        "fun enforceDivioSections(slice) = 'Verify required sections exist per page. Missing sections become blockers.'",
+        "fun generateSliceQuickstart(slice) = 'Produce a runnable Quickstart achieving first success in <5 minutes. Record commands and expected outputs.'",
+        "fun importReferenceArtifacts(slice) = 'Import OpenAPI/GraphQL/TypeDoc/Sphinx outputs into Reference.md with anchors and language tabs.'",
+        "fun addInteractiveSamples(slice) = 'Add Mermaid flow diagrams and Postman/cURL/API console samples for key paths.'",
+        "fun generateDiagrams(slice) = 'Create Mermaid diagrams: sequence (key flows), component (architecture), state (lifecycles) as applicable; save under docs/diagrams.'",
+        "fun generateTables(slice) = 'Produce tables for API endpoints, config options, errors, metrics; include columns for version, deprecation, owners.'",
+        "fun lintLinksAndCrossRefs(docs) = 'Check all intra/inter-doc links, anchors, and references; produce report and fix list.'",
+        "fun requireOwnership(slice) = 'Ensure owner metadata (team, maintainers) exists for each slice; update governance table.'",
+        "fun checkHelloWorldGate(slice) = 'Validate Quickstart is runnable, complete, and <5 minutes including prerequisites.'",
+        "fun checkLinkLintGate(docs) = 'Block progression if any broken links/anchors remain. Append evidence to progress doc.'",
+        "fun checkOwnershipGate(slices) = 'Block progression if any slice lacks owners; show missing entries and required actions.'",
+        "fun checkVisualsGate(slice) = 'Enforce presence of required visuals: ≥1 sequence diagram, ≥1 component diagram, and ≥1 key table per slice unless not applicable with rationale.'"
     ],
     
     "steps": [
@@ -267,6 +288,34 @@
             ],
             "requireConfirmation": true
         },
+        {
+            "id": "phase-4a-vertical-slice-derivation",
+            "title": "Phase 4a: Vertical Slice Derivation & Mapping",
+            "prompt": "**VERTICAL SLICE PLANNING** - Derive a set of focused, standalone documents grouped by aspect/feature of the scope.\n\n**INPUTS**:\n- Use results from Phases 1-2 (analysis, existing docs) and answers from Phase 3 clarifications\n\n**TASKS**:\n1) Use findSliceCandidates(scope, analysis) to propose candidate slices (e.g., Realtime, Sending, Receiving, Storage, API, Admin, Observability)\n2) Use chooseSliceHeuristics(userPreferences) to pick grouping strategy (bounded context, user journey, subsystem, data flow)\n3) Use deriveSlices(sliceCandidates, sliceHeuristics, registeredComponents) to generate sliceDocuments[] with: name, rationale, includedComponents[], entryPoints[], dependencies[], dataFlows[], risks[], plannedDocSections[]\n4) Use mapComponentsToSlices(registeredComponents, sliceDocuments) to ensure every component is assigned; set orphanComponents[] if any\n5) Use optimizeSliceDocStructure(sliceDocuments) to define consistent per-slice document skeleton\n\n**OUTPUTS**:\n- Set context: useSlices=true, sliceHeuristics, sliceDocuments[]\n- Create SlicePlan.md summarizing slices with coverage table and rationales\n- Update DOCUMENTATION_CONTEXT.md with slice plan and navigation\n- If useSlices=true, plan to set documentationStructure = sliceDocuments in Phase 4\n\n**PROGRESS TRACKING**:\n- Log analysis step for slice planning\n- Update Coverage Matrix by slice and component\n- Calculate preliminary documentation units count",
+            "agentRole": "You are designing vertical slices that are cohesive, maintainable, and map cleanly to code boundaries for standalone docs that compose the whole.",
+            "guidance": [
+                "Favor slices that align with dependency clusters and clear data-flow boundaries",
+                "Avoid giant slices; keep each doc focused and navigable",
+                "Allow limited overlap only when justified by shared cross-cutting code",
+                "Ensure each slice can be read as 'every page is page one'"
+            ],
+            "requireConfirmation": true
+        },
+        {
+            "id": "phase-4b-slice-coverage-gate",
+            "title": "Phase 4b: Slice Coverage Gate",
+            "prompt": "**SLICE COVERAGE GATE** - Enforce that all components are covered by at least one slice and no orphans remain.\n\n**VALIDATION**:\nUse checkSliceCoverageGate() to verify:\n- 100% of registered components mapped to sliceDocuments\n- Overlaps (components in >1 slice) have recorded rationale\n- No orphanComponents remain\n- Slice skeletons defined (optimizeSliceDocStructure)\n\n**ENFORCEMENT**:\nUse enforceProgressGates() to block if any condition fails. List specific missing components or rationale.\n\n**OUTPUT**:\n- Gate status recorded in progress doc\n- Proceed only when coverage is complete\n- Set documentationStructure = sliceDocuments when useSlices=true",
+            "agentRole": "You are enforcing coverage so vertical slices truly partition or appropriately overlay the scope without gaps.",
+            "guidance": [
+                "No component may remain unmapped",
+                "Keep slices cohesive and justifiable",
+                "Document any intentional overlaps with reasons"
+            ],
+            "validationCriteria": [
+                { "type": "contains", "value": "Slice Coverage: ✅", "message": "All components must be mapped to slices" }
+            ],
+            "requireConfirmation": true
+        },
         
         {
             "id": "phase-4-documentation-planning",
@@ -285,86 +334,83 @@
         {
             "id": "phase-5-comprehensive-documentation",
             "type": "loop",
-            "title": "Phase 5: Comprehensive Documentation Creation",
+            "title": "Phase 5: Comprehensive Documentation Creation (Per-Slice Divio Pages)",
             "loop": {
-                "type": "forEach", 
+                "type": "forEach",
                 "items": "documentationStructure",
-                "itemVar": "currentDocument",
-                "indexVar": "docIndex",
-                "maxIterations": 15
+                "itemVar": "currentSlice",
+                "indexVar": "sliceIndex",
+                "maxIterations": 30
             },
             "body": [
                 {
-                    "id": "setup-document-structure",
-                    "title": "Setup Document Structure",
-                    "prompt": "**SETUP DOCUMENT STRUCTURE** - Initialize the documentation framework.\n\n**STRUCTURE SETUP**:\n- Create document header with navigation links\n- Set up main section framework from plan\n- Include table of contents for longer documents\n- Initialize document metadata and context\n\n**PROGRESS TRACKING**:\n- Call updateComponentStatus(documentComponents, 'documenting', 0, 'structure initialized')\n- Call logAnalysisStep('5-Creation', currentDocument.name, 'document structure created')\n\n**OUTPUT**: Document framework ready for content synthesis",
-                    "agentRole": "You are setting up the foundational structure for comprehensive technical documentation.",
+                    "id": "prepare-slice-templates",
+                    "title": "Prepare Slice Templates",
+                    "prompt": "Use createSliceTemplates([currentSlice]) and enforceDivioSections(currentSlice).\nCreate files: Tutorial.md, HowTo.md, Concepts.md, Reference.md with headers and placeholders.\nRecord ownership metadata and navigation links.",
+                    "agentRole": "You scaffold Divio-compliant pages for the slice.",
                     "guidance": [
-                        "Focus on creating a clear, navigable document framework",
-                        "Use the planned structure from Phase 4",
-                        "Ensure structure supports both human and agent consumption",
-                        "Initialize progress tracking for this document"
+                        "Ensure required sections exist on each page",
+                        "Set up standard headers and page navigation"
                     ],
                     "requireConfirmation": false
                 },
-                
                 {
-                    "id": "synthesize-analysis-content",
-                    "title": "Synthesize Analysis Content",
-                    "prompt": "**SYNTHESIZE ANALYSIS CONTENT** - Integrate all analysis findings into the document.\n\n**CONTENT SYNTHESIS**: Use synthesizeDocumentation(scope, currentDocument)\n- **Analysis Integration**: Incorporate relevant findings from all 4 analysis phases\n- **Clarification Integration**: Weave in user answers to intelligent questions  \n- **Existing Doc Integration**: Include/reference valuable existing documentation\n- **Code Example Integration**: Include specific code snippets with file references\n\n**QUALITY STANDARDS**:\n- All technical claims backed by specific code references\n- Include file paths and line numbers for key assertions\n- Provide context for architectural decisions\n\n**OUTPUT**: Content-rich sections with integrated analysis findings",
-                    "agentRole": "You are synthesizing complex analysis findings into coherent, valuable documentation content.",
+                    "id": "generate-quickstart-and-hello-world",
+                    "title": "Generate Quickstart and Hello World Gate",
+                    "prompt": "Run generateSliceQuickstart(currentSlice). Produce a minimal runnable path to success in <5 minutes.\nThen run checkHelloWorldGate(currentSlice). Block if unmet and list fixes.",
+                    "agentRole": "You ensure each slice has a fast, runnable quickstart.",
                     "guidance": [
-                        "Draw from all previous analysis phases systematically",
-                        "Maintain technical accuracy with specific code references",
-                        "Integrate user clarifications naturally",
-                        "Balance depth with clarity for the intended audience"
+                        "Prioritize real, copy-pasteable commands",
+                        "Call out prerequisites explicitly"
+                    ],
+                    "requireConfirmation": true
+                },
+                {
+                    "id": "synthesize-concepts-and-howto",
+                    "title": "Write Concepts and How‑to Pages",
+                    "prompt": "Populate Concepts.md with architecture, responsibilities, data flow, dependencies, and design rationale from analysis.\nPopulate HowTo.md with the top 3-7 tasks developers perform, each step-by-step with code. Cross-link to Tutorial and Reference.",
+                    "agentRole": "You synthesize analysis into clear concepts and actionable how‑tos.",
+                    "guidance": [
+                        "Ground every assertion in code evidence",
+                        "Prefer tasks developers actually do"
                     ],
                     "requireConfirmation": false
                 },
-                
                 {
-                    "id": "create-sections-systematically",
-                    "title": "Create Sections Systematically",
-                    "prompt": "**CREATE SECTIONS SYSTEMATICALLY** - Build each planned section with comprehensive content.\n\n**SECTION CREATION**:\n- Create each planned section systematically\n- Include content requirements from planning phase\n- Reference analysis sources for each section\n- Meet expected length and depth requirements\n- Add cross-references to related documents\n- Include troubleshooting information where relevant\n\n**PROGRESS TRACKING**:\n- Update progress for each completed section\n- Track content depth and coverage metrics\n\n**OUTPUT**: Complete sections meeting planned requirements",
-                    "agentRole": "You are methodically creating comprehensive sections that fulfill the documentation plan.",
+                    "id": "import-reference-and-samples",
+                    "title": "Import Reference and Add Interactive Samples",
+                    "prompt": "Use importReferenceArtifacts(currentSlice) to generate Reference.md from OpenAPI/TypeDoc/etc. Add language tabs.\nUse addInteractiveSamples(currentSlice) to include Mermaid diagrams and Postman/cURL.",
+                    "agentRole": "You generate authoritative, current reference and interactive artifacts.",
                     "guidance": [
-                        "Work through sections in logical order",
-                        "Ensure each section meets its planned requirements",
-                        "Reference specific analysis sources for credibility",
-                        "Maintain consistency across all sections"
+                        "Reference must be source-of-truth and up-to-date",
+                        "Include at least one sequence or flow diagram"
                     ],
                     "requireConfirmation": false
                 },
-                
                 {
-                    "id": "optimize-for-agent-consumption",
-                    "title": "Optimize for Agent Consumption",
-                    "prompt": "**OPTIMIZE FOR AGENT CONSUMPTION** - Structure and format the document for optimal AI agent usage.\n\n**AGENT-FRIENDLY FORMATTING**:\n- Clear section headers for easy navigation\n- Bullet points and lists for scannability  \n- Code blocks with syntax highlighting\n- Consistent terminology and linking\n- Decision rationales prominently displayed\n- Metadata tags for search and organization\n\n**FINAL PROGRESS TRACKING**:\n- Call updateComponentStatus(documentComponents, 'documented', qualityScore, 'documentation completed')\n- Call logAnalysisStep('5-Creation', currentDocument.name, 'documentation file completed')\n- Use calculateCompletionMetrics() to update documentation completion percentage\n\n**OUTPUT**: Documentation optimized for both human and AI agent consumption",
-                    "agentRole": "You are finalizing documentation with optimal structure and formatting for agent consumption.",
+                    "id": "generate-visuals-and-tables",
+                    "title": "Generate Required Visuals and Tables",
+                    "prompt": "Run generateDiagrams(currentSlice) to produce sequence/component/state diagrams as applicable.\nRun generateTables(currentSlice) to create API/config/errors/metrics tables with required columns.",
+                    "agentRole": "You produce comprehensive visuals and structured tables for clarity.",
                     "guidance": [
-                        "Prioritize agent-friendly formatting without sacrificing human readability",
-                        "Include clear decision rationales and context",
-                        "Ensure consistent terminology throughout",
-                        "Complete all progress tracking requirements"
+                        "Prefer Mermaid for diagrams stored as text",
+                        "Ensure tables are complete and normalized"
                     ],
                     "requireConfirmation": false
                 },
-                
                 {
-                    "id": "document-internal-review",
-                    "title": "Internal Quality Review", 
-                    "prompt": "**INTERNAL QUALITY REVIEW** - Review the created documentation for quality and completeness.\n\n**REVIEW CRITERIA**:\n\n1. **Content Completeness**:\n   - ✅ All planned sections present and substantive?\n   - ✅ Analysis findings appropriately integrated?\n   - ✅ User clarifications incorporated?\n   - ✅ Code examples relevant and accurate?\n\n2. **Technical Accuracy**:\n   - ✅ All code references verified against actual files?\n   - ✅ File paths and line numbers accurate?\n   - ✅ Technical descriptions match implementation?\n   - ✅ Architecture descriptions consistent with code?\n\n3. **Documentation Quality**:\n   - ✅ Clear section organization and flow?\n   - ✅ Appropriate level of detail for audience?\n   - ✅ Good use of formatting (headers, lists, code blocks)?\n   - ✅ Cross-references working and helpful?\n\n4. **Agent Usability**:\n   - ✅ Easy for AI agents to parse and understand?\n   - ✅ Clear decision rationales provided?\n   - ✅ Sufficient context for future work?\n   - ✅ Good navigation and structure?\n\n**IMPROVEMENT IDENTIFICATION**:\n- Note any content gaps or unclear sections\n- Identify areas needing additional code examples\n- Check for inconsistencies with other documents\n- Assess overall value for intended purpose\n\n**QUALITY SCORE**: Rate document 1-10 on completeness and utility\n\n**OUTPUT**: \n- Document quality assessment with specific improvement recommendations\n- Set `documentQualityScore` for tracking\n- Update DOCUMENTATION_CONTEXT.md with review results",
-                    "agentRole": "You are conducting a thorough quality review to ensure the created documentation meets professional standards and serves its intended purpose effectively.",
+                    "id": "link-lint-and-review",
+                    "title": "Link Lint and Internal Review",
+                    "prompt": "Run lintLinksAndCrossRefs(currentSlice.docs). Block via checkLinkLintGate(currentSlice.docs) if any broken links.\nRun checkVisualsGate(currentSlice) to enforce diagrams/tables presence.\nPerform internal review; rate documentQualityScore (≥8 required).",
+                    "agentRole": "You enforce link integrity and quality standards.",
                     "guidance": [
-                        "Be thorough but practical in review - focus on significant issues",
-                        "Consider the document's role in the overall documentation suite",  
-                        "Verify technical accuracy by checking against code analysis",
-                        "Assess value from both human and agent user perspectives"
+                        "All links and anchors must resolve",
+                        "Quality score below 8 triggers fixes"
                     ],
                     "requireConfirmation": {
                         "or": [
-                            {"var": "documentQualityScore", "lt": 8},
-                            {"var": "automationLevel", "equals": "Low"}
+                            { "var": "documentQualityScore", "lt": 8 },
+                            { "var": "automationLevel", "equals": "Low" }
                         ]
                     }
                 }
@@ -375,7 +421,7 @@
         {
             "id": "phase-5a-documentation-completion-gate",
             "title": "Phase 5a: Documentation Completion Gate",
-            "prompt": "**DOCUMENTATION COMPLETION GATE** - Verify all components are fully documented before final integration.\n\n**COMPLETION VALIDATION**:\nUse checkCoverageGate('documentation-complete') to verify:\n- ✅ Documentation Coverage: 100% of components have status 'documented'\n- ✅ Quality Threshold: All documents scored ≥8/10 in quality review\n- ✅ Cross-Reference Integrity: All internal links and references valid\n- ✅ Agent Optimization: All documents structured for agent consumption\n\n**COMPREHENSIVE CHECK**:\nUse enforceProgressGates() to ensure:\n- No components remain undocumented\n- All planned documents created and validated\n- Quality scores meet minimum thresholds\n- Documentation structure complete\n\n**FINAL METRICS**:\nUse calculateCompletionMetrics() to compute:\n- `documentationComplete` = 100% (required)\n- `overallQualityScore` = weighted average across all documents\n- `documentsAtRisk` = count of documents below quality threshold\n\n**BLOCKING CONDITIONS**:\nCannot proceed if:\n- Any component lacks documentation\n- Any document scored <8/10 in quality review\n- Cross-references broken or incomplete\n- Agent optimization requirements not met\n\n**OUTPUT**: Documentation completion gate status with specific requirements if blocked",
+            "prompt": "**DOCUMENTATION COMPLETION GATE** - Verify all components and slices are fully documented before final integration.\n\n**COMPLETION VALIDATION**:\nUse checkCoverageGate('documentation-complete') and checkSliceCoverageGate() to verify:\n- ✅ Documentation Coverage: 100% components documented across slices\n- ✅ Slice Quality: All slice pages (Tutorial/How‑to/Concepts/Reference) ≥8/10\n- ✅ Quickstart: All slices pass Hello World gate\n- ✅ Links: Link-lint gate passes for all docs\n- ✅ Agent Optimization: Documents structured for agent consumption\n\n**COMPREHENSIVE CHECK**:\nUse enforceProgressGates() to ensure:\n- No components or slices remain incomplete\n- All planned documents created and validated\n- Ownership metadata present per slice\n\n**FINAL METRICS**:\nUse calculateCompletionMetrics() to compute:\n- `documentationComplete` = 100% (required)\n- `overallQualityScore` = weighted average across slices\n- `documentsAtRisk` = count of pages below quality threshold\n\n**BLOCKING CONDITIONS**:\nCannot proceed if any slice fails quickstart/links/quality or any component unmapped.\n\n**OUTPUT**: Documentation completion gate status with specific requirements if blocked",
             "agentRole": "You are enforcing complete documentation coverage with quality standards before allowing final integration.",
             "guidance": [
                 "No component can remain undocumented",
@@ -391,7 +437,7 @@
                 },
                 {
                     "type": "contains",
-                    "value": "Quality Threshold: ✅",
+                    "value": "Slice Quality: ✅",
                     "message": "Cannot proceed until all documents meet quality standards (≥8/10)"
                 }
             ],
@@ -401,7 +447,7 @@
         {
             "id": "phase-6-final-integration",
             "title": "Phase 6: Final Integration & Navigation Setup",
-            "prompt": "**FINAL INTEGRATION** - Create navigation, cross-references, and final documentation package.\n\n**INTEGRATION TASKS**:\n\n1. **Create Master Index** (for multi-document suites):\n   - Overview of the entire documentation set\n   - Clear navigation to all documents\n   - Quick reference section with key information\n   - Links to most important sections across documents\n\n2. **Cross-Reference Validation**:\n   - Verify all inter-document links work\n   - Add missing cross-references between related sections  \n   - Create bidirectional linking where appropriate\n   - Add \"See also\" sections for related topics\n\n3. **Consistency Pass**:\n   - Standardize terminology across all documents\n   - Ensure consistent formatting and style\n   - Align section numbering and heading styles\n   - Verify code example formatting consistency\n\n4. **Completeness Verification**:\n   - Check all analysis findings are incorporated somewhere\n   - Verify all user clarifications are addressed\n   - Ensure all planned content areas are covered\n   - Validate against original scope boundaries\n\n5. **Agent Optimization**:\n   - Add summary sections for quick agent consumption\n   - Include key decision rationales prominently  \n   - Structure for easy chunking and retrieval\n   - Add metadata tags for search and organization\n\n**CREATE DOCUMENTATION PACKAGE**:\n- Master README or index file\n- All individual documentation files\n- Supporting diagrams or examples\n- Change log for future updates\n\n**FINAL VALIDATION**: Use validateDocumentation(docs, scope)\n- Completeness against original scope\n- Accuracy of all technical content  \n- Utility for stated documentation purpose\n- Maintainability and update process\n\n**OUTPUT**: Complete, integrated documentation package ready for use",
+            "prompt": "**FINAL INTEGRATION** - Create hub navigation, cross-references, and final documentation package.\n\n**INTEGRATION TASKS**:\n\n1. **Create Documentation Hub**:\n   - Index page listing all slices (Tutorial, How‑to, Concepts, Reference per slice)\n   - Global glossary and common patterns\n   - Version switcher and changelog links\n\n2. **Cross-Reference Validation**:\n   - Verify inter-slice links and \"See also\" references\n   - Ensure bidirectional links where appropriate\n\n3. **Consistency Pass**:\n   - Standardize terminology, style, and visuals across slices\n   - Ensure code and samples use consistent languages/tabs\n\n4. **Completeness Verification**:\n   - Confirm all slice gates passed (quickstart, links, quality)\n   - Validate coverage against original scope boundaries\n\n5. **Agent Optimization**:\n   - Add per-slice summaries and navigation metadata\n   - Ensure each page is \"Every Page is Page One\" compliant\n\n**CREATE DOCUMENTATION PACKAGE**:\n- Hub index\n- Per-slice pages\n- Diagrams and samples\n- Change log\n\n**FINAL VALIDATION**: Use validateDocumentation(docs, scope)\n- Completeness and accuracy\n- Usability and maintainability\n\n**OUTPUT**: Complete, integrated documentation package ready for use",
             "agentRole": "You are finalizing the documentation package, ensuring it works as a cohesive whole and serves its intended purpose effectively.",
             "guidance": [
                 "Focus on the user experience of consuming this documentation",
