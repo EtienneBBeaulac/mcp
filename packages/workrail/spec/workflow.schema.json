@@ -161,7 +161,7 @@
       "properties": {
         "id": { "$ref": "#/$defs/stepId", "description": "Unique identifier for the step" },
         "title": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "prompt": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "prompt": { "type": "string", "minLength": 1, "maxLength": 8192 },
         "agentRole": { "type": "string", "minLength": 10, "maxLength": 1024 },
         "guidance": { "type": "array", "items": { "type": "string" } },
         "askForFiles": { "type": "boolean", "default": false },
