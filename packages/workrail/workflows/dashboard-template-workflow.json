@@ -1,0 +1,337 @@
+{
+  "id": "dashboard-template-workflow",
+  "name": "Dashboard Template Workflow",
+  "description": "Template demonstrating how to create dashboard-enabled workflows with best practices",
+  "version": "1.0.0",
+  "tags": ["template", "dashboard", "example"],
+  "steps": [
+    {
+      "id": "initialize-dashboard",
+      "title": "Initialize Dashboard",
+      "instructions": [
+        "Create a session for this workflow using workrail_create_session.",
+        "Initialize the dashboard with basic information:",
+        "- Set a clear, descriptive title",
+        "- Set status to 'in_progress'",
+        "- Set initial progress to 0",
+        "",
+        "Example structure:",
+        "```json",
+        "{",
+        "  \"dashboard\": {",
+        "    \"title\": \"[Workflow Name]: [Session ID]\",",
+        "    \"subtitle\": \"Brief description of what's happening\",",
+        "    \"status\": \"in_progress\",",
+        "    \"progress\": 0,",
+        "    \"_meta\": {",
+        "      \"order\": [\"summary\", \"details\", \"timeline\"],",
+        "      \"collapsible\": { \"timeline\": true }",
+        "    }",
+        "  }",
+        "}",
+        "```",
+        "",
+        "Use workrail_create_session with these parameters:",
+        "- workflowId: \"dashboard-template-workflow\"",
+        "- sessionId: A unique ID (e.g., timestamp or user-provided)",
+        "- initialData: The dashboard structure above",
+        "",
+        "IMPORTANT: After creating the session, inform the user they can view the dashboard at:",
+        "http://localhost:3456/dashboard.html?workflow=dashboard-template-workflow&id=[SESSION-ID]"
+      ],
+      "expectedOutput": {
+        "sessionCreated": true,
+        "dashboardUrl": "string"
+      }
+    },
+    {
+      "id": "gather-information",
+      "title": "Gather Information",
+      "instructions": [
+        "Collect information needed for your workflow.",
+        "As you gather information, update the dashboard to show progress.",
+        "",
+        "Use workrail_update_session to update:",
+        "```json",
+        "{",
+        "  \"dashboard\": {",
+        "    \"progress\": 25,",
+        "    \"currentPhase\": \"Information Gathering\"",
+        "  },",
+        "  \"summary\": {",
+        "    \"description\": \"Summary of information gathered so far\",",
+        "    \"status\": \"in_progress\"",
+        "  }",
+        "}",
+        "```",
+        "",
+        "Add timeline events to show what you're doing:",
+        "```json",
+        "{",
+        "  \"timeline\": [",
+        "    {",
+        "      \"timestamp\": \"[current ISO timestamp]\",",
+        "      \"event\": \"Started information gathering\",",
+        "      \"details\": \"Collecting data from user and system\"",
+        "    }",
+        "  ]",
+        "}",
+        "```",
+        "",
+        "TIP: Use dot notation for updates:",
+        "- \"dashboard.progress\": 25 (updates just progress)",
+        "- \"timeline\": [...] (replaces entire timeline)"
+      ]
+    },
+    {
+      "id": "analyze-data",
+      "title": "Analyze Data",
+      "instructions": [
+        "Analyze the information you've gathered.",
+        "Update the dashboard with your findings.",
+        "",
+        "For findings with severity:",
+        "```json",
+        "{",
+        "  \"dashboard\": {",
+        "    \"progress\": 50,",
+        "    \"currentPhase\": \"Analysis\"",
+        "  },",
+        "  \"findings\": [",
+        "    {",
+        "      \"finding\": \"Description of finding\",",
+        "      \"severity\": \"high\",  // critical, high, medium, low, info",
+        "      \"confidence\": 8.5,",
+        "      \"reasoning\": \"Why this is a finding\"",
+        "    }",
+        "  ]",
+        "}",
+        "```",
+        "",
+        "For hypotheses:",
+        "```json",
+        "{",
+        "  \"hypotheses\": [",
+        "    {",
+        "      \"hypothesis\": \"Description of hypothesis\",",
+        "      \"status\": \"testing\",  // active, testing, confirmed, partial, rejected, cancelled",
+        "      \"confidence\": 7.0,",
+        "      \"reasoning\": \"Why you believe this\"",
+        "    }",
+        "  ]",
+        "}",
+        "```",
+        "",
+        "Add timeline events:",
+        "```json",
+        "{",
+        "  \"timeline\": [",
+        "    ...(existing events),",
+        "    {",
+        "      \"timestamp\": \"[current ISO timestamp]\",",
+        "      \"event\": \"Analysis complete\",",
+        "      \"details\": \"Identified 3 potential issues\"",
+        "    }",
+        "  ]",
+        "}",
+        "```"
+      ]
+    },
+    {
+      "id": "generate-recommendations",
+      "title": "Generate Recommendations",
+      "instructions": [
+        "Based on your analysis, generate actionable recommendations.",
+        "",
+        "Use priority-based recommendations:",
+        "```json",
+        "{",
+        "  \"dashboard\": {",
+        "    \"progress\": 75,",
+        "    \"currentPhase\": \"Recommendations\"",
+        "  },",
+        "  \"recommendations\": [",
+        "    {",
+        "      \"priority\": 9,  // 1-10 scale, higher = more important",
+        "      \"description\": \"Clear, actionable recommendation\",",
+        "      \"reasoning\": \"Why this is important\",",
+        "      \"effort\": \"Estimated effort (e.g., '2 hours', 'medium')\",",
+        "      \"status\": \"proposed\"  // proposed, planned, in_progress, complete",
+        "    },",
+        "    {",
+        "      \"priority\": 5,",
+        "      \"description\": \"Lower priority item\",",
+        "      \"reasoning\": \"Nice to have\"",
+        "    }",
+        "  ]",
+        "}",
+        "```",
+        "",
+        "The dashboard will automatically:",
+        "- Sort by priority (highest first)",
+        "- Color-code by priority (red=high, yellow=medium, blue=low)",
+        "- Display in card format with reasoning"
+      ]
+    },
+    {
+      "id": "finalize",
+      "title": "Finalize and Complete",
+      "instructions": [
+        "Complete the workflow and update the dashboard to reflect completion.",
+        "",
+        "Final update:",
+        "```json",
+        "{",
+        "  \"dashboard\": {",
+        "    \"status\": \"complete\",  // or \"error\" if failed",
+        "    \"progress\": 100,",
+        "    \"currentPhase\": \"Complete\",",
+        "    \"confidence\": 8.5  // Overall confidence in results (0-10)",
+        "  },",
+        "  \"conclusion\": {",
+        "    \"summary\": \"High-level summary of what was accomplished\",",
+        "    \"keyFindings\": [\"Finding 1\", \"Finding 2\", \"Finding 3\"],",
+        "    \"nextSteps\": [\"Step 1\", \"Step 2\"]",
+        "  },",
+        "  \"timeline\": [",
+        "    ...(existing events),",
+        "    {",
+        "      \"timestamp\": \"[current ISO timestamp]\",",
+        "      \"event\": \"Workflow complete\",",
+        "      \"details\": \"All analysis and recommendations generated\"",
+        "    }",
+        "  ]",
+        "}",
+        "```",
+        "",
+        "Remind the user to check the dashboard for full results:",
+        "http://localhost:3456/dashboard.html?workflow=dashboard-template-workflow&id=[SESSION-ID]"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Bug Investigation Pattern",
+      "dashboard": {
+        "title": "Bug Investigation: AUTH-1234",
+        "subtitle": "Token Refresh Issue",
+        "status": "in_progress",
+        "progress": 65,
+        "_meta": {
+          "order": ["bugSummary", "rootCause", "fix", "hypotheses", "timeline", "recommendations"],
+          "icons": {
+            "bugSummary": "bug",
+            "rootCause": "alert-circle",
+            "fix": "wrench",
+            "hypotheses": "lightbulb",
+            "timeline": "clock",
+            "recommendations": "star"
+          },
+          "collapsible": {
+            "timeline": true,
+            "hypotheses": true
+          }
+        }
+      },
+      "bugSummary": {
+        "description": "Users unable to refresh auth tokens",
+        "severity": "high",
+        "affectedUsers": "~1000"
+      },
+      "rootCause": {
+        "description": "Token expiry check using server time instead of UTC",
+        "confidence": 9.5,
+        "file": "/src/auth/token-manager.ts",
+        "line": 145
+      }
+    },
+    {
+      "title": "Code Review Pattern",
+      "dashboard": {
+        "title": "Code Review: PR-456",
+        "subtitle": "Feature: User Profile Updates",
+        "status": "in_progress",
+        "progress": 40,
+        "_meta": {
+          "order": ["summary", "findings", "recommendations"],
+          "icons": {
+            "summary": "file-text",
+            "findings": "alert-circle",
+            "recommendations": "star"
+          },
+          "collapsible": {
+            "findings": true
+          }
+        }
+      },
+      "summary": {
+        "filesChanged": 8,
+        "linesAdded": 234,
+        "linesRemoved": 67
+      },
+      "findings": [
+        {
+          "finding": "Missing error handling",
+          "severity": "high",
+          "file": "/src/profile.ts",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "title": "Test Results Pattern",
+      "dashboard": {
+        "title": "Test Run: Suite #1234",
+        "status": "complete",
+        "progress": 100,
+        "_meta": {
+          "order": ["summary", "results", "failures"],
+          "collapsible": {
+            "failures": true
+          }
+        }
+      },
+      "summary": {
+        "totalTests": 156,
+        "passed": 148,
+        "failed": 8,
+        "coverage": "87%"
+      }
+    }
+  ],
+  "tips": [
+    "Always include a 'dashboard' object with title, status, and progress",
+    "Use semantic field names that describe the content",
+    "Add timeline events to show what you're doing",
+    "Use _meta.order to control section sequence",
+    "Make long sections (timeline, logs) collapsible",
+    "Include confidence scores for AI-generated insights",
+    "Update progress incrementally (0%, 25%, 50%, 75%, 100%)",
+    "Use status badges: pending, in_progress, complete, error",
+    "Add severity to findings: critical, high, medium, low, info",
+    "Add priority to recommendations: 1-10 scale",
+    "Use ISO 8601 timestamps for timeline events",
+    "Group related data: hypotheses array, findings array, etc.",
+    "Hide internal fields with _meta.hidden",
+    "Use custom icons with _meta.icons for visual identity"
+  ],
+  "autoRecognitionPatterns": {
+    "timeline": "Arrays with 'timestamp' field",
+    "groupedList": "Arrays with 'status' field",
+    "severityList": "Arrays with 'severity' field",
+    "priorityList": "Arrays with 'priority' field",
+    "phasesList": "Object with keys like 'phase-0', 'phase-1' containing 'complete' and 'name'",
+    "highlightCard": "Objects with 'confidence' >= 8",
+    "progressBar": "Numbers between 0-100",
+    "checkbox": "Boolean values",
+    "link": "Strings starting with http:// or https://",
+    "filePath": "Strings starting with / or containing file extensions",
+    "code": "Strings with code-like patterns (function, class, etc.)"
+  }
+}
+
+
+
+
+
+

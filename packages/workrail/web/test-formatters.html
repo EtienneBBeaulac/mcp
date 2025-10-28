@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formatters Test - Workrail</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            display: grid;
+            grid-template-columns: 200px 1fr 1fr;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        .function-name {
+            font-weight: 600;
+            color: #667eea;
+            font-family: monospace;
+        }
+        .input {
+            color: #666;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .output {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .success {
+            color: #10b981;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.status-complete { background: #d1fae5; color: #065f46; }
+        .badge.status-in_progress { background: #dbeafe; color: #1e40af; }
+        .badge.status-failed { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>✨ Workrail Formatters Test</h1>
+    <p>Testing all formatting utilities from <code>utils/formatters.js</code></p>
+
+    <div class="test-section">
+        <h2>⏰ Time & Date Formatting</h2>
+        <div id="timeTests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Progress & Confidence</h2>
+        <div id="progressTests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🏷️ Status Formatting</h2>
+        <div id="statusTests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔢 Numbers & Counts</h2>
+        <div id="numberTests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🛡️ Security & Text</h2>
+        <div id="securityTests"></div>
+    </div>
+
+    <script type="module">
+        import * as formatters from '/assets/utils/formatters.js';
+
+        // Make formatters available globally for debugging
+        window.formatters = formatters;
+
+        function renderTest(functionName, input, output) {
+            return `
+                <div class="test-item">
+                    <div class="function-name">${functionName}</div>
+                    <div class="input">${JSON.stringify(input)}</div>
+                    <div class="output">${output}</div>
+                </div>
+            `;
+        }
+
+        // Time & Date Tests
+        const now = new Date();
+        const fiveMinutesAgo = new Date(now - 5 * 60 * 1000);
+        const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000);
+        
+        document.getElementById('timeTests').innerHTML = [
+            renderTest('formatTime()', now.toISOString(), formatters.formatTime(now)),
+            renderTest('formatDateTime()', now.toISOString(), formatters.formatDateTime(now)),
+            renderTest('formatRelativeTime()', 'now', formatters.formatRelativeTime(now)),
+            renderTest('formatRelativeTime()', '5 min ago', formatters.formatRelativeTime(fiveMinutesAgo)),
+            renderTest('formatRelativeTime()', '2 hours ago', formatters.formatRelativeTime(twoHoursAgo)),
+            renderTest('formatTime()', null, formatters.formatTime(null)),
+        ].join('');
+
+        // Progress & Confidence Tests
+        document.getElementById('progressTests').innerHTML = [
+            renderTest('formatProgress()', 75, formatters.formatProgress(75)),
+            renderTest('formatProgress()', 0, formatters.formatProgress(0)),
+            renderTest('formatProgress()', 100, formatters.formatProgress(100)),
+            renderTest('formatConfidence()', 7.5, formatters.formatConfidence(7.5)),
+            renderTest('formatConfidence()', 10, formatters.formatConfidence(10)),
+            renderTest('confidenceToPercent()', 7.5, `${formatters.confidenceToPercent(7.5)}%`),
+            renderTest('formatDuration()', 5000, formatters.formatDuration(5000)),
+            renderTest('formatDuration()', 65000, formatters.formatDuration(65000)),
+            renderTest('formatDuration()', 3665000, formatters.formatDuration(3665000)),
+        ].join('');
+
+        // Status Tests
+        const statuses = ['in_progress', 'complete', 'failed'];
+        document.getElementById('statusTests').innerHTML = statuses.map(status => {
+            const badgeClass = formatters.getStatusClass(status);
+            const variant = formatters.getStatusVariant(status);
+            return `
+                <div class="test-item">
+                    <div class="function-name">Full Status</div>
+                    <div class="input">'${status}'</div>
+                    <div class="output">
+                        <span class="badge ${badgeClass}">${formatters.formatStatus(status)}</span>
+                        <br><small>Class: ${badgeClass}, Variant: ${variant}</small>
+                    </div>
+                </div>
+            `;
+        }).join('') + [
+            renderTest('formatStatus()', 'in_progress', formatters.formatStatus('in_progress')),
+            renderTest('getStatusClass()', 'complete', formatters.getStatusClass('complete')),
+            renderTest('getStatusVariant()', 'failed', formatters.getStatusVariant('failed')),
+        ].join('');
+
+        // Number Tests
+        document.getElementById('numberTests').innerHTML = [
+            renderTest('formatNumber()', 1234567, formatters.formatNumber(1234567)),
+            renderTest('formatBytes()', 1024, formatters.formatBytes(1024)),
+            renderTest('formatBytes()', 1048576, formatters.formatBytes(1048576)),
+            renderTest('formatCount()', [3, 'session'], formatters.formatCount(3, 'session')),
+            renderTest('formatCount()', [1, 'session'], formatters.formatCount(1, 'session')),
+            renderTest('pluralize()', [1, 'hypothesis', 'hypotheses'], formatters.pluralize(1, 'hypothesis', 'hypotheses')),
+            renderTest('pluralize()', [5, 'hypothesis', 'hypotheses'], formatters.pluralize(5, 'hypothesis', 'hypotheses')),
+        ].join('');
+
+        // Security Tests
+        document.getElementById('securityTests').innerHTML = [
+            renderTest('escapeHtml()', '<script>alert("xss")</script>', formatters.escapeHtml('<script>alert("xss")</script>')),
+            renderTest('escapeHtml()', 'Normal text', formatters.escapeHtml('Normal text')),
+            renderTest('truncate()', ['Very long title here', 15], formatters.truncate('Very long title that needs truncating', 15)),
+            renderTest('truncate()', ['Short', 15], formatters.truncate('Short', 15)),
+        ].join('');
+
+        console.log('%c✅ All formatters loaded successfully!', 'color: green; font-weight: bold; font-size: 14px;');
+        console.log('Available formatters:', Object.keys(formatters));
+        console.log('Try: formatters.formatTime(new Date())');
+    </script>
+</body>
+</html>
+

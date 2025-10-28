@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    // Enable type checking for JS files (IDE only)
+    "allowJs": true,
+    "checkJs": false,  // Set to true when ready for strict checking
+    "maxNodeModuleJsDepth": 1,
+    
+    // Better IDE support for web files
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["web/assets/*"]
+    },
+    
+    // DOM types for web files
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    
+    // Module resolution
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true  // Don't generate output files
+  },
+  "include": [
+    "web/**/*.js",
+    "web/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-web",
+    "**/*.test.js",
+    "**/*.spec.js"
+  ]
+}
+

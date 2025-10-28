@@ -3,7 +3,27 @@
 > **Transform chaotic AI interactions into structured, reliable workflows**
 
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.org)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)]()
+[![npm version](https://img.shields.io/npm/v/@exaudeus/workrail.svg)](https://www.npmjs.com/package/@exaudeus/workrail)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+---
+
+## 📑 Table of Contents
+
+- [The Problem](#-the-problem)
+- [The Solution](#-the-solution)
+- [MCP Tools](#️-mcp-tools)
+- [Installation](#️-installation)
+- [External Workflows](#-external-workflows-load-from-git-repositories)
+- [Local Workflows](#-using-local-workflows)
+- [Available Workflows](#-available-workflows)
+- [Loop Support](#-loop-support)
+- [Quick Example](#-quick-example)
+- [Why Choose WorkRail](#-why-choose-workrail)
+- [Environment Variables](#-environment-variables-reference)
+- [Getting Started](#-getting-started)
+- [Planned Features](#-planned-features)
+- [Learn More](#-learn-more)
 
 ---
 
@@ -86,7 +106,98 @@ Add to your agent's `config.json`:
 
 ---
 
-## 💾 Using Local Workflows (when configuring MCP via JSON)
+## 🌐 External Workflows: Load from Git Repositories
+
+**NEW in v0.6+**: Load workflows from GitHub, GitLab, Bitbucket, or any Git repository!
+
+Perfect for:
+- **Team sharing** - Company-wide workflow repositories
+- **Community workflows** - Shared across organizations
+- **Version control** - Track workflow changes in Git
+- **Multi-source** - Combine workflows from multiple repos
+
+### Quick Start
+
+Add to your agent config:
+
+```json
+{
+  "mcpServers": {
+    "workrail": {
+      "command": "npx",
+      "args": ["-y", "@exaudeus/workrail"],
+      "env": {
+        "WORKFLOW_GIT_REPOS": "https://github.com/your-org/workflows.git",
+        "GITHUB_TOKEN": "your-github-token"
+      }
+    }
+  }
+}
+```
+
+### Multiple Repositories
+
+Load workflows from multiple sources (later repos override earlier ones):
+
+```json
+"env": {
+  "WORKFLOW_GIT_REPOS": "https://github.com/company/workflows.git,https://gitlab.com/team/workflows.git",
+  "GITHUB_TOKEN": "ghp_xxx",
+  "GITLAB_TOKEN": "glpat_xxx"
+}
+```
+
+### Authentication Options
+
+**Service-Specific Tokens** (Recommended):
+```bash
+GITHUB_TOKEN=ghp_xxxx           # For github.com
+GITLAB_TOKEN=glpat_xxxx          # For gitlab.com
+BITBUCKET_TOKEN=xxx              # For bitbucket.org
+```
+
+**Self-Hosted Git** (hostname-based):
+```bash
+GIT_COMPANY_COM_TOKEN=xxx        # For git.company.com
+GIT_INTERNAL_GITLAB_IO_TOKEN=xxx # For internal.gitlab.io
+```
+
+**SSH Keys** (no token needed):
+```bash
+WORKFLOW_GIT_REPOS="git@github.com:company/workflows.git"
+# Uses your ~/.ssh/ keys automatically
+```
+
+**Generic Fallback**:
+```bash
+GIT_TOKEN=xxx                    # Used if no specific token found
+WORKFLOW_GIT_AUTH_TOKEN=xxx      # Alternative generic token
+```
+
+### Repository Structure
+
+Your Git repository should have a `/workflows` directory:
+
+```
+your-repo/
+├── workflows/
+│   ├── custom-workflow.json
+│   ├── team-process.json
+│   └── company-standard.json
+└── README.md (optional)
+```
+
+### Features
+
+- ✅ **Auto-sync** - Workflows update automatically (configurable interval)
+- ✅ **Caching** - Works offline after initial clone
+- ✅ **Security** - Path traversal prevention, file size limits, command injection protection
+- ✅ **Priority system** - Later repos override earlier ones
+- ✅ **Branch support** - Specify branch in repo config
+
+---
+
+## 💾 Using Local Workflows
 
 WorkRail will auto-discover workflows even when added to your agent via JSON config. It searches, in priority order:
 
@@ -111,13 +222,33 @@ Example agent config passing env and `cwd` so your local workflows are picked up
 }
 ```
 
-Quick tips:
+WorkRail searches for workflows in this priority order:
 
-- Initialize your user dir once: `workrail init`
-- Validate a file: `workrail validate /abs/path/my-workflows/my-workflow.json`
-- List all discovered workflows: `workrail list`
+1. **Bundled** - Built-in workflows (always available)
+2. **User** - `~/.workrail/workflows` (recommended for personal workflows)
+3. **Custom** - Directories in `WORKFLOW_STORAGE_PATH` (team/shared workflows)
+4. **Git Repositories** - External repos via `WORKFLOW_GIT_REPOS` ([see above](#-external-workflows-load-from-git-repositories))
+5. **Project** - `./workflows` relative to process `cwd` (project-specific)
 
-See also: `docs/workflow-management.md` for more details.
+Later sources override earlier ones when workflow IDs conflict.
+
+### Quick Tips
+
+```bash
+# Initialize your user directory
+workrail init
+
+# Validate a workflow file
+workrail validate /path/to/workflow.json
+
+# List all discovered workflows
+workrail list
+
+# Get workflow JSON schema
+workrail schema
+```
+
+See `docs/workflow-management.md` for more details.
 
 ---
 
@@ -228,6 +359,50 @@ WorkRail reduces these variables:
 
 ---
 
+## 🌟 Environment Variables Reference
+
+Customize WorkRail's behavior with these environment variables:
+
+### Workflow Sources
+```bash
+WORKFLOW_INCLUDE_BUNDLED=true   # Include built-in workflows (default: true)
+WORKFLOW_INCLUDE_USER=true      # Include ~/.workrail/workflows (default: true)
+WORKFLOW_INCLUDE_PROJECT=true   # Include ./workflows from cwd (default: true)
+WORKFLOW_STORAGE_PATH=/path1:/path2  # Additional directories (colon-separated)
+```
+
+### External Git Repositories
+```bash
+# Single or multiple repos (comma-separated)
+WORKFLOW_GIT_REPOS=https://github.com/org/repo.git
+WORKFLOW_GIT_REPOS=repo1.git,repo2.git,repo3.git
+
+# Authentication
+GITHUB_TOKEN=ghp_xxx            # GitHub
+GITLAB_TOKEN=glpat_xxx          # GitLab  
+BITBUCKET_TOKEN=xxx             # Bitbucket
+GIT_HOSTNAME_TOKEN=xxx          # Self-hosted (replace dots with underscores)
+GIT_TOKEN=xxx                   # Generic fallback
+```
+
+### Cache & Performance
+```bash
+WORKRAIL_CACHE_DIR=/path/to/cache  # Cache location (default: .workrail-cache)
+CACHE_TTL=300000                    # Cache TTL in ms (default: 5 minutes)
+```
+
+### Priority Order
+
+Workflows are loaded with this priority (later sources override earlier):
+1. Bundled (built-in workflows)
+2. Plugins (npm packages)
+3. User directory (`~/.workrail/workflows`)
+4. Custom paths (`WORKFLOW_STORAGE_PATH`)
+5. Git repositories (`WORKFLOW_GIT_REPOS`)
+6. Project directory (`./workflows`)
+
+---
+
 ## 🚀 Planned Features
 
 WorkRail is actively evolving. Here are key enhancements on the roadmap:
@@ -246,10 +421,11 @@ Workflows could recommend optimal models for specific steps:
 *Note: WorkRail provides text recommendations to users, not automatic model switching*
 
 ### **Enhanced Workflow Management**
-- **Dynamic Workflow Loading** - Add/edit workflows without republishing the server
+- ✅ ~~**Dynamic Workflow Loading**~~ - **IMPLEMENTED in v0.6+** (Git repositories)
 - **Workflow Categories** - Organize workflows by domain (debugging, planning, review, etc.)
 - **Reusable Components** - Plugin system for common workflow patterns (codebase analysis, document creation, etc.)
 - **Schema Versioning** - Backwards-compatible workflow schema evolution
+- **Workflow Templates** - Create workflows from templates via CLI
 
 ### **Advanced Validation & Quality**
 - **Custom Validation Functions** - Domain-specific output validation beyond basic schema checks

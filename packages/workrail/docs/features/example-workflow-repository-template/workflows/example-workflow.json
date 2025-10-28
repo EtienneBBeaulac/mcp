@@ -1,0 +1,80 @@
+{
+  "id": "example-workflow",
+  "name": "Example Workflow",
+  "description": "This is an example workflow that demonstrates the basic structure. You can delete this file and add your own workflows.",
+  "version": "1.0.0",
+  "preconditions": [
+    "You have a clear goal for what you want to accomplish",
+    "You have identified the relevant files or areas to work on"
+  ],
+  "clarificationPrompts": [
+    "What is the specific outcome you want to achieve?",
+    "Are there any constraints or requirements I should know about?"
+  ],
+  "steps": [
+    {
+      "id": "analyze-requirement",
+      "title": "Analyze the Requirement",
+      "prompt": "Review and understand the requirement. Break it down into smaller, actionable tasks.",
+      "agentRole": "You are a careful analyst who asks clarifying questions and ensures full understanding before proceeding.",
+      "guidance": [
+        "Read the requirement carefully",
+        "Identify any ambiguities",
+        "Break down into subtasks",
+        "Ask clarifying questions if needed"
+      ],
+      "requireConfirmation": true
+    },
+    {
+      "id": "implement-solution",
+      "title": "Implement the Solution",
+      "prompt": "Implement the solution based on the analyzed requirements. Follow best practices and coding standards.",
+      "agentRole": "You are an experienced developer who writes clean, maintainable code and follows established patterns.",
+      "guidance": [
+        "Follow project coding standards",
+        "Write clear, self-documenting code",
+        "Add appropriate comments",
+        "Consider edge cases"
+      ],
+      "askForFiles": true
+    },
+    {
+      "id": "test-solution",
+      "title": "Test the Solution",
+      "prompt": "Test the implemented solution thoroughly. Verify it meets all requirements.",
+      "guidance": [
+        "Test happy path scenarios",
+        "Test edge cases",
+        "Test error conditions",
+        "Verify all requirements are met"
+      ],
+      "hasValidation": true,
+      "validationCriteria": [
+        {
+          "type": "contains",
+          "value": "test",
+          "message": "Response should include testing approach or results"
+        }
+      ]
+    },
+    {
+      "id": "review-and-refine",
+      "title": "Review and Refine",
+      "prompt": "Review the solution for quality, performance, and maintainability. Make any necessary refinements.",
+      "guidance": [
+        "Check for code quality",
+        "Look for optimization opportunities",
+        "Ensure consistency with codebase",
+        "Update documentation if needed"
+      ],
+      "requireConfirmation": true
+    }
+  ],
+  "metaGuidance": [
+    "Always prioritize code clarity over cleverness",
+    "Document your reasoning for non-obvious decisions",
+    "Consider the maintainability of your solution",
+    "Follow the project's established patterns and conventions"
+  ]
+}
+

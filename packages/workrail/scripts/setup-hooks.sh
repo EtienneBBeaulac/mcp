@@ -34,3 +34,15 @@ echo "To skip validation: git commit --no-verify (not recommended)"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+

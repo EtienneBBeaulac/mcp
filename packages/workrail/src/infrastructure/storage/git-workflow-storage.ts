@@ -23,11 +23,13 @@ export interface GitWorkflowConfig {
   authToken?: string;
   maxFileSize?: number;
   maxFiles?: number;
+  skipSandboxCheck?: boolean; // For testing only - allows arbitrary paths
 }
 
-export interface ValidatedGitWorkflowConfig extends Required<GitWorkflowConfig> {
+export interface ValidatedGitWorkflowConfig extends Required<Omit<GitWorkflowConfig, 'skipSandboxCheck'>> {
   maxFileSize: number;
   maxFiles: number;
+  skipSandboxCheck?: boolean;
 }
 
 /**
@@ -68,18 +70,20 @@ export class GitWorkflowStorage implements IWorkflowStorage {
     const localPath = config.localPath || 
       path.join(process.cwd(), '.workrail-cache', 'community-workflows');
     
-    // Ensure local path is within safe boundaries
-    try {
-      assertWithinBase(localPath, process.cwd());
-    } catch (error) {
-      throw new SecurityError(`Local path outside safe boundaries: ${(error as Error).message}`);
+    // Ensure local path is within safe boundaries (skip for tests)
+    if (!config.skipSandboxCheck) {
+      try {
+        assertWithinBase(localPath, process.cwd());
+      } catch (error) {
+        throw new SecurityError(`Local path outside safe boundaries: ${(error as Error).message}`);
+      }
     }
 
     return {
       repositoryUrl: config.repositoryUrl.trim(),
       branch: this.sanitizeGitRef(config.branch || 'main'),
       localPath,
-      syncInterval: Math.max(1, config.syncInterval || 60), // minimum 1 minute
+      syncInterval: config.syncInterval !== undefined ? Math.max(0, config.syncInterval) : 60, // default 60 minutes, allow 0 for testing
       authToken: config.authToken || '',
       maxFileSize: securityOptions.maxFileSizeBytes,
       maxFiles: config.maxFiles || 100 // default 100 files
@@ -87,6 +91,24 @@ export class GitWorkflowStorage implements IWorkflowStorage {
   }
 
   private isValidGitUrl(url: string): boolean {
+    // SSH format: git@github.com:org/repo.git
+    const sshPattern = /^git@[\w.-]+:[\w\/-]+\.git$/;
+    if (sshPattern.test(url)) {
+      return true;
+    }
+    
+    // SSH URL format: ssh://git@github.com/org/repo.git
+    if (url.startsWith('ssh://')) {
+      return true;
+    }
+    
+    // Local file paths (for testing and local repos)
+    // /path/to/repo or file:///path/to/repo
+    if (url.startsWith('/') || url.startsWith('file://')) {
+      return true;
+    }
+    
+    // HTTPS/Git protocol
     try {
       const parsed = new URL(url);
       
@@ -96,12 +118,27 @@ export class GitWorkflowStorage implements IWorkflowStorage {
         'dev.azure.com', 'sourceforge.net'
       ];
       
-      return allowedHosts.some(host => 
-        parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
-      ) && (parsed.protocol === 'https:' || parsed.protocol === 'git:');
-    } catch {
+      // For HTTPS/Git protocols, validate against known hosts
+      if (parsed.protocol === 'https:' || parsed.protocol === 'git:') {
+        return allowedHosts.some(host => 
+          parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
+        );
+      }
+      
+      // file:// protocol is valid
+      if (parsed.protocol === 'file:') {
+        return true;
+      }
+      
       return false;
+    } catch {
+      // If URL parsing fails, might be a local path
+      return url.startsWith('/');
     }
+  }
+  
+  private isSshUrl(url: string): boolean {
+    return url.startsWith('git@') || url.startsWith('ssh://');
   }
 
   private sanitizeGitRef(ref: string): string {
@@ -271,15 +308,25 @@ export class GitWorkflowStorage implements IWorkflowStorage {
     const parentDir = path.dirname(this.localPath);
     await fs.mkdir(parentDir, { recursive: true });
     
-    // Security: Escape shell arguments to prevent injection
-    const escapedUrl = this.config.authToken 
-      ? this.config.repositoryUrl.replace('https://', `https://${this.escapeShellArg(this.config.authToken)}@`)
-      : this.config.repositoryUrl;
+    // Prepare URL based on protocol
+    let cloneUrl = this.config.repositoryUrl;
     
+    // For local paths, convert to file:// URL for proper remote tracking
+    if (cloneUrl.startsWith('/')) {
+      cloneUrl = `file://${cloneUrl}`;
+    }
+    
+    // For HTTPS URLs with token, inject token into URL
+    if (!this.isSshUrl(this.config.repositoryUrl) && this.config.authToken && cloneUrl.startsWith('https://')) {
+      cloneUrl = cloneUrl.replace('https://', `https://${this.config.authToken}@`);
+    }
+    // For SSH URLs, Git will use SSH keys from ~/.ssh/ automatically
+    
+    const escapedUrl = this.escapeShellArg(cloneUrl);
     const escapedBranch = this.escapeShellArg(this.config.branch);
     const escapedPath = this.escapeShellArg(this.localPath);
     
-    const command = `git clone --branch ${escapedBranch} --depth 1 ${this.escapeShellArg(escapedUrl)} ${escapedPath}`;
+    const command = `git clone --branch ${escapedBranch} ${escapedUrl} ${escapedPath}`;
     
     try {
       await execAsync(command, { timeout: 60000 }); // 1 minute timeout
@@ -292,13 +339,23 @@ export class GitWorkflowStorage implements IWorkflowStorage {
     const escapedPath = this.escapeShellArg(this.localPath);
     const escapedBranch = this.escapeShellArg(this.config.branch);
     
-    const command = `cd ${escapedPath} && git pull origin ${escapedBranch}`;
-    
     try {
-      await execAsync(command, { timeout: 30000 }); // 30 second timeout
+      // Try to fetch and reset
+      const fetchCommand = `cd ${escapedPath} && git fetch origin ${escapedBranch}`;
+      const resetCommand = `cd ${escapedPath} && git reset --hard origin/${escapedBranch}`;
+      
+      await execAsync(fetchCommand, { timeout: 30000 });
+      await execAsync(resetCommand, { timeout: 30000 });
     } catch (error) {
-      // Don't throw on pull failure - use cached version
-      // This is intentional behavior for offline scenarios
+      // If fetch/reset fails, try simple pull
+      try {
+        const pullCommand = `cd ${escapedPath} && git pull origin ${escapedBranch}`;
+        await execAsync(pullCommand, { timeout: 30000 });
+      } catch (pullError) {
+        // Don't throw on pull failure - use cached version
+        // This is intentional behavior for offline scenarios
+        console.warn(`Git pull failed for ${this.config.repositoryUrl}:`, (pullError as Error).message);
+      }
     }
   }
 

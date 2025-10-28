@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Check - Generic Dashboard</title>
+    <link rel="stylesheet" href="/assets/styles/tokens.css">
+    <link rel="stylesheet" href="/assets/design-system.css">
+    <link rel="stylesheet" href="/assets/generic-dashboard.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: var(--space-8);
+            line-height: 1.6;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: var(--space-3) var(--space-5);
+            background: var(--glass-bg-strong);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-weight: var(--font-semibold);
+            transition: all var(--duration-fast);
+        }
+        .theme-toggle:hover {
+            background: var(--bg-secondary);
+        }
+        .component-showcase {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+        }
+        .showcase-title {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-2);
+        }
+        .showcase-subtitle {
+            font-size: var(--text-lg);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-8);
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-label">🌙 Dark Mode</span>
+    </button>
+
+    <div class="component-showcase">
+        <div>
+            <h1 class="showcase-title">Generic Dashboard Theme Check</h1>
+            <p class="showcase-subtitle">Verify all components render correctly in light and dark mode</p>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="hero-title">Sample Dashboard Title</h1>
+            <p class="hero-subtitle">This is a subtitle describing the workflow session</p>
+            <div class="hero-meta">
+                <span class="hero-badge status-complete">Complete</span>
+                <div class="hero-progress">
+                    <span class="hero-progress-label">Progress:</span>
+                    <div class="progress-bar-inline">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                    <span class="hero-progress-value">75%</span>
+                </div>
+                <span class="hero-confidence">Confidence: 8.5</span>
+                <span class="hero-phase">Phase: Testing</span>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <i data-lucide="list" class="section-icon"></i>
+                <h2 class="section-title">Section Title</h2>
+            </div>
+            <div class="section-content">
+                <p>This is section content using semantic text colors.</p>
+            </div>
+        </section>
+
+        <!-- Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4);">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Regular Card</h3>
+                </div>
+                <div class="card-content">
+                    <p>Regular card content with <strong>bold text</strong> and normal text.</p>
+                </div>
+            </div>
+
+            <div class="card card-highlight">
+                <div class="card-header">
+                    <h3>Highlight Card</h3>
+                    <span class="confidence-badge">Confidence: 9.2</span>
+                </div>
+                <div class="card-content">
+                    <p>High confidence result with visual emphasis.</p>
+                </div>
+            </div>
+
+            <div class="card card-error">
+                <div class="card-header">
+                    <h3>Error Card</h3>
+                </div>
+                <div class="card-content">
+                    <p style="color: var(--status-error);">Error message with appropriate styling.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped List -->
+        <div class="grouped-list">
+            <div class="list-group">
+                <div class="group-header">
+                    <h4 class="group-title">Complete</h4>
+                    <span class="group-count">3</span>
+                </div>
+                <div class="group-items">
+                    <div class="list-item">
+                        <div class="item-field"><strong>Title:</strong> Task 1</div>
+                        <div class="item-field"><strong>Status:</strong> Complete</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-field"><strong>Title:</strong> Task 2</div>
+                        <div class="item-field"><strong>Status:</strong> Complete</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Severity List -->
+        <div class="severity-list">
+            <div class="severity-group severity-critical">
+                <div class="group-header">
+                    <span class="severity-icon">🔴</span>
+                    <h4 class="group-title">CRITICAL</h4>
+                    <span class="group-count">2</span>
+                </div>
+                <div class="group-items">
+                    <div class="list-item">
+                        <div class="item-field"><strong>Issue:</strong> Database connection failed</div>
+                        <div class="item-field"><strong>Impact:</strong> High</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">2 hours ago</div>
+                    <div class="timeline-event">Workflow started</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">1 hour ago</div>
+                    <div class="timeline-event">Analysis completed</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">30 minutes ago</div>
+                    <div class="timeline-event">Results generated</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat Grid -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-value">1,234</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">98.5%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">42ms</div>
+                <div class="stat-label">Avg Response</div>
+            </div>
+        </div>
+
+        <!-- Code Block -->
+        <div class="code-container">
+            <pre class="code-block"><code>function example() {
+  const data = fetchData();
+  return processResult(data);
+}</code></pre>
+        </div>
+
+        <div style="height: 100px;"></div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            
+            document.getElementById('theme-label').textContent = 
+                newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+

@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import { execSync } from 'child_process';
 import os from 'os';
 import { EventEmitter } from 'events';
 import { SessionDataNormalizer } from './SessionDataNormalizer';
@@ -35,18 +36,26 @@ export interface ProjectMetadata {
  * - Deep merge updates
  * - JSONPath-like queries for targeted reads
  * - Project-based organization
+ * - Git worktree support (shares sessions across worktrees)
  */
 export class SessionManager extends EventEmitter {
   private sessionsRoot: string;
   private projectId: string;
+  private projectPath: string;
   private watchers: Map<string, fsSync.FSWatcher> = new Map();
   private normalizer: SessionDataNormalizer;
   private validator: SessionDataValidator;
   
-  constructor(private projectPath: string = process.cwd()) {
+  constructor(projectPath: string = process.cwd()) {
     super();
     this.sessionsRoot = path.join(os.homedir(), '.workrail', 'sessions');
-    this.projectId = this.hashProjectPath(projectPath);
+    
+    // Resolve to Git repository root if in a Git repo
+    // This ensures worktrees share the same project ID
+    const resolvedPath = this.resolveProjectPath(projectPath);
+    this.projectPath = resolvedPath;
+    this.projectId = this.hashProjectPath(resolvedPath);
+    
     this.normalizer = new SessionDataNormalizer();
     this.validator = new SessionDataValidator();
   }
@@ -59,6 +68,47 @@ export class SessionManager extends EventEmitter {
       .update(path.resolve(projectPath))
       .digest('hex')
       .substring(0, 12);
+  }
+  
+  /**
+   * Resolve project path to Git repository root if in a Git repo.
+   * This ensures Git worktrees share the same project ID.
+   * Falls back to the original path if not in Git or Git unavailable.
+   */
+  private resolveProjectPath(startPath: string): string {
+    // Try to find Git repo root
+    const gitRoot = this.findGitRepoRoot(startPath);
+    
+    if (gitRoot) {
+      console.error(`[SessionManager] Git repository detected: ${gitRoot}`);
+      if (gitRoot !== path.resolve(startPath)) {
+        console.error(`[SessionManager] Resolved worktree ${startPath} to main repo ${gitRoot}`);
+      }
+      return gitRoot;
+    }
+    
+    // Not in Git or Git unavailable, use the path as-is
+    return path.resolve(startPath);
+  }
+  
+  /**
+   * Find the Git repository root using git rev-parse.
+   * This works correctly for regular repos, worktrees, and submodules.
+   * Returns null if not in a Git repository or Git is unavailable.
+   */
+  private findGitRepoRoot(startPath: string): string | null {
+    try {
+      const result = execSync('git rev-parse --show-toplevel', {
+        cwd: startPath,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'ignore'] // Suppress stderr
+      }).trim();
+      
+      return result;
+    } catch {
+      // Not a git repository, git not installed, or other error
+      return null;
+    }
   }
   
   /**
@@ -335,6 +385,83 @@ export class SessionManager extends EventEmitter {
    */
   getProjectId(): string {
     return this.projectId;
+  }
+  
+  /**
+   * Get the current project path
+   */
+  getProjectPath(): string {
+    return this.projectPath;
+  }
+  
+  /**
+   * List all sessions from all projects (for unified dashboard)
+   */
+  async listAllProjectsSessions(): Promise<Session[]> {
+    const sessions: Session[] = [];
+    
+    try {
+      const projectDirs = await fs.readdir(this.sessionsRoot);
+      
+      for (const projectId of projectDirs) {
+        const projectRoot = path.join(this.sessionsRoot, projectId);
+        
+        // Check if it's a directory
+        const stat = await fs.stat(projectRoot);
+        if (!stat.isDirectory()) continue;
+        
+        // Read sessions from this project
+        const projectSessions = await this.listSessionsForProject(projectId);
+        sessions.push(...projectSessions);
+      }
+    } catch (error: any) {
+      // Sessions root doesn't exist yet
+      if (error.code !== 'ENOENT') throw error;
+    }
+    
+    return sessions.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+  
+  /**
+   * List sessions for a specific project
+   * @private
+   */
+  private async listSessionsForProject(projectId: string): Promise<Session[]> {
+    const sessions: Session[] = [];
+    const projectRoot = path.join(this.sessionsRoot, projectId);
+    
+    try {
+      const workflows = await fs.readdir(projectRoot);
+      
+      for (const workflow of workflows) {
+        if (workflow === 'project.json') continue;
+        
+        const workflowPath = path.join(projectRoot, workflow);
+        const stat = await fs.stat(workflowPath);
+        
+        if (!stat.isDirectory()) continue;
+        
+        const files = await fs.readdir(workflowPath);
+        
+        for (const file of files) {
+          if (!file.endsWith('.json')) continue;
+          
+          const sessionPath = path.join(workflowPath, file);
+          try {
+            const content = await fs.readFile(sessionPath, 'utf-8');
+            sessions.push(JSON.parse(content));
+          } catch (error) {
+            // Skip corrupted session files
+            console.error(`Failed to read session ${sessionPath}:`, error);
+          }
+        }
+      }
+    } catch (error: any) {
+      // Project directory doesn't exist yet
+      if (error.code !== 'ENOENT') throw error;
+    }
+    
+    return sessions;
   }
   
   /**

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SessionList Test - Workrail</title>
+  <link rel="stylesheet" href="assets/base.css">
+  <link rel="stylesheet" href="assets/sections/session-list.css">
+  <style>
+    body {
+      background: var(--bg-secondary, #f9fafb);
+      padding: var(--space-6, 24px);
+    }
+    
+    .test-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .test-header {
+      background: white;
+      padding: var(--space-6, 24px);
+      border-radius: var(--radius-xl, 12px);
+      margin-bottom: var(--space-6, 24px);
+      box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+    }
+    
+    .test-header h1 {
+      margin: 0 0 var(--space-2, 8px) 0;
+      font-size: var(--text-3xl, 30px);
+      color: var(--text-primary, #1f2937);
+    }
+    
+    .test-header p {
+      margin: 0;
+      color: var(--text-secondary, #6b7280);
+      font-size: var(--text-base, 16px);
+    }
+    
+    .test-controls {
+      background: white;
+      padding: var(--space-4, 16px);
+      border-radius: var(--radius-xl, 12px);
+      margin-bottom: var(--space-4, 16px);
+      box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+    }
+    
+    .control-group {
+      display: flex;
+      gap: var(--space-3, 12px);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .control-group label {
+      font-size: var(--text-sm, 14px);
+      font-weight: var(--font-semibold, 600);
+      color: var(--text-primary, #1f2937);
+    }
+    
+    .control-group button,
+    .control-group select {
+      padding: var(--space-2, 8px) var(--space-3, 12px);
+      border-radius: var(--radius-md, 6px);
+      border: 1px solid var(--border-light, #e5e7eb);
+      background: white;
+      cursor: pointer;
+      font-size: var(--text-sm, 14px);
+      font-weight: var(--font-medium, 500);
+      transition: all 0.2s ease;
+    }
+    
+    .control-group button:hover,
+    .control-group select:hover {
+      background: var(--bg-secondary, #f3f4f6);
+      border-color: var(--primary-500, #667eea);
+    }
+    
+    .control-group button.active {
+      background: var(--primary-500, #667eea);
+      color: white;
+      border-color: var(--primary-500, #667eea);
+    }
+    
+    .test-section {
+      background: white;
+      padding: var(--space-6, 24px);
+      border-radius: var(--radius-xl, 12px);
+      margin-bottom: var(--space-6, 24px);
+      box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+    }
+    
+    .test-section h2 {
+      margin: 0 0 var(--space-4, 16px) 0;
+      font-size: var(--text-xl, 20px);
+      color: var(--text-primary, #1f2937);
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      padding: var(--space-1, 4px) var(--space-2, 8px);
+      border-radius: var(--radius-md, 6px);
+      font-size: var(--text-xs, 12px);
+      font-weight: var(--font-semibold, 600);
+      margin-left: var(--space-2, 8px);
+    }
+    
+    .status-indicator.loading {
+      background: rgba(59, 130, 246, 0.1);
+      color: #1e40af;
+    }
+    
+    .status-indicator.ready {
+      background: rgba(16, 185, 129, 0.1);
+      color: #065f46;
+    }
+    
+    .status-indicator.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="test-container">
+    <!-- Header -->
+    <div class="test-header">
+      <h1>📋 SessionList Section Test</h1>
+      <p>Testing the new reusable SessionList component with real API data</p>
+    </div>
+    
+    <!-- Controls -->
+    <div class="test-controls">
+      <div class="control-group">
+        <label>Filter:</label>
+        <button id="filterAll" class="active">All Sessions</button>
+        <button id="filterActive">Active Only</button>
+        <button id="filterComplete">Complete Only</button>
+        
+        <label style="margin-left: var(--space-4, 16px);">Sort By:</label>
+        <select id="sortSelect">
+          <option value="time">Updated Time</option>
+          <option value="progress">Progress</option>
+          <option value="confidence">Confidence</option>
+        </select>
+        
+        <button id="refreshBtn">🔄 Refresh Data</button>
+        <button id="startPollingBtn">▶️ Start Polling</button>
+        <button id="stopPollingBtn" disabled>⏸️ Stop Polling</button>
+      </div>
+    </div>
+    
+    <!-- Test Sections -->
+    <div class="test-section">
+      <h2>
+        Default Grid Layout
+        <span id="status1" class="status-indicator loading">Loading...</span>
+      </h2>
+      <div id="sessionList1"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>
+        Compact List Layout
+        <span id="status2" class="status-indicator loading">Loading...</span>
+      </h2>
+      <div id="sessionList2"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>
+        Empty State Demo
+        <span id="status3" class="status-indicator ready">Ready</span>
+      </h2>
+      <div id="sessionList3"></div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import { SessionList, SessionGrid, CompactSessionList } from './assets/sections/SessionList.js';
+    import * as api from './assets/services/api.js';
+    import * as polling from './assets/services/polling.js';
+    
+    // Create session list instances
+    let config = {
+      showAll: true,
+      sortBy: 'time',
+      sortDesc: true,
+      onSessionClick: (session, workflowId, sessionId) => {
+        console.log('Session clicked:', session);
+        alert(`Session: ${sessionId}\nWorkflow: ${workflowId}\nStatus: ${session.dashboard?.status || 'unknown'}`);
+      },
+      onSessionDelete: (session, workflowId, sessionId) => {
+        if (confirm(`Delete session "${sessionId}"?`)) {
+          deleteSession(workflowId, sessionId);
+        }
+      }
+    };
+    
+    const list1 = SessionGrid(config);
+    const list2 = CompactSessionList({ ...config, showAll: false });
+    const list3 = SessionList({
+      ...config,
+      emptyMessage: 'This is an empty state example. Start a workflow to see sessions.'
+    });
+    
+    // Append to DOM
+    document.getElementById('sessionList1').appendChild(list1.element);
+    document.getElementById('sessionList2').appendChild(list2.element);
+    document.getElementById('sessionList3').appendChild(list3.element);
+    
+    // State
+    let currentSessions = [];
+    let pollingId = null;
+    
+    // Load sessions
+    async function loadSessions() {
+      try {
+        updateStatus('status1', 'loading', 'Loading...');
+        updateStatus('status2', 'loading', 'Loading...');
+        
+        const sessions = await api.getSessions();
+        currentSessions = sessions;
+        
+        updateAllLists();
+        
+        updateStatus('status1', 'ready', `${sessions.length} sessions`);
+        updateStatus('status2', 'ready', `${sessions.filter(s => s.dashboard?.status === 'in_progress').length} active`);
+        
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
+        updateStatus('status1', 'error', 'Load failed');
+        updateStatus('status2', 'error', 'Load failed');
+      }
+    }
+    
+    // Update all lists
+    function updateAllLists() {
+      let filtered = currentSessions;
+      
+      // Apply filter
+      const activeFilter = document.querySelector('.control-group button.active');
+      if (activeFilter.id === 'filterActive') {
+        filtered = filtered.filter(s => s.dashboard?.status === 'in_progress');
+      } else if (activeFilter.id === 'filterComplete') {
+        filtered = filtered.filter(s => s.dashboard?.status === 'complete');
+      }
+      
+      list1.update(filtered);
+      
+      // List 2 always shows only active
+      const active = currentSessions.filter(s => s.dashboard?.status === 'in_progress');
+      list2.update(active);
+      
+      // List 3 always shows empty
+      list3.update([]);
+    }
+    
+    // Update status indicator
+    function updateStatus(id, type, text) {
+      const el = document.getElementById(id);
+      el.className = `status-indicator ${type}`;
+      el.textContent = text;
+    }
+    
+    // Delete session
+    async function deleteSession(workflowId, sessionId) {
+      try {
+        await api.deleteSession(workflowId, sessionId);
+        await loadSessions();
+      } catch (error) {
+        console.error('Failed to delete session:', error);
+        alert('Failed to delete session');
+      }
+    }
+    
+    // Filter controls
+    document.getElementById('filterAll').addEventListener('click', (e) => {
+      document.querySelectorAll('.control-group button[id^="filter"]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      config.showAll = true;
+      updateAllLists();
+    });
+    
+    document.getElementById('filterActive').addEventListener('click', (e) => {
+      document.querySelectorAll('.control-group button[id^="filter"]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      config.showAll = false;
+      updateAllLists();
+    });
+    
+    document.getElementById('filterComplete').addEventListener('click', (e) => {
+      document.querySelectorAll('.control-group button[id^="filter"]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      config.showAll = false;
+      updateAllLists();
+    });
+    
+    // Sort control
+    document.getElementById('sortSelect').addEventListener('change', (e) => {
+      config.sortBy = e.target.value;
+      updateAllLists();
+    });
+    
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', loadSessions);
+    
+    // Polling controls
+    document.getElementById('startPollingBtn').addEventListener('click', () => {
+      if (pollingId) return;
+      
+      pollingId = polling.startPolling(
+        `${window.location.origin}/api/sessions`,
+        2000, // Every 2 seconds
+        async (data) => {
+          console.log('Polling update:', data);
+          currentSessions = data;
+          updateAllLists();
+        }
+      );
+      
+      document.getElementById('startPollingBtn').disabled = true;
+      document.getElementById('stopPollingBtn').disabled = false;
+      updateStatus('status1', 'loading', 'Polling...');
+    });
+    
+    document.getElementById('stopPollingBtn').addEventListener('click', () => {
+      if (pollingId) {
+        polling.stopPolling(pollingId);
+        pollingId = null;
+      }
+      
+      document.getElementById('startPollingBtn').disabled = false;
+      document.getElementById('stopPollingBtn').disabled = true;
+      updateStatus('status1', 'ready', `${currentSessions.length} sessions`);
+    });
+    
+    // Initial load
+    loadSessions();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      list1.destroy();
+      list2.destroy();
+      list3.destroy();
+      if (pollingId) {
+        polling.stopPolling(pollingId);
+      }
+    });
+  </script>
+  
+</body>
+</html>
+

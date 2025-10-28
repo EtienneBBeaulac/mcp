@@ -1,6 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import { createServer, Server as HttpServerType } from 'http';
 import path from 'path';
+import fs from 'fs/promises';
+import os from 'os';
 import { SessionManager } from './SessionManager.js';
 import cors from 'cors';
 import open from 'open';
@@ -8,6 +10,15 @@ import open from 'open';
 export interface ServerConfig {
   port?: number;
   autoOpen?: boolean;
+  disableUnifiedDashboard?: boolean; // Opt-out of unified dashboard
+}
+
+interface DashboardLock {
+  pid: number;
+  port: number;
+  startedAt: string;
+  projectId: string;
+  projectPath: string;
 }
 
 /**
@@ -16,13 +27,17 @@ export interface ServerConfig {
  * Routes:
  * - GET / -> Dashboard home page
  * - GET /web/* -> Static dashboard assets
- * - GET /api/sessions -> List all sessions
+ * - GET /api/sessions -> List all sessions (unified: all projects)
  * - GET /api/sessions/:workflow/:id -> Get specific session
  * - GET /api/current-project -> Get current project info
  * - GET /api/projects -> List all projects
  * 
  * Features:
- * - Auto-increments port if 3456 is busy
+ * - Unified dashboard (primary/secondary pattern)
+ * - First instance becomes primary on port 3456
+ * - Subsequent instances skip HTTP server
+ * - Auto-recovery from crashed primary
+ * - Falls back to legacy mode if needed
  * - ETag support for efficient polling
  * - CORS enabled for local development
  */
@@ -31,12 +46,15 @@ export class HttpServer {
   private server: HttpServerType | null = null;
   private port: number;
   private baseUrl: string = '';
+  private isPrimary: boolean = false;
+  private lockFile: string;
   
   constructor(
     private sessionManager: SessionManager,
     private config: ServerConfig = {}
   ) {
     this.port = config.port || 3456;
+    this.lockFile = path.join(os.homedir(), '.workrail', 'dashboard.lock');
     this.app = express();
     this.setupMiddleware();
     this.setupRoutes();
@@ -94,16 +112,24 @@ export class HttpServer {
       }
     });
     
-    // API: List all sessions for current project
+    // API: List all sessions (unified: all projects when primary, current project otherwise)
     this.app.get('/api/sessions', async (req: Request, res: Response) => {
       try {
-        const sessions = await this.sessionManager.listAllSessions();
+        // If primary, return sessions from all projects
+        // If secondary/legacy, return only current project sessions
+        const sessions = this.isPrimary
+          ? await this.sessionManager.listAllProjectsSessions()
+          : await this.sessionManager.listAllSessions();
+          
         res.json({
           success: true,
           count: sessions.length,
+          unified: this.isPrimary, // Indicate if this is unified view
           sessions: sessions.map(s => ({
             id: s.id,
             workflowId: s.workflowId,
+            projectId: s.projectId,
+            projectPath: s.projectPath,
             createdAt: s.createdAt,
             updatedAt: s.updatedAt,
             url: `/api/sessions/${s.workflowId}/${s.id}`,
@@ -288,7 +314,10 @@ export class HttpServer {
         success: true,
         status: 'healthy',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isPrimary: this.isPrimary,
+        pid: process.pid,
+        port: this.port
       });
     });
     
@@ -304,10 +333,201 @@ export class HttpServer {
   
   /**
    * Start the HTTP server
-   * Tries port 3456, increments if busy
+   * Uses unified dashboard pattern (primary/secondary) unless disabled
    */
-  async start(): Promise<string> {
-    // Try ports 3456-3499
+  async start(): Promise<string | null> {
+    // Check if unified dashboard is disabled
+    if (this.config.disableUnifiedDashboard || process.env.WORKRAIL_DISABLE_UNIFIED_DASHBOARD === '1') {
+      console.error('[Dashboard] Unified dashboard disabled, using legacy mode');
+      return await this.startLegacyMode();
+    }
+    
+    // Try to become primary
+    if (await this.tryBecomePrimary()) {
+      try {
+        await this.startAsPrimary();
+        return this.baseUrl;
+      } catch (error: any) {
+        if (error.code === 'EADDRINUSE') {
+          // Port busy even though we have lock - cleanup and fall back
+          console.error('[Dashboard] Port 3456 busy despite lock, falling back to legacy mode');
+          await fs.unlink(this.lockFile).catch(() => {});
+          return await this.startLegacyMode();
+        }
+        throw error;
+      }
+    } else {
+      // Secondary mode - dashboard already running
+      console.error('[Dashboard] ✅ Unified dashboard at http://localhost:3456');
+      return null;
+    }
+  }
+  
+  /**
+   * Try to become the primary dashboard
+   */
+  private async tryBecomePrimary(): Promise<boolean> {
+    try {
+      // Ensure .workrail directory exists
+      await fs.mkdir(path.dirname(this.lockFile), { recursive: true });
+      
+      // Try to create lock file atomically
+      const lockData: DashboardLock = {
+        pid: process.pid,
+        port: 3456,
+        startedAt: new Date().toISOString(),
+        projectId: this.sessionManager.getProjectId(),
+        projectPath: this.sessionManager.getProjectPath()
+      };
+      
+      await fs.writeFile(this.lockFile, JSON.stringify(lockData, null, 2), { flag: 'wx' });
+      
+      // Success! We are primary
+      console.error('[Dashboard] Primary elected');
+      this.isPrimary = true;
+      this.setupPrimaryCleanup();
+      return true;
+      
+    } catch (error: any) {
+      if (error.code === 'EEXIST') {
+        // Lock exists, check if it's stale
+        return await this.reclaimStaleLock();
+      } else if (error.code === 'EACCES' || error.code === 'EPERM') {
+        // Permission denied
+        console.error('[Dashboard] Cannot write lock file (permission denied)');
+        return false;
+      }
+      throw error;
+    }
+  }
+  
+  /**
+   * Check if existing lock is stale and reclaim if possible
+   */
+  private async reclaimStaleLock(): Promise<boolean> {
+    try {
+      const lockContent = await fs.readFile(this.lockFile, 'utf-8');
+      const lockData: DashboardLock = JSON.parse(lockContent);
+      
+      // Validate lock structure
+      if (!lockData.pid || !lockData.port || !lockData.startedAt) {
+        console.error('[Dashboard] Invalid lock file, reclaiming');
+        await fs.unlink(this.lockFile);
+        return await this.tryBecomePrimary();
+      }
+      
+      // Check if process exists
+      let processExists = false;
+      try {
+        process.kill(lockData.pid, 0); // Signal 0 = check existence
+        processExists = true;
+      } catch {
+        processExists = false;
+      }
+      
+      if (!processExists) {
+        // Process is dead, reclaim lock
+        console.error(`[Dashboard] Stale lock detected (PID ${lockData.pid} dead), reclaiming`);
+        await fs.unlink(this.lockFile);
+        return await this.tryBecomePrimary();
+      }
+      
+      // Process exists, check if it's actually serving
+      const isHealthy = await this.checkHealth(lockData.port);
+      
+      if (!isHealthy) {
+        // Process exists but not responding
+        console.error(`[Dashboard] Primary (PID ${lockData.pid}) not responding, reclaiming`);
+        
+        // Try to kill it gracefully
+        try {
+          process.kill(lockData.pid, 'SIGTERM');
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s
+        } catch {}
+        
+        await fs.unlink(this.lockFile);
+        return await this.tryBecomePrimary();
+      }
+      
+      // Valid primary exists
+      return false;
+      
+    } catch (error: any) {
+      // Corrupt lock file or parse error
+      console.error('[Dashboard] Corrupted lock file, removing');
+      await fs.unlink(this.lockFile).catch(() => {});
+      return await this.tryBecomePrimary();
+    }
+  }
+  
+  /**
+   * Check if a server is healthy on given port
+   */
+  private async checkHealth(port: number): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000); // 2s timeout
+      
+      const response = await fetch(`http://localhost:${port}/api/health`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) return false;
+      
+      const data = await response.json();
+      return data.status === 'healthy' && data.isPrimary !== undefined;
+      
+    } catch {
+      return false;
+    }
+  }
+  
+  /**
+   * Setup cleanup handlers for primary
+   */
+  private setupPrimaryCleanup(): void {
+    const cleanup = async () => {
+      if (this.isPrimary) {
+        console.error('[Dashboard] Primary shutting down, releasing lock');
+        await fs.unlink(this.lockFile).catch(() => {});
+        this.isPrimary = false;
+      }
+    };
+    
+    process.on('exit', cleanup);
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    process.on('SIGHUP', cleanup);
+  }
+  
+  /**
+   * Start as primary dashboard
+   */
+  private async startAsPrimary(): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      this.server = createServer(this.app);
+      
+      this.server.on('error', (error: any) => {
+        reject(error);
+      });
+      
+      this.server.listen(3456, () => {
+        this.port = 3456;
+        this.baseUrl = 'http://localhost:3456';
+        this.printBanner();
+        resolve();
+      });
+    });
+  }
+  
+  /**
+   * Legacy mode: auto-increment ports 3457-3499
+   */
+  private async startLegacyMode(): Promise<string> {
+    this.port = 3457; // Start from 3457 in legacy mode
+    
     while (this.port < 3500) {
       try {
         await new Promise<void>((resolve, reject) => {
@@ -327,11 +547,10 @@ export class HttpServer {
         });
         
         this.baseUrl = `http://localhost:${this.port}`;
-        
-        // Print banner
+        console.error(`[Dashboard] Started in legacy mode on port ${this.port}`);
         this.printBanner();
-        
         return this.baseUrl;
+        
       } catch (error: any) {
         if (error.message === 'Port in use') {
           this.port++;
@@ -341,7 +560,7 @@ export class HttpServer {
       }
     }
     
-    throw new Error('No available ports in range 3456-3499');
+    throw new Error('No available ports in range 3457-3499');
   }
   
   /**
@@ -352,7 +571,7 @@ export class HttpServer {
     console.error(`\n${line}`);
     console.error(`🔧 Workrail MCP Server Started`);
     console.error(line);
-    console.error(`📊 Dashboard: ${this.baseUrl}`);
+    console.error(`📊 Dashboard: ${this.baseUrl} ${this.isPrimary ? '(PRIMARY - All Projects)' : '(Legacy Mode)'}`);
     console.error(`💾 Sessions:  ${this.sessionManager.getSessionsRoot()}`);
     console.error(`🏗️  Project:   ${this.sessionManager.getProjectId()}`);
     console.error(line);

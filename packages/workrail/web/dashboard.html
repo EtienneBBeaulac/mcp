@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-bg-intensity="subtle">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workrail Dashboard</title>
+    
+    <!-- Design System -->
+    <link rel="stylesheet" href="/assets/styles/tokens.css">
+    <link rel="stylesheet" href="/assets/design-system.css">
+    <link rel="stylesheet" href="/assets/generic-dashboard.css">
+    <link rel="stylesheet" href="/assets/styles/charts.css">
+    <link rel="stylesheet" href="/assets/styles/accessibility.css">
+    <link rel="stylesheet" href="/assets/styles/search.css">
+    <link rel="stylesheet" href="/assets/theme-toggle.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Theme Management -->
+    <script src="/assets/theme-manager.js"></script>
+    <script src="/assets/theme-toggle.js"></script>
+    <script src="/assets/time-of-day-theme.js"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, 
+                rgba(249, 250, 251, 1) 0%,
+                rgba(243, 244, 246, 1) 50%,
+                rgba(249, 250, 251, 1) 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, 
+                #0f1419 0%,
+                #18181b 50%,
+                #0f1419 100%);
+        }
+        
+        .dashboard-header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+        
+        .back-link:hover {
+            background: var(--glass-bg-strong);
+            transform: translateX(-2px);
+        }
+        
+        .loading-state,
+        .error-state {
+            max-width: 1200px;
+            margin: var(--space-16) auto;
+            padding: var(--space-12);
+            text-align: center;
+            background: var(--glass-bg-strong);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+        }
+        
+        .loading-state {
+            color: var(--text-secondary);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-light);
+            border-top-color: var(--primary-500);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: var(--space-4);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-state {
+            color: var(--status-error);
+        }
+        
+        .error-icon {
+            font-size: var(--text-4xl);
+            margin-bottom: var(--space-4);
+        }
+        
+        .error-message {
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-6);
+            color: var(--text-primary);
+        }
+        
+        .error-details {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-6);
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+        }
+        
+        .error-btn {
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+        
+        .error-btn-primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .error-btn-primary:hover {
+            background: var(--primary-600);
+        }
+        
+        .error-btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-medium);
+        }
+        
+        .error-btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Links for keyboard navigation -->
+    <nav class="skip-links" aria-label="Skip links">
+        <a href="#main-content" class="skip-link">Skip to main content</a>
+        <a href="#dashboard-data" class="skip-link">Skip to dashboard</a>
+    </nav>
+
+    <!-- Header with back link -->
+    <header class="dashboard-header" role="banner">
+        <a href="/" class="back-link">
+            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+            <span>Back to Home</span>
+        </a>
+        <!-- Theme toggle will be added here by theme-toggle.js -->
+    </div>
+    
+    <!-- Dashboard Mount Point -->
+    <main id="main-content" role="main" tabindex="-1">
+        <div id="root">
+            <div id="dashboard-data" class="loading-state" role="status" aria-live="polite" aria-label="Loading dashboard">
+            <div class="generic-dashboard-container">
+                <!-- Hero skeleton -->
+                <div class="skeleton skeleton-card" style="height: 200px; margin-bottom: var(--space-6);"></div>
+                
+                <!-- Section skeletons -->
+                <div class="dashboard-section" style="animation: none;">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                    <div class="skeleton skeleton-text" style="width: 90%;"></div>
+                </div>
+                
+                <div class="dashboard-section" style="animation: none;">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text" style="width: 70%;"></div>
+                </div>
+                
+                <div class="dashboard-section" style="animation: none;">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-text"></div>
+                    <div class="skeleton skeleton-text" style="width: 85%;"></div>
+                    <div class="skeleton skeleton-text" style="width: 75%;"></div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Initialize Dashboard -->
+    <script type="module">
+        // Import Web Components
+        import '/assets/components/index.js';
+        
+        import { GenericDashboard } from '/assets/scaffolds/generic-dashboard.js';
+        
+        const root = document.getElementById('root');
+        
+        // Get session info from URL
+        const params = new URLSearchParams(window.location.search);
+        const workflowId = params.get('workflow');
+        const sessionId = params.get('id') || params.get('session');
+        
+        // Validate parameters
+        if (!sessionId) {
+            showError(
+                'No Session ID',
+                'Please provide a session ID in the URL.',
+                'Add ?workflow=WORKFLOW-ID&id=SESSION-ID to the URL',
+                [
+                    { label: 'Go to Home', action: () => window.location.href = '/', primary: true }
+                ]
+            );
+        } else if (!workflowId) {
+            showError(
+                'No Workflow ID',
+                'Please provide a workflow ID in the URL.',
+                'Add ?workflow=WORKFLOW-ID&id=SESSION-ID to the URL',
+                [
+                    { label: 'Go to Home', action: () => window.location.href = '/', primary: true }
+                ]
+            );
+        } else {
+            // Create dashboard
+            try {
+                const dashboard = GenericDashboard({
+                    workflowId,
+                    sessionId,
+                    autoStart: true
+                });
+                
+                root.innerHTML = '';
+                root.appendChild(dashboard.element);
+                
+                // Initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    setTimeout(() => lucide.createIcons(), 100);
+                }
+                
+                console.log(`✅ Generic Dashboard loaded for ${workflowId}/${sessionId}`);
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                showError(
+                    'Dashboard Error',
+                    'Failed to initialize dashboard.',
+                    error.message,
+                    [
+                        { label: 'Reload Page', action: () => window.location.reload(), primary: true },
+                        { label: 'Go to Home', action: () => window.location.href = '/' }
+                    ]
+                );
+            }
+        }
+        
+        /**
+         * Show error state
+         */
+        function showError(title, message, details, actions = []) {
+            const actionsHtml = actions.map(action => `
+                <button class="error-btn ${action.primary ? 'error-btn-primary' : 'error-btn-secondary'}" 
+                        onclick="${action.action.name}()">
+                    ${action.label}
+                </button>
+            `).join('');
+            
+            // Store action functions globally
+            actions.forEach(action => {
+                window[action.action.name] = action.action;
+            });
+            
+            root.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h2 style="margin: 0 0 var(--space-3) 0; color: var(--text-primary);">${escapeHtml(title)}</h2>
+                    <div class="error-message">${escapeHtml(message)}</div>
+                    ${details ? `<div class="error-details">${escapeHtml(details)}</div>` : ''}
+                    <div class="error-actions">${actionsHtml}</div>
+                </div>
+            `;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,125 @@
+name: Validate Workflows
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install WorkRail
+        run: npm install -g workrail || echo "WorkRail not yet published, skipping validation"
+      
+      - name: Count workflows
+        id: count
+        run: |
+          count=$(ls -1 workflows/*.json 2>/dev/null | wc -l || echo 0)
+          echo "count=$count" >> $GITHUB_OUTPUT
+          echo "Found $count workflow(s)"
+      
+      - name: Validate workflow files
+        if: steps.count.outputs.count > 0
+        run: |
+          errors=0
+          for file in workflows/*.json; do
+            echo "Validating $file..."
+            
+            # Check if file exists and is readable
+            if [ ! -r "$file" ]; then
+              echo "❌ Cannot read file: $file"
+              errors=$((errors + 1))
+              continue
+            fi
+            
+            # Validate JSON syntax
+            if ! jq empty "$file" 2>/dev/null; then
+              echo "❌ Invalid JSON in $file"
+              errors=$((errors + 1))
+              continue
+            fi
+            
+            # Check required fields
+            if ! jq -e '.id' "$file" >/dev/null; then
+              echo "❌ Missing 'id' field in $file"
+              errors=$((errors + 1))
+            fi
+            
+            if ! jq -e '.name' "$file" >/dev/null; then
+              echo "❌ Missing 'name' field in $file"
+              errors=$((errors + 1))
+            fi
+            
+            if ! jq -e '.description' "$file" >/dev/null; then
+              echo "❌ Missing 'description' field in $file"
+              errors=$((errors + 1))
+            fi
+            
+            if ! jq -e '.version' "$file" >/dev/null; then
+              echo "❌ Missing 'version' field in $file"
+              errors=$((errors + 1))
+            fi
+            
+            if ! jq -e '.steps' "$file" >/dev/null; then
+              echo "❌ Missing 'steps' field in $file"
+              errors=$((errors + 1))
+            fi
+            
+            # Check filename matches workflow ID
+            workflow_id=$(jq -r '.id' "$file")
+            expected_filename="workflows/${workflow_id}.json"
+            if [ "$file" != "$expected_filename" ]; then
+              echo "⚠️  Warning: Workflow ID '$workflow_id' doesn't match filename '$file'"
+              echo "   Expected: $expected_filename"
+            fi
+            
+            echo "✅ $file is valid"
+          done
+          
+          if [ $errors -gt 0 ]; then
+            echo "❌ Found $errors error(s)"
+            exit 1
+          fi
+          
+          echo "✅ All workflows are valid"
+      
+      - name: Check for duplicate IDs
+        if: steps.count.outputs.count > 0
+        run: |
+          ids=$(jq -r '.id' workflows/*.json | sort)
+          duplicate_ids=$(echo "$ids" | uniq -d)
+          
+          if [ -n "$duplicate_ids" ]; then
+            echo "❌ Found duplicate workflow IDs:"
+            echo "$duplicate_ids"
+            exit 1
+          fi
+          
+          echo "✅ No duplicate workflow IDs found"
+      
+      - name: Generate workflow summary
+        if: steps.count.outputs.count > 0
+        run: |
+          echo "## Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| ID | Name | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          
+          for file in workflows/*.json; do
+            id=$(jq -r '.id' "$file")
+            name=$(jq -r '.name' "$file")
+            version=$(jq -r '.version' "$file")
+            echo "| $id | $name | $version |" >> $GITHUB_STEP_SUMMARY
+          done
+

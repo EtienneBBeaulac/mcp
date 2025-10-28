@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generic Dashboard Test</title>
+    
+    <!-- Design System -->
+    <link rel="stylesheet" href="/assets/styles/tokens.css">
+    <link rel="stylesheet" href="/assets/design-system.css">
+    <link rel="stylesheet" href="/assets/generic-dashboard.css">
+    
+    <!-- Theme Management -->
+    <script src="/assets/theme-manager.js" defer></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, 
+                rgba(249, 250, 251, 1) 0%,
+                rgba(243, 244, 246, 1) 50%,
+                rgba(249, 250, 251, 1) 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: var(--space-6) 0;
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, 
+                #0f1419 0%,
+                #18181b 50%,
+                #0f1419 100%);
+        }
+        
+        .test-header {
+            max-width: 1200px;
+            margin: 0 auto var(--space-8);
+            padding: 0 var(--space-6);
+        }
+        
+        .test-header h1 {
+            font-size: var(--text-3xl);
+            color: var(--text-primary);
+            margin: 0 0 var(--space-2) 0;
+        }
+        
+        .test-header p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .test-controls {
+            max-width: 1200px;
+            margin: 0 auto var(--space-6);
+            padding: 0 var(--space-6);
+            display: flex;
+            gap: var(--space-3);
+        }
+        
+        .test-btn {
+            padding: var(--space-2) var(--space-4);
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+        
+        .test-btn:hover {
+            background: var(--primary-600);
+            transform: translateY(-1px);
+        }
+        
+        .loading-state,
+        .error-state {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-12);
+            text-align: center;
+        }
+        
+        .loading-state {
+            font-size: var(--text-lg);
+            color: var(--text-secondary);
+        }
+        
+        .error-state {
+            color: var(--status-error);
+        }
+        
+        .error-icon {
+            font-size: var(--text-4xl);
+            margin-bottom: var(--space-4);
+        }
+        
+        .error-message {
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-6);
+        }
+        
+        .error-reload-btn {
+            padding: var(--space-3) var(--space-6);
+            background: var(--status-error);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>🧪 Generic Dashboard Test</h1>
+        <p>Testing pattern-based dashboard rendering</p>
+    </div>
+    
+    <div class="test-controls">
+        <button class="test-btn" onclick="testWithRealData()">Load Real Session</button>
+        <button class="test-btn" onclick="testWithMockData()">Use Mock Data</button>
+        <button class="test-btn" onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+    
+    <div id="root"></div>
+    
+    <script type="module">
+        import { GenericDashboard } from '/assets/scaffolds/generic-dashboard.js';
+        import { GenericRenderer } from '/assets/services/generic-renderer.js';
+        
+        let currentDashboard = null;
+        const root = document.getElementById('root');
+        
+        // Test with real session data from API
+        window.testWithRealData = function() {
+            const params = new URLSearchParams(window.location.search);
+            const workflowId = params.get('workflow') || 'systematic-bug-investigation-with-loops';
+            const sessionId = params.get('id') || params.get('session');
+            
+            if (!sessionId) {
+                alert('No session ID provided. Add ?id=SESSION-ID to the URL');
+                return;
+            }
+            
+            // Destroy previous dashboard
+            if (currentDashboard) {
+                currentDashboard.destroy();
+            }
+            
+            // Create new dashboard
+            currentDashboard = GenericDashboard({
+                workflowId,
+                sessionId,
+                dataSource: `/api/sessions/${workflowId}/${sessionId}`,
+                pollInterval: 5000,
+                autoStart: true
+            });
+            
+            root.innerHTML = '';
+            root.appendChild(currentDashboard.element);
+        };
+        
+        // Test with mock data
+        window.testWithMockData = function() {
+            // Destroy previous dashboard
+            if (currentDashboard) {
+                currentDashboard.destroy();
+            }
+            
+            root.innerHTML = '';
+            
+            // Create mock session data
+            const mockData = {
+                dashboard: {
+                    title: "Mock Bug Investigation - TEST-123",
+                    status: "in_progress",
+                    progress: 65,
+                    confidence: 7.5,
+                    currentPhase: "Phase 3: Validation"
+                },
+                hypotheses: [
+                    {
+                        id: "H1",
+                        description: "Database connection pool exhausted during peak load",
+                        status: "active",
+                        confidence: 8.5,
+                        evidence: [
+                            "Connection pool metrics show 100/100 connections in use",
+                            "Response time degradation correlates with connection count",
+                            "Error logs show 'Too many connections' errors"
+                        ]
+                    },
+                    {
+                        id: "H2",
+                        description: "Memory leak in cache implementation",
+                        status: "ruled-out",
+                        confidence: 2.0,
+                        evidence: [
+                            "Memory usage stable over 24-hour period",
+                            "Heap dump shows no unusual object retention"
+                        ]
+                    },
+                    {
+                        id: "H3",
+                        description: "Slow database queries causing timeout",
+                        status: "confirmed",
+                        confidence: 9.2,
+                        evidence: [
+                            "Query execution time >5s for specific report",
+                            "Missing index on frequently queried column",
+                            "Adding index in test environment fixed the issue"
+                        ]
+                    }
+                ],
+                timeline: [
+                    { timestamp: "2025-10-09T10:00:00Z", event: "Investigation started" },
+                    { timestamp: "2025-10-09T10:15:00Z", event: "Identified H1: Connection pool issue" },
+                    { timestamp: "2025-10-09T10:30:00Z", event: "Tested H2: Memory leak hypothesis" },
+                    { timestamp: "2025-10-09T10:45:00Z", event: "Ruled out H2 based on heap analysis" },
+                    { timestamp: "2025-10-09T11:00:00Z", event: "Discovered H3: Slow query pattern" },
+                    { timestamp: "2025-10-09T11:15:00Z", event: "Confirmed H3 with index addition test" }
+                ],
+                rootCause: {
+                    description: "Missing database index on users.email column causing full table scan",
+                    location: "src/database/schema.sql",
+                    confidence: 9.5,
+                    impact: "High - Affects all user lookup operations",
+                    solution: "Add index on users.email column"
+                },
+                metrics: {
+                    totalHypotheses: 3,
+                    confirmed: 1,
+                    ruledOut: 1,
+                    timeSpent: 75
+                },
+                recommendations: [
+                    "Add database index on users.email column",
+                    "Increase connection pool size to 200",
+                    "Add query performance monitoring",
+                    "Implement connection pool metrics alerting"
+                ],
+                codeSnippet: `-- Add missing index
+ALTER TABLE users 
+ADD INDEX idx_email (email);
+
+-- Increase connection pool
+spring.datasource.hikari.maximum-pool-size=200`,
+                analysis: {
+                    severity: "critical",
+                    priority: "high",
+                    category: "performance"
+                },
+                relatedTickets: [
+                    "PERF-456: Slow user lookup",
+                    "BUG-789: Timeout errors on dashboard"
+                ]
+            };
+            
+            // Render mock data
+            const renderer = new GenericRenderer();
+            const dashboardContent = renderer.renderAll(mockData);
+            root.appendChild(dashboardContent);
+            
+            // Initialize icons
+            if (typeof lucide !== 'undefined') {
+                setTimeout(() => lucide.createIcons(), 50);
+            }
+        };
+        
+        // Toggle theme
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'light';
+            html.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
+        };
+        
+        // Auto-test on load
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('id') || params.has('session')) {
+            testWithRealData();
+        } else {
+            testWithMockData();
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+

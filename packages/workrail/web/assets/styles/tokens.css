@@ -17,13 +17,17 @@
   --status-active: #3b82f6;
   --status-pending: #f59e0b;
   --status-error: #ef4444;
+  --status-error-light: rgba(239, 68, 68, 0.1);
   --status-info: #6366f1;
   
   /* Brand/Primary Colors */
+  --primary-100: #ede9fe;
+  --primary-300: #c4b5fd;
   --primary-400: #a78bfa;
   --primary-500: #8b5cf6;
   --primary-600: #7c3aed;
   --primary-700: #6d28d9;
+  --primary-900: #4c1d95;
   
   /* Vibrant Accent Colors */
   --accent-cyan: #06b6d4;
@@ -270,13 +274,17 @@ body {
   --status-active: #3b82f6;
   --status-pending: #f59e0b;
   --status-error: #ef4444;
+  --status-error-light: rgba(239, 68, 68, 0.1);
   --status-info: #6366f1;
   
   /* Brand/Primary Colors */
+  --primary-100: #ede9fe;
+  --primary-300: #c4b5fd;
   --primary-400: #a78bfa;
   --primary-500: #8b5cf6;
   --primary-600: #7c3aed;
   --primary-700: #6d28d9;
+  --primary-900: #4c1d95;
   
   /* Vibrant Accent Colors */
   --accent-cyan: #06b6d4;

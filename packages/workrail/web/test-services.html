@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services Test - Workrail</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        pre {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            border: 1px solid #e2e8f0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .stat-card {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 5px;
+        }
+        .log {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .log-entry {
+            margin: 3px 0;
+            padding: 2px 0;
+        }
+        .log-time {
+            color: #68d391;
+        }
+        .log-type {
+            color: #fbd38d;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Workrail Services Test</h1>
+    <p>Testing API, session-data, and polling services</p>
+
+    <div id="serverStatus" class="status info">
+        <strong>⏳ Checking server connection...</strong>
+    </div>
+
+    <!-- API Service Tests -->
+    <div class="test-section">
+        <h2>📡 API Service</h2>
+        <p>Test HTTP endpoints with the API wrapper</p>
+        
+        <div class="controls">
+            <button onclick="testGetSessions()">Get Sessions</button>
+            <button onclick="testGetProject()">Get Project</button>
+            <button onclick="testGetProjects()">Get Projects</button>
+        </div>
+        
+        <div id="apiResults"></div>
+    </div>
+
+    <!-- Session Data Tests -->
+    <div class="test-section">
+        <h2>📊 Session Data Service</h2>
+        <p>Test data extraction and manipulation utilities</p>
+        
+        <div id="sessionStats" class="stat-grid"></div>
+        
+        <div class="controls">
+            <button onclick="testExtractDashboard()">Extract Dashboard</button>
+            <button onclick="testFilterSessions()">Filter Sessions</button>
+            <button onclick="testCalculateStats()">Calculate Stats</button>
+            <button onclick="testSortSessions()">Sort Sessions</button>
+        </div>
+        
+        <div id="sessionDataResults"></div>
+    </div>
+
+    <!-- Polling Service Tests -->
+    <div class="test-section">
+        <h2>🔄 Polling Service</h2>
+        <p>Test polling utilities (adaptive, backoff, etc.)</p>
+        
+        <div class="controls">
+            <button id="startPollingBtn" onclick="testStartPolling()">Start Simple Polling</button>
+            <button id="stopPollingBtn" onclick="testStopPolling()" disabled>Stop Polling</button>
+            <button id="adaptiveBtn" onclick="testAdaptivePolling()">Start Adaptive Polling</button>
+            <button onclick="testShowActivePollers()">Show Active Pollers</button>
+        </div>
+        
+        <div id="pollingStatus"></div>
+        <div id="pollingLog" class="log"></div>
+    </div>
+
+    <script type="module">
+        import * as api from '/assets/services/api.js';
+        import * as sessionData from '/assets/services/session-data.js';
+        import * as polling from '/assets/services/polling.js';
+
+        // Make available globally for onclick handlers
+        window.api = api;
+        window.sessionData = sessionData;
+        window.polling = polling;
+        
+        let cachedSessions = [];
+        const pollLog = [];
+        
+        // Check server connection
+        async function checkServer() {
+            try {
+                await api.getCurrentProject();
+                document.getElementById('serverStatus').className = 'status success';
+                document.getElementById('serverStatus').innerHTML = '<strong>✅ Server connected!</strong> Ready to test services.';
+                
+                // Load initial data
+                await loadInitialData();
+            } catch (error) {
+                document.getElementById('serverStatus').className = 'status error';
+                document.getElementById('serverStatus').innerHTML = `<strong>❌ Server not reachable</strong><br>Make sure Workrail is running on localhost:3456<br><small>${error.message}</small>`;
+            }
+        }
+        
+        async function loadInitialData() {
+            try {
+                cachedSessions = await api.getSessions();
+                updateSessionStats();
+                log('info', 'Loaded initial session data');
+            } catch (error) {
+                log('error', 'Failed to load sessions');
+            }
+        }
+        
+        function updateSessionStats() {
+            const stats = sessionData.calculateStats(cachedSessions);
+            document.getElementById('sessionStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Sessions</div>
+                    <div class="stat-value">${stats.total}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active</div>
+                    <div class="stat-value">${stats.active}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value">${stats.completed}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value">${stats.failed}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Progress</div>
+                    <div class="stat-value">${stats.avgProgress}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Confidence</div>
+                    <div class="stat-value">${stats.avgConfidence}/10</div>
+                </div>
+            `;
+        }
+        
+        function showResults(elementId, title, data) {
+            const formatted = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            document.getElementById(elementId).innerHTML = `
+                <h3>${title}</h3>
+                <pre>${formatted}</pre>
+            `;
+        }
+        
+        function log(type, message) {
+            const time = new Date().toLocaleTimeString();
+            pollLog.push({ time, type, message });
+            
+            // Keep last 20 entries
+            if (pollLog.length > 20) pollLog.shift();
+            
+            const logEl = document.getElementById('pollingLog');
+            if (logEl) {
+                logEl.innerHTML = pollLog.map(entry => 
+                    `<div class="log-entry"><span class="log-time">[${entry.time}]</span> <span class="log-type">${entry.type}:</span> ${entry.message}</div>`
+                ).reverse().join('');
+            }
+        }
+        
+        // API Tests
+        window.testGetSessions = async function() {
+            try {
+                const sessions = await api.getSessions();
+                cachedSessions = sessions;
+                updateSessionStats();
+                showResults('apiResults', '✅ Get Sessions', {
+                    count: sessions.length,
+                    sample: sessions.slice(0, 2)
+                });
+                log('success', `Fetched ${sessions.length} sessions`);
+            } catch (error) {
+                showResults('apiResults', '❌ Error', error.message);
+                log('error', 'Failed to fetch sessions');
+            }
+        };
+        
+        window.testGetProject = async function() {
+            try {
+                const project = await api.getCurrentProject();
+                showResults('apiResults', '✅ Get Current Project', project);
+                log('success', `Got project: ${project.id}`);
+            } catch (error) {
+                showResults('apiResults', '❌ Error', error.message);
+                log('error', 'Failed to get project');
+            }
+        };
+        
+        window.testGetProjects = async function() {
+            try {
+                const projects = await api.getProjects();
+                showResults('apiResults', '✅ Get All Projects', projects);
+                log('success', `Found ${projects.length} projects`);
+            } catch (error) {
+                showResults('apiResults', '❌ Error', error.message);
+                log('error', 'Failed to get projects');
+            }
+        };
+        
+        // Session Data Tests
+        window.testExtractDashboard = function() {
+            if (cachedSessions.length === 0) {
+                showResults('sessionDataResults', 'ℹ️ No Sessions', 'Load sessions first');
+                return;
+            }
+            
+            const sample = cachedSessions[0];
+            const dashboard = sessionData.extractDashboard(sample);
+            showResults('sessionDataResults', '✅ Extract Dashboard', {
+                input: sample.id,
+                output: dashboard
+            });
+            log('info', 'Extracted dashboard data');
+        };
+        
+        window.testFilterSessions = function() {
+            const active = sessionData.getActiveSessions(cachedSessions);
+            const completed = sessionData.getCompletedSessions(cachedSessions);
+            const failed = sessionData.getFailedSessions(cachedSessions);
+            
+            showResults('sessionDataResults', '✅ Filter Sessions', {
+                active: active.length,
+                completed: completed.length,
+                failed: failed.length
+            });
+            log('info', `Filtered: ${active.length} active, ${completed.length} completed`);
+        };
+        
+        window.testCalculateStats = function() {
+            const stats = sessionData.calculateStats(cachedSessions);
+            showResults('sessionDataResults', '✅ Calculate Stats', stats);
+            log('info', 'Calculated aggregate statistics');
+        };
+        
+        window.testSortSessions = function() {
+            const byTime = sessionData.sortByUpdatedAt(cachedSessions, true);
+            const byProgress = sessionData.sortByProgress(cachedSessions, true);
+            
+            showResults('sessionDataResults', '✅ Sort Sessions', {
+                newest: byTime.slice(0, 3).map(s => s.id),
+                mostProgress: byProgress.slice(0, 3).map(s => ({ 
+                    id: s.id, 
+                    progress: s.data?.dashboard?.progress 
+                }))
+            });
+            log('info', 'Sorted sessions by various criteria');
+        };
+        
+        // Polling Tests
+        let simplePoller = null;
+        let adaptivePoller = null;
+        let pollCount = 0;
+        
+        window.testStartPolling = function() {
+            pollCount = 0;
+            simplePoller = polling.startPolling('test', async () => {
+                pollCount++;
+                log('poll', `Simple poll #${pollCount}`);
+                document.getElementById('pollingStatus').innerHTML = `
+                    <div class="status info">
+                        <strong>✅ Simple polling active</strong><br>
+                        Poll count: ${pollCount}<br>
+                        Interval: 5000ms
+                    </div>
+                `;
+            }, 5000);
+            
+            document.getElementById('startPollingBtn').disabled = true;
+            document.getElementById('stopPollingBtn').disabled = false;
+            log('success', 'Started simple polling (5s interval)');
+        };
+        
+        window.testStopPolling = function() {
+            if (simplePoller) {
+                simplePoller();
+                simplePoller = null;
+            }
+            polling.stopPolling('test');
+            
+            document.getElementById('startPollingBtn').disabled = false;
+            document.getElementById('stopPollingBtn').disabled = true;
+            document.getElementById('pollingStatus').innerHTML = `
+                <div class="status success">
+                    <strong>⏹️ Polling stopped</strong><br>
+                    Total polls: ${pollCount}
+                </div>
+            `;
+            log('info', 'Stopped polling');
+        };
+        
+        window.testAdaptivePolling = function() {
+            if (adaptivePoller) {
+                adaptivePoller();
+            }
+            
+            pollCount = 0;
+            adaptivePoller = polling.startAdaptivePolling('adaptive-test', async () => {
+                pollCount++;
+                const sessions = await api.getSessions();
+                log('adaptive', `Adaptive poll #${pollCount} - ${sessions.length} sessions`);
+                return sessions;
+            }, {
+                fastInterval: 2000,
+                slowInterval: 10000
+            });
+            
+            document.getElementById('pollingStatus').innerHTML = `
+                <div class="status success">
+                    <strong>✅ Adaptive polling active</strong><br>
+                    Fast: 2s, Slow: 10s<br>
+                    <small>Try switching tabs or being inactive to see it slow down</small>
+                </div>
+            `;
+            log('success', 'Started adaptive polling (2s-10s)');
+        };
+        
+        window.testShowActivePollers = function() {
+            const pollers = polling.getActivePollers();
+            showResults('sessionDataResults', '✅ Active Pollers', pollers);
+            log('info', `Found ${pollers.length} active pollers`);
+        };
+        
+        // Initialize
+        checkServer();
+        
+        console.log('%c✅ All services loaded!', 'color: green; font-weight: bold; font-size: 14px;');
+        console.log('Available:', { api, sessionData, polling });
+    </script>
+</body>
+</html>
+
