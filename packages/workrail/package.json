@@ -1,6 +1,6 @@
 {
   "name": "@exaudeus/workrail",
-  "version": "0.6.1-beta.3",
+  "version": "0.6.1-beta.4",
   "description": "MCP server for structured workflow orchestration and step-by-step task guidance",
   "license": "MIT",
   "bin": {
@@ -17,7 +17,6 @@
     "release": "bash -c './scripts/release.sh'",
     "dev": "npm run build && node dist/mcp-server.js",
     "prepare": "npm run build",
-    "postinstall": "bash scripts/setup-hooks.sh",
     "watch": "tsc --watch",
     "validate:workflows": "bash scripts/validate-workflows.sh",
     "precommit": "npm run validate:workflows",
