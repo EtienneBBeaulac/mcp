@@ -417,8 +417,9 @@ export function createEnhancedMultiSourceWorkflowStorage(
   }
   // Format 2: Comma-separated URLs
   else if (gitReposJson) {
+    // Use home directory for cache (more predictable than process.cwd() when running via MCP/npx)
     const cacheBaseDir = process.env['WORKRAIL_CACHE_DIR'] || 
-                         path.join(process.cwd(), '.workrail-cache');
+                         path.join(os.homedir(), '.workrail', 'cache');
     
     config.gitRepositories = gitReposJson.split(',').map((url, index) => {
       const trimmedUrl = url.trim();

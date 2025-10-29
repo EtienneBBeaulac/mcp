@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import os from 'os';
 import { 
   sanitizeId, 
   assertWithinBase, 
@@ -67,13 +68,22 @@ export class GitWorkflowStorage implements IWorkflowStorage {
       maxFileSizeBytes: config.maxFileSize || 1024 * 1024 // 1MB default
     });
 
+    // Use home directory for cache by default (more predictable than process.cwd() when running via MCP/npx)
+    const defaultCacheDir = path.join(os.homedir(), '.workrail', 'cache');
     const localPath = config.localPath || 
-      path.join(process.cwd(), '.workrail-cache', 'community-workflows');
+      path.join(defaultCacheDir, 'community-workflows');
     
     // Ensure local path is within safe boundaries (skip for tests)
+    // For Git repos, validate against the cache directory, not process.cwd()
+    // This is important when running via MCP/npx where process.cwd() is unpredictable
     if (!config.skipSandboxCheck) {
       try {
-        assertWithinBase(localPath, process.cwd());
+        // Determine the safe base directory: either the configured cache dir or home directory
+        const safeBaseDir = config.localPath 
+          ? path.dirname(path.dirname(config.localPath)) // Parent of parent (e.g., ~/.workrail from ~/.workrail/cache/repo-name)
+          : path.join(os.homedir(), '.workrail'); // Default safe zone
+        
+        assertWithinBase(localPath, safeBaseDir);
       } catch (error) {
         throw new SecurityError(`Local path outside safe boundaries: ${(error as Error).message}`);
       }
