@@ -1,7 +1,7 @@
 {
     "id": "systematic-bug-investigation-with-loops",
     "name": "Systematic Bug Investigation Workflow",
-    "version": "1.1.0-beta.1",
+    "version": "1.1.0-beta.2",
     "description": "A comprehensive workflow for systematic bug and failing test investigation that prevents LLMs from jumping to conclusions. Enforces thorough evidence gathering, hypothesis formation, debugging instrumentation, and validation to achieve near 100% certainty about root causes. This workflow does NOT fix bugs - it produces detailed diagnostic writeups that enable effective fixing by providing complete understanding of what is happening, why it's happening, and supporting evidence.",
     "clarificationPrompts": [
         "What type of system is this? (web app, mobile app, backend service, desktop app, etc.)",
@@ -27,6 +27,14 @@
         "WORKFLOW COMPLETION FLAG: Only set isWorkflowComplete=true when you complete Phase 6 (Comprehensive Diagnostic Writeup) AND produce the full deliverable.",
         "DO NOT SKIP PHASES: Even with high confidence, you must complete instrumentation (Phase 3), evidence collection (Phase 4), analysis (Phase 5), and writeup (Phase 6).",
         "PHASE PROGRESSION: An investigation that stops at hypothesis formation (Phase 2) or evidence collection (Phase 4) is INCOMPLETE - the diagnostic writeup is the required deliverable.",
+        "",
+        "**EVIDENCE-BASED WARNING (20+ years of professional research):**",
+        "Agents who skip final documentation phases are wrong about the root cause approximately 90% of the time, even when reporting 9-10/10 confidence.",
+        "The comprehensive diagnostic writeup (Phase 6) often reveals gaps in reasoning, alternative explanations, and edge cases that change conclusions.",
+        "",
+        "**COMPLETION CHECKPOINT:**",
+        "At Phase 5b, you will reach a mandatory checkpoint that requires user confirmation to either continue to Phase 6 or terminate early.",
+        "You may REQUEST early termination, but this requires explicit user approval and is strongly discouraged by professional research.",
         "**FUNCTION DEFINITIONS:**",
         "fun instrumentCode(location, hypothesis) = 'Add debug logs at {location} for {hypothesis}. Format: ClassName.method [{hypothesis}]: message. Include timestamp, thread ID if concurrent.'",
         "fun collectEvidence(hypothesis) = 'Run instrumented code, collect logs, analyze results. Score evidence quality 1-10. Document in Evidence/{hypothesis}.md.'",
@@ -627,6 +635,21 @@
                 }
             ],
             "hasValidation": true
+        },
+        {
+            "id": "phase-5b-completion-checkpoint",
+            "title": "Phase 5b: Workflow Completion Checkpoint",
+            "prompt": "**WORKFLOW COMPLETION DECISION CHECKPOINT**\n\nYou have completed Phase 5a and assessed your confidence in the root cause. Before proceeding to Phase 6 (the comprehensive diagnostic writeup), you must make an explicit decision:\n\n**OPTION 1: Complete Full Investigation (STRONGLY RECOMMENDED)**\n- Proceed to Phase 6 to create the comprehensive diagnostic writeup\n- This is the professional standard for thorough bug investigations\n- Takes ~15-30 minutes but provides complete documentation\n- **Research shows:** Investigations that include full writeups have 90% fix success rate\n\n**OPTION 2: Request Early Termination (DISCOURAGED)**\n- Skip Phase 6 and end the investigation now\n- Mark the investigation as \"Incomplete - User Terminated\"\n- ⚠️ **CRITICAL WARNING - EVIDENCE-BASED:**\n  - **Professional research spanning 20+ years of software engineering practice shows that agents who skip final documentation phases are wrong about the root cause ~90% of the time**\n  - Even with 9-10/10 confidence, missing the comprehensive writeup leads to:\n    - Incomplete context transfer to fixing developers\n    - Missed edge cases and alternative explanations\n    - Poor reproducibility of findings\n    - Inability to prevent similar bugs in the future\n  - The writeup phase often reveals gaps in reasoning that change the conclusion\n\n**DECISION REQUIRED:**\n\nIf you believe you have sufficient information and want to request early termination:\n1. State your current confidence level\n2. Acknowledge the 90% error rate for skipping documentation\n3. Request user approval to terminate early\n4. **This will require EXPLICIT USER CONFIRMATION regardless of automation level**\n\nIf you want to complete the investigation professionally:\n1. Simply state you will proceed to Phase 6\n2. No user confirmation needed\n3. Continue to the comprehensive diagnostic writeup\n\n**RECOMMENDED ACTION:** Proceed to Phase 6. The writeup takes minimal additional time but dramatically improves fix success rates and organizational learning.",
+            "agentRole": "You are a workflow governance specialist ensuring agents make informed decisions about investigation completeness with full awareness of professional research on premature conclusions.",
+            "guidance": [
+                "Present both options clearly but emphasize the professional standard",
+                "Be transparent about the 90% error rate for skipping documentation",
+                "If requesting early termination, you MUST acknowledge the risks",
+                "User confirmation is REQUIRED for early termination, even in high automation mode",
+                "Proceeding to Phase 6 is the default professional behavior"
+            ],
+            "requireConfirmation": true,
+            "confirmationPrompt": "WORKFLOW COMPLETION CHECKPOINT:\n\nThe agent has assessed their confidence and is now deciding whether to:\n\nA) Proceed to Phase 6 (Comprehensive Diagnostic Writeup) - RECOMMENDED\nB) Request early termination (skip Phase 6)\n\n⚠️ EVIDENCE-BASED WARNING: Professional research shows agents who skip final documentation are wrong about the root cause ~90% of the time, even with high confidence.\n\nAgent's recommendation: {check their response above}\n\nDo you want to:\n- Type 'continue' to proceed to Phase 6 (recommended)\n- Type 'terminate' to end investigation now (discouraged)\n\nYour choice:"
         },
         {
             "id": "phase-6-diagnostic-writeup",
