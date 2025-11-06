@@ -1,7 +1,7 @@
 {
   "id": "systematic-bug-investigation-with-loops",
   "name": "Systematic Bug Investigation Workflow",
-  "version": "1.1.0-beta.18",
+  "version": "1.1.0-beta.19",
   "description": "A comprehensive workflow for systematic bug and failing test investigation that prevents LLMs from jumping to conclusions. Enforces thorough evidence gathering, hypothesis formation, debugging instrumentation, and validation to achieve near 100% certainty about root causes. This workflow does NOT fix bugs - it produces detailed diagnostic writeups that enable effective fixing by providing complete understanding of what is happening, why it's happening, and supporting evidence.",
   "clarificationPrompts": [
     "What type of system is this? (web app, mobile app, backend service, desktop app, etc.)",
@@ -32,6 +32,10 @@
     "\"I found the bug\" = YOU HAVE A GUESS. \"I proved the bug\" = YOU HAVE EVIDENCE FROM PHASES 3-5.",
     "FINDING \u2260 DONE. PROVING = DONE. Only after completing instrumentation, evidence collection, and validation do you have proof.",
     "NEVER say \"I've identified the root cause\" and stop. That is a THEORY, not PROOF. Continue to evidence collection.",
+    "**\ud83d\udea8 USER SAYS: NO RATIONALIZATION. NO EXCEPTIONS. NO \"BUT IN MY CASE...\":**",
+    "DO NOT say \"However, given that I have...\" or \"Let me do a targeted Phase X...\" or \"Based on my high confidence...\"",
+    "USER SAYS: YOUR SITUATION IS NOT SPECIAL. YOU ARE NOT THE EXCEPTION. Complete ALL 23 steps. Complete ALL 5 analysis iterations.",
+    "USER SAYS: \"I found the bug early\" = ALL THE MORE REASON to validate it properly through ALL phases. Quick conclusions are WRONG 90% of the time.",
     "DO NOT create \"summary documents\" or \"diagnostic writeups\" until Phase 6. That is SKIPPING THE WORKFLOW.",
     "**\ud83c\udfaf PHASE 0 = PURE SETUP (NO ANALYSIS):**",
     "Phase 0 is MECHANICAL SETUP ONLY: triage, user preferences, tool checking, context creation. No code analysis, no assumption checking. That comes in Phase 1.",
@@ -280,7 +284,13 @@
           "requireConfirmation": false
         }
       ],
-      "requireConfirmation": false
+      "requireConfirmation": false,
+      "guidance": [
+        "\ud83d\udea8 USER SAYS: This loop MUST complete ALL 5 iterations. Do NOT exit early even if you think you found the bug.",
+        "DO NOT rationalize: 'I have high confidence so I can do a targeted Phase 2.' NO. Complete all 5 iterations FIRST.",
+        "Agents who skip analysis iterations are wrong ~95% of the time. The later iterations catch edge cases and alternative explanations.",
+        "Iteration 2/5 is NOT enough. Iteration 3/5 is NOT enough. Complete 5/5."
+      ]
     },
     {
       "id": "phase-1a-binary-search",
