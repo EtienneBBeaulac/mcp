@@ -5,30 +5,42 @@ import type {
   CallToolResult,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import { createAppContainer } from "./container.js";
+import { createAppContainer, AppContainer } from "./container.js";
 import { SessionManager, HttpServer } from "./infrastructure/session/index.js";
 import { createSessionTools, handleSessionTool } from "./tools/session-tools.js";
+import { IFeatureFlagProvider } from "./config/feature-flags.js";
 
 class WorkflowOrchestrationServer {
-  private container: any;
-  private sessionManager: SessionManager;
-  private httpServer: HttpServer;
+  private container: AppContainer;
+  private featureFlags: IFeatureFlagProvider;
+  private sessionManager: SessionManager | null = null;
+  private httpServer: HttpServer | null = null;
   private sessionTools: Tool[];
 
-  constructor() {
-    this.container = createAppContainer();
+  constructor(container?: AppContainer) {
+    // Dependency Injection: Accept container or create default
+    this.container = container ?? createAppContainer();
+    this.featureFlags = this.container.featureFlags;
     
-    // Initialize session management (DISABLED for release)
-    // TODO: Re-enable session tools when ready for production
-    this.sessionManager = new SessionManager();
-    this.httpServer = new HttpServer(this.sessionManager, { autoOpen: false });
-    this.sessionTools = []; // Disabled: createSessionTools(this.sessionManager, this.httpServer);
+    // Initialize session management based on feature flag
+    if (this.featureFlags.isEnabled('sessionTools')) {
+      this.sessionManager = new SessionManager();
+      this.httpServer = new HttpServer(this.sessionManager, { autoOpen: false });
+      this.sessionTools = createSessionTools(this.sessionManager, this.httpServer);
+      
+      console.error('[FeatureFlags] Session tools enabled');
+    } else {
+      this.sessionTools = [];
+      console.error('[FeatureFlags] Session tools disabled (enable with WORKRAIL_ENABLE_SESSION_TOOLS=true)');
+    }
   }
   
   async initialize(): Promise<void> {
-    // Start HTTP server for dashboard (DISABLED for release)
-    // TODO: Re-enable when session tools are production-ready
-    // await this.httpServer.start();
+    // Start HTTP server for dashboard if session tools are enabled
+    if (this.featureFlags.isEnabled('sessionTools') && this.httpServer) {
+      await this.httpServer.start();
+      console.error('[FeatureFlags] Dashboard server started');
+    }
   }
   
   getSessionTools(): Tool[] {
@@ -36,6 +48,20 @@ class WorkflowOrchestrationServer {
   }
   
   async handleSessionTool(name: string, args: any): Promise<CallToolResult> {
+    // Guard: Session tools must be enabled
+    if (!this.featureFlags.isEnabled('sessionTools') || !this.sessionManager || !this.httpServer) {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: 'Session tools are not enabled. Set WORKRAIL_ENABLE_SESSION_TOOLS=true to enable.',
+            tool: name
+          }, null, 2)
+        }],
+        isError: true
+      };
+    }
+    
     return handleSessionTool(name, args, this.sessionManager, this.httpServer);
   }
 
@@ -419,11 +445,10 @@ async function runServer() {
   server.setRequestHandler(CallToolRequestSchema, async (request: any): Promise<CallToolResult> => {
     const { name, arguments: args } = request.params;
 
-    // Handle session tools (DISABLED for release)
-    // TODO: Re-enable when session tools are production-ready
-    // if (name.startsWith('workrail_')) {
-    //   return await workflowServer.handleSessionTool(name, args || {});
-    // }
+    // Handle session tools (only if enabled via feature flag)
+    if (name.startsWith('workrail_')) {
+      return await workflowServer.handleSessionTool(name, args || {});
+    }
 
     // Handle workflow tools
     switch (name) {

@@ -6,6 +6,10 @@ import { createWorkflowLookupServer } from './infrastructure/rpc/server.js';
 import { WorkflowLookupServer } from './types/server.js';
 import { ILoopContextOptimizer } from './types/loop-context-optimizer.js';
 import { LoopContextOptimizer } from './application/services/loop-context-optimizer.js';
+import { 
+  IFeatureFlagProvider, 
+  createFeatureFlagProvider 
+} from './config/feature-flags.js';
 
 /**
  * Centralized composition root / dependency-injection helper.
@@ -13,6 +17,7 @@ import { LoopContextOptimizer } from './application/services/loop-context-optimi
  * testing or alternative implementations.
  */
 export interface AppContainer {
+  featureFlags: IFeatureFlagProvider;
   storage: IWorkflowStorage;
   validationEngine: ValidationEngine;
   loopContextOptimizer: ILoopContextOptimizer;
@@ -26,6 +31,7 @@ export interface AppContainer {
  *                   in-memory storage for tests.
  */
 export function createAppContainer(overrides: Partial<AppContainer> = {}): AppContainer {
+  const featureFlags = overrides.featureFlags ?? createFeatureFlagProvider();
   const storage = overrides.storage ?? createDefaultWorkflowStorage();
   const validationEngine = overrides.validationEngine ?? new ValidationEngine();
   const loopContextOptimizer = overrides.loopContextOptimizer ?? new LoopContextOptimizer();
@@ -34,6 +40,7 @@ export function createAppContainer(overrides: Partial<AppContainer> = {}): AppCo
   const server = overrides.server ?? createWorkflowLookupServer(workflowService);
 
   return {
+    featureFlags,
     storage,
     validationEngine,
     loopContextOptimizer,
