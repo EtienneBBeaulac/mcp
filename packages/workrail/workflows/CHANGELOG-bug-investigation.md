@@ -1,5 +1,33 @@
 # Changelog - Systematic Bug Investigation Workflow
 
+## [1.1.0-beta.17] - 2025-01-06
+
+### Major Restructuring
+- **Phase 0 Consolidation**: Merged 4 separate Phase 0 steps into single comprehensive setup step
+  - Combined: Triage (0), User Preferences (0a), Tool Check (0b), Context Creation (0c)
+  - Result: Single "Phase 0: Complete Investigation Setup" step covering all mechanical preparation
+  - Rationale: Reduce workflow overhead while maintaining thorough setup
+  - New structure: Phase 0 (Setup) → Phase 0a (Commitment Checkpoint, conditional)
+  
+- **Assumption Verification Relocation**: Moved from Phase 0a to Phase 1f
+  - Previously: Early assumption check before ANY code analysis (removed)
+  - Now: Assumption verification AFTER all 5 analysis iterations complete (Phase 1f Step 2.5)
+  - Rationale: Assumptions can only be properly verified with full code context
+  - Timing: Happens after neighborhood mapping, pattern analysis, component ranking, data flow tracing, and test gap analysis
+  - Location: Integrated into Phase 1f "Final Breadth & Scope Verification" before hypothesis development
+  
+### Impact
+- **Step Count**: Reduced from 27 steps to 23 steps (4 Phase 0 steps → 1)
+- **Phase Numbering**: Simplified Phase 0 structure (Phase 0d → Phase 0a)
+- **Debugging Workflow Alignment**: Better follows traditional debugging principles (observe fully THEN question assumptions THEN hypothesize)
+- **Agent Experience**: Faster setup phase, more informed assumption checking
+
+### Breaking Changes
+- `completedSteps` array format changed:
+  - OLD: `["phase-0-triage", "phase-0a-user-preferences", "phase-0b-tool-check", "phase-0c-create-context", "phase-0d-workflow-commitment"]`
+  - NEW: `["phase-0-complete-setup", "phase-0a-workflow-commitment"]`
+- Step IDs changed: `phase-0d-workflow-commitment` → `phase-0a-workflow-commitment`
+
 ## [1.1.0-beta.9] - 2025-01-06
 
 ### Enhanced
