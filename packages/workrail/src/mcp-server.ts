@@ -18,15 +18,17 @@ class WorkflowOrchestrationServer {
   constructor() {
     this.container = createAppContainer();
     
-    // Initialize session management
+    // Initialize session management (DISABLED for release)
+    // TODO: Re-enable session tools when ready for production
     this.sessionManager = new SessionManager();
     this.httpServer = new HttpServer(this.sessionManager, { autoOpen: false });
-    this.sessionTools = createSessionTools(this.sessionManager, this.httpServer);
+    this.sessionTools = []; // Disabled: createSessionTools(this.sessionManager, this.httpServer);
   }
   
   async initialize(): Promise<void> {
-    // Start HTTP server for dashboard
-    await this.httpServer.start();
+    // Start HTTP server for dashboard (DISABLED for release)
+    // TODO: Re-enable when session tools are production-ready
+    // await this.httpServer.start();
   }
   
   getSessionTools(): Tool[] {
@@ -417,10 +419,11 @@ async function runServer() {
   server.setRequestHandler(CallToolRequestSchema, async (request: any): Promise<CallToolResult> => {
     const { name, arguments: args } = request.params;
 
-    // Handle session tools
-    if (name.startsWith('workrail_')) {
-      return await workflowServer.handleSessionTool(name, args || {});
-    }
+    // Handle session tools (DISABLED for release)
+    // TODO: Re-enable when session tools are production-ready
+    // if (name.startsWith('workrail_')) {
+    //   return await workflowServer.handleSessionTool(name, args || {});
+    // }
 
     // Handle workflow tools
     switch (name) {

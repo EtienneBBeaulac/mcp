@@ -1,5 +1,22 @@
 # Changelog - Systematic Bug Investigation Workflow
 
+## [1.1.0-beta.9] - 2025-01-06
+
+### Enhanced
+- **CRITICAL**: Strengthened anti-premature-completion safeguards throughout the workflow
+  - Added explicit "ANALYSIS ≠ DIAGNOSIS ≠ PROOF" section in metaGuidance
+  - Phase 1f: Added "DO NOT STOP HERE" warning emphasizing ZERO PROOF after analysis (~25% done)
+  - Phase 2a: Added "YOU ARE NOT DONE" warning with 5-point reminder about mandatory validation
+  - Phase 2h: Added "YOU ARE HALFWAY DONE (~50%)" warning before instrumentation phase
+  - Clarified progression: Analysis (20%) → Hypotheses (40%) → Evidence (80%) → Writeup (100%)
+  - Reinforced: Even with "100% confidence," stopping before evidence collection = providing guesses, not diagnosis
+  
+### Context
+- **Problem**: Agents were stopping after Phase 1 or 2 when they reached "100% confidence" in analysis/hypotheses
+- **Root Cause**: Agents conflating "confident theory" with "proven diagnosis"
+- **Solution**: Explicit warnings at every potential stopping point emphasizing lack of proof until Phases 3-5 complete
+- **Impact**: Forces agents to understand that analysis/hypotheses are NOT evidence, and professional practice requires validation
+
 ## [1.1.0-beta.8] - 2025-01-06
 
 ### Fixed
