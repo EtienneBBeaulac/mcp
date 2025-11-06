@@ -1,5 +1,37 @@
 # Changelog - Systematic Bug Investigation Workflow
 
+## [1.1.0-beta.7] - 2025-11-06
+
+### 🎯 Fix: Phase 0e Conditional on Automation Level
+
+**Problem**: Phase 0e (Early Termination Checkpoint) required user confirmation even in HIGH automation mode, creating friction and contradicting the "no permission asking" principle.
+
+**Solution**: Made Phase 0e conditional on automation level:
+
+```javascript
+runCondition: {
+  var: "automationLevel",
+  notEquals: "High"
+}
+```
+
+**Behavior:**
+- **HIGH AUTO MODE**: Skips Phase 0e entirely, proceeds automatically with full investigation
+- **MEDIUM/LOW MODE**: Shows Phase 0e checkpoint, requires explicit user confirmation to proceed
+
+**Rationale**: 
+- User choosing HIGH AUTO MODE is already committing to systematic thoroughness
+- Checkpoint still valuable for MEDIUM/LOW modes where user wants more control
+- Aligns with HIGH AUTO MODE principle: "execute phases automatically, no inter-phase asking"
+- User can still interrupt workflow anytime if they change their mind
+
+**Why This Makes Sense**:
+- HIGH AUTO users trust the process and want speed → Skip checkpoint
+- MEDIUM/LOW users want control points → Keep checkpoint
+- Best of both worlds: Respects user's automation preference
+
+---
+
 ## [1.1.0-beta.6] - 2025-11-06
 
 ### 🎯 Major Enhancements: Concrete Instrumentation & Breadth Check
