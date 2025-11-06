@@ -1,5 +1,27 @@
 # Changelog - Systematic Bug Investigation Workflow
 
+## [1.1.0-beta.20] - 2025-01-06
+
+### CRITICAL FIX - Dangerous "Autonomy" Language
+- **ROOT CAUSE IDENTIFIED**: Our automation level descriptions were giving agents permission to skip!
+  - OLD: "High=**auto-approve >8.0 confidence decisions**" ❌
+  - Interpreted as: "I have 9/10 confidence → I can approve my decision to skip phases"
+  - OLD: "Control workflow **autonomy**" ❌
+  - Interpreted as: "High mode gives me autonomy to decide what to skip"
+
+### Language Fixes
+1. **Removed "auto-approve decisions"**: Changed to "execute phases automatically WITHOUT asking permission between phases"
+2. **Removed "autonomy"**: Changed to "Control confirmation frequency"
+3. **Clarified HIGH AUTO MODE**:
+   - NEW: "HIGH AUTO = NO INTERRUPTIONS, NOT NO PHASES"
+   - NEW: "HIGH AUTO ≠ PERMISSION TO SKIP PHASES"
+4. **Explicit USER SAYS**:
+   - "USER SAYS: 'High automation mode' means you DON'T ASK PERMISSION. It does NOT mean you have autonomy to decide which phases to skip."
+   - "High auto = Faster execution of ALL phases. NOT = Smarter agent gets to skip phases."
+
+### Credit
+User insight: "Could the high automation be causing it to do this? do we frame it as letting it do whatever it wants?" - YES, we were!
+
 ## [1.1.0-beta.19] - 2025-01-06
 
 ### CRITICAL FIX - Anti-Rationalization
