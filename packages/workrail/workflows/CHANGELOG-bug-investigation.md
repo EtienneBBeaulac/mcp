@@ -1,5 +1,93 @@
 # Changelog - Systematic Bug Investigation Workflow
 
+## [1.1.0-beta.4] - 2025-11-06
+
+### 🎯 Major Enhancement: Sophisticated Code Analysis (Adapted from MR Review Workflow)
+
+**Problem**: The codebase analysis in Phase 1 was weaker than it should be. It lacked explicit structural mapping, contracts & invariants discovery, and sophisticated call graph visualization that are essential for understanding bugs in complex codebases.
+
+**Solution**: Added new **Phase 1a: Neighborhood, Call Graph & Contracts** analysis step, bringing total Phase 1 sub-phases from 4 to 5, and total workflow steps from 27 to 28.
+
+### 📊 New Phase 1a: Neighborhood, Call Graph & Contracts
+
+This new first analysis step builds the structural foundation before diving into details:
+
+#### **1. Module Root Computation**
+- Find nearest common ancestor of error stack trace files
+- Clamp to package/src boundary to define investigation scope
+- Prevents unbounded analysis across entire codebase
+
+#### **2. Neighborhood Map**
+- Immediate neighbors (same directory, max 8)
+- Imports/exports directly used (max 10)
+- Co-located tests
+- Closest entry points (routes, endpoints, CLI commands, max 5)
+- Provides context for what's near the failing code
+
+#### **3. Bounded Call Graph with Small Multiples**
+- Build call graph ≤2 hops deep per failing symbol
+- Cap total nodes at ≤15 per symbol
+- **HOT Path Ranking** scoring system:
+  * Error location in path: +3
+  * Entry point to path: +2
+  * Test coverage exists: +1
+  * Mentioned in ticket/error: +1
+  * Tag as HOT if score ≥3
+- **Small Multiples ASCII visualization**:
+  * Width ≤100 chars per path
+  * Format: `EntryPoint -> Caller -> [*FailingSymbol*] -> Callee`
+  * ≤8 total paths, prioritize HOT paths
+  * Alias Legend for repeated subpaths (A1, A2...)
+- **Adjacency Summary** fallback if caps exceeded
+
+#### **4. Flow Anchors**
+- Map how users/systems trigger the bug
+- HTTP routes → handlers → failing code
+- CLI commands → execution → failing code
+- Scheduled jobs, event handlers → failing code
+- Cap at ≤5 most relevant anchors
+- **Critical**: Shows HOW the bug is reached for reproduction
+
+#### **5. Contracts & Invariants** (NEW - Most Critical Addition)
+- Public API symbols (exported functions/classes)
+- API endpoints (REST/GraphQL/RPC)
+- Database tables/collections touched
+- Message queue topics/events
+- **Extract stated invariants** from:
+  * JSDoc/docstrings with @invariant
+  * Assertions in code
+  * Validation logic patterns
+  * Comments describing guarantees
+- **Why this matters**: Contracts tell us what guarantees the code MUST maintain - bugs are often broken contracts
+
+### 📈 Benefits
+
+1. **Structural Scaffolding**: Phase 1a provides the map before exploring terrain
+2. **Contract-Driven Analysis**: Understanding what code promises helps identify where it breaks promises
+3. **HOT Path Prioritization**: Focus investigation on high-impact code paths first
+4. **Bounded Analysis**: Strict caps prevent 2-hour rabbit holes
+5. **Entry Point Clarity**: Flow anchors show how to reproduce bugs
+6. **Visual Call Graphs**: ASCII Small Multiples make relationships scannable
+
+### 🏗️ Updated Phase Structure
+
+Phase 1 now has 5 sub-phases (up from 4):
+- **1a**: Neighborhood, Call Graph & Contracts (NEW)
+- **1b**: Breadth Scan & Pattern Discovery (was 1a)
+- **1c**: Component Deep Dive (was 1b)
+- **1d**: Dependencies & Flow (was 1c)
+- **1e**: Test Coverage (was 1d)
+
+### 🎓 Adapted From MR Review Workflow
+
+This enhancement adapts proven patterns from the `mr-review-workflow.json` Phase 1b:
+- Bounded call graph with caps
+- Small Multiples visualization
+- HOT path ranking
+- Alias Legend for repeated paths
+- Adjacency Summary fallback
+- Contracts & Invariants discovery
+
 ## [1.1.0-beta.3] - 2025-11-06
 
 ### 🚨 CRITICAL FIX: Prevent ALL Phase Skipping (Not Just Documentation)

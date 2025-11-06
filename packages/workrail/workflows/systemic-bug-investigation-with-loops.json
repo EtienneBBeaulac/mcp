@@ -1,7 +1,7 @@
 {
     "id": "systematic-bug-investigation-with-loops",
     "name": "Systematic Bug Investigation Workflow",
-    "version": "1.1.0-beta.3",
+    "version": "1.1.0-beta.4",
     "description": "A comprehensive workflow for systematic bug and failing test investigation that prevents LLMs from jumping to conclusions. Enforces thorough evidence gathering, hypothesis formation, debugging instrumentation, and validation to achieve near 100% certainty about root causes. This workflow does NOT fix bugs - it produces detailed diagnostic writeups that enable effective fixing by providing complete understanding of what is happening, why it's happening, and supporting evidence.",
     "clarificationPrompts": [
         "What type of system is this? (web app, mobile app, backend service, desktop app, etc.)",
@@ -23,10 +23,10 @@
     "metaGuidance": [
         "**🚨 MANDATORY WORKFLOW EXECUTION - READ THIS FIRST:**",
         "YOU ARE EXECUTING A STRUCTURED WORKFLOW, NOT FREESTYLE DEBUGGING.",
-        "You CANNOT \"figure out the bug\" and stop. You MUST execute all 26 workflow steps by repeatedly calling workflow_next until the MCP returns isComplete=true.",
+        "You CANNOT \"figure out the bug\" and stop. You MUST execute all 28 workflow steps by repeatedly calling workflow_next until the MCP returns isComplete=true.",
         "WORKFLOW MECHANICS: Each call to workflow_next returns the next required step. You MUST execute that step, then call workflow_next again. Repeat until isComplete=true.",
         "DO NOT STOP CALLING WORKFLOW_NEXT: Even if you think you know the bug, even if you have high confidence, even if it seems obvious - you MUST continue calling workflow_next.",
-        "STEP COUNTER: Every prompt shows \"Step X of 26\" - you are NOT done until you reach Step 26/26 and isComplete=true.",
+        "STEP COUNTER: Every prompt shows \"Step X of 28\" - you are NOT done until you reach Step 28/28 and isComplete=true.",
         "",
         "**🎯 WHY THIS STRUCTURE EXISTS (Evidence-Based):**",
         "Professional research spanning 20+ years shows agents who skip systematic investigation steps are wrong ~90% of the time, even with 9-10/10 self-reported confidence.",
@@ -168,7 +168,7 @@
                 "Users must confirm the agent's commitment before proceeding"
             ],
             "requireConfirmation": true,
-            "confirmationPrompt": "The agent has acknowledged they will follow all 26 workflow steps through Phase 6. Do you approve proceeding with the systematic investigation?\n\nType 'yes' to continue, or 'no' to discuss modifications to the investigation approach."
+            "confirmationPrompt": "The agent has acknowledged they will follow all 28 workflow steps through Phase 6. Do you approve proceeding with the systematic investigation?\n\nType 'yes' to continue, or 'no' to discuss modifications to the investigation approach."
         },
         {
             "id": "phase-1-iterative-analysis",
@@ -176,64 +176,84 @@
             "title": "Phase 1: Multi-Dimensional Codebase Analysis",
             "loop": {
                 "type": "for",
-                "count": 4,
-                "maxIterations": 4,
+                "count": 5,
+                "maxIterations": 5,
                 "iterationVar": "analysisPhase"
             },
             "body": [
                 {
-                    "id": "analysis-breadth-scan",
-                    "title": "Analysis 1/4: Breadth Scan",
-                    "prompt": "**BREADTH SCAN - Cast Wide Net**\n\nGoal: Understand full system impact and identify all potentially involved components.\n\nPerform: Error propagation mapping, Component discovery, Data flow mapping, Recent changes analysis, and Historical pattern search.\n\n**Output**: Complete BreadthAnalysis.md with component interaction map, data flow diagram, suspicious areas ranked by likelihood, and list of all potentially related files and functions.",
-                    "agentRole": "You are performing systematic analysis phase 1 of 4. Your focus is casting a wide net to find all potentially related components.",
+                    "id": "analysis-neighborhood-contracts",
+                    "title": "Analysis 1/5: Neighborhood, Call Graph & Contracts",
+                    "prompt": "**NEIGHBORHOOD & CONTRACTS DISCOVERY - Build Structural Foundation**\n\nGoal: Build lightweight understanding of code structure, relationships, and contracts BEFORE diving into details. This provides the scaffolding for all subsequent analysis.\n\n**STEP 1: Compute Module Root**\n- Find nearest common ancestor of error stack trace files\n- Clamp to package boundary or src/ directory\n- This defines your investigation scope\n- Set `moduleRoot` context variable\n\n**STEP 2: Neighborhood Map** (cap per file to prevent analysis paralysis)\n- For each file in error stack trace:\n  - List immediate neighbors (same directory, max 8)\n  - Find imports/exports directly used (max 10)\n  - Locate co-located tests (same name pattern)\n  - Identify closest entry points: routes, endpoints, CLI commands (max 5)\n- Produce table: File | Neighbors | Tests | Entry Points\n\n**STEP 3: Bounded Call Graph** (Small Multiples with HOT Path Ranking)\n- For each failing function/class in stack trace:\n  - Build call graph ≤2 hops deep (inbound and outbound)\n  - Cap total nodes at ≤15 per failing symbol\n  - Score edges for HOT path ranking:\n    * Error location in path: +3\n    * Entry point to path: +2  \n    * Test coverage exists: +1\n    * Mentioned in ticket/error message: +1\n  - Tag paths as HOT if score ≥3\n  - Use Small Multiples ASCII visualization:\n    * Width ≤100 chars per path\n    * Format: `EntryPoint -> Caller -> [*FailingSymbol*] -> Callee`\n    * Mark changed/failing code as `[*name*]`\n    * Add HOT tag for high-impact paths\n    * ≤8 total paths, prioritize HOT paths first\n  - If graph exceeds caps, use Adjacency Summary instead:\n    * Table: Node | Inbound | Outbound | Notes\n    * Top-K by degree/frequency\n- Create Alias Legend for repeated subpaths:\n  * A1 = common.validation.validateInput\n  * A2 = database.connection.getPool\n  * Reuse aliases across all paths\n\n**STEP 4: Flow Anchors** (Entry Points to Bug)\n- Map how users/systems trigger the bug:\n  - HTTP routes → handlers → failing code\n  - CLI commands → execution → failing code  \n  - Scheduled jobs → workers → failing code\n  - Event handlers → callbacks → failing code\n- Produce table: Anchor Type | Entry Point | Target Symbol | User Action\n- Cap at ≤5 most relevant anchors\n- Note: This tells us HOW the bug is reached\n\n**STEP 5: Contracts & Invariants**\n- Within `moduleRoot` and immediate neighbors:\n  - List public API symbols (exported functions/classes)\n  - Document API endpoints (REST/GraphQL/RPC)\n  - Identify database tables/collections touched\n  - Note message queue topics/events\n  - Extract stated invariants from:\n    * JSDoc/docstrings with @invariant\n    * Assertions in code\n    * Validation logic patterns\n    * Comments describing guarantees\n- Produce table: Symbol/API | Contract | Invariant | Location\n- Focus on contracts related to failing code\n\n**OUTPUT: Create StructuralAnalysis.md with:**\n- Module Root declaration\n- Neighborhood Map table\n- Bounded Call Graph (Small Multiples ASCII or Adjacency Summary)\n- Alias Legend (for call graph subpaths)\n- Flow Anchors table\n- Contracts & Invariants table\n- Self-Critique: 1-2 areas of uncertainty\n\n**CAPS (strictly enforce to prevent analysis paralysis):**\n- ≤8 neighbors per file\n- ≤10 imports per file\n- ≤5 entry points total\n- ≤15 call graph nodes per failing symbol\n- ≤8 total call graph paths\n- ≤5 flow anchors\n- ≤100 chars width for ASCII paths",
+                    "agentRole": "You are a codebase navigator building structural understanding. Your focus is mapping relationships, entry points, and contracts WITHOUT diving into implementation details yet.",
                     "guidance": [
-                        "This is analysis phase 1 of 4 total phases",
-                        "Phase 1 = Breadth Scan - Cast wide net for all related components",
-                        "Create BreadthAnalysis.md with structured findings",
-                        "ERROR PROPAGATION MAPPING: Use grep_search for all error occurrences, trace error messages across all log files, map all stack traces to identify call chains, document every point where error appears or is handled",
-                        "COMPONENT DISCOVERY: Find ALL components that interact with failing area, use codebase_search \"How is [failing component] used?\", identify all callers and callees, build component interaction map, note both direct and indirect relationships",
-                        "DATA FLOW MAPPING: Trace data that flows through bug area, identify all transformations applied to data, find all persistence points (database, cache, files), document complete data journey, note where data could be corrupted or lost",
-                        "RECENT CHANGES ANALYSIS: Git history for all identified components, check last 10 commits affecting these areas, identify when bug likely appeared, look for related PRs or issues, note any configuration or dependency changes",
-                        "HISTORICAL PATTERN SEARCH: Use findSimilarBugs() to search for similar error patterns in codebase, previous fixes to related components, related test failures in history",
-                        "Use findSimilarBugs() to search for historical patterns",
-                        "Use the function definitions for standardized operations",
-                        "Update INVESTIGATION_CONTEXT.md after completion",
-                        "Be thorough - it's better to include too much than miss something critical",
-                        "Document your reasoning for why each component is potentially involved"
+                        "This is analysis phase 1 of 5 total phases",
+                        "Phase 1a = Structure - Build the map before exploring terrain",
+                        "Initialize majorIssuesFound = false",
+                        "STRICTLY ENFORCE CAPS - this prevents 2-hour rabbit holes",
+                        "Small Multiples: Render mini ASCII path diagrams (≤6 nodes per path)",
+                        "HOT Path Ranking: Score and prioritize high-impact paths",
+                        "Alias Legend: Collapse repeated subpaths with deterministic aliases (A1, A2...)",
+                        "Adjacency Summary: If caps exceeded, use tabular summary instead of full graph",
+                        "Contracts are CRITICAL: They tell us what guarantees the code must maintain",
+                        "Flow Anchors show HOW users trigger the bug - essential for reproduction",
+                        "Create StructuralAnalysis.md in investigation directory",
+                        "Update INVESTIGATION_CONTEXT.md with module root and structural summary",
+                        "This phase provides the scaffolding for all subsequent analysis"
                     ],
                     "runCondition": {"var": "analysisPhase", "equals": 1},
                     "requireConfirmation": false
                 },
                 {
-                    "id": "analysis-deep-dive",
-                    "title": "Analysis 2/4: Component Deep Dive",
-                    "prompt": "**COMPONENT DEEP DIVE - Understand Internals**\n\nGoal: Deep understanding of top 5 suspicious components from breadth scan.\n\nFor each component, use recursiveAnalysis(component, 3) to perform 3-level analysis: Direct Implementation (Level 1), Direct Dependencies (Level 2), and Integration Points (Level 3). Document likelihood scores, suspicious code sections, failure modes, and red flags.\n\n**Output**: ComponentAnalysis.md with deep insights for top 5 components, ranked list of most likely root cause locations, detailed notes on internals, and dependency graph showing relationships.",
-                    "agentRole": "You are performing systematic analysis phase 2 of 4. Your focus is deep diving into the most suspicious components to understand their internals.",
+                    "id": "analysis-breadth-scan",
+                    "title": "Analysis 2/5: Breadth Scan & Pattern Discovery",
+                    "prompt": "**BREADTH SCAN - Cast Wide Net + Learn Expected Behavior**\n\nGoal: Understand full system impact, identify all potentially involved components, and discover existing code patterns to understand expected behavior.\n\n**PART A: Pattern Discovery (Learn How Code SHOULD Work)**\n1. **Compute Module Root**: Find nearest common ancestor of error stack trace files, clamped to package/src\n2. **Discover Patterns** (scan only moduleRoot, exclude failing files from pattern definition):\n   - Naming conventions (classes, methods, variables)\n   - Error handling patterns (try/catch, error propagation, logging)\n   - Logging patterns (format, verbosity, error vs info vs debug)\n   - Data validation patterns (where/how data is checked)\n   - Test patterns (structure, naming, assertion style)\n   - Require ≥2 occurrences across distinct files to qualify as pattern\n3. **Capture Pattern Catalog**: Document validated patterns with 1-3 exemplar locations (file:line)\n4. **Identify Pattern Deviations in Failing Code**: Compare failing code against pattern catalog\n\n**PART B: Error Propagation & Component Discovery**\n1. **ERROR PROPAGATION MAPPING**: Use grep_search for all error occurrences, trace error messages across log files, map stack traces to identify call chains, document every point where error appears/handled\n2. **COMPONENT DISCOVERY**: Find components interacting with failing area, use codebase_search \"How is [component] used?\", identify callers/callees, cap to top 10 most suspicious, rank by likelihood (1-10)\n3. **BOUNDED CALL GRAPH**: For failing function, build call graph ≤2 hops deep, cap at ≤15 total nodes, identify HOT paths (paths through error location), prioritize HOT paths in analysis\n4. **FLOW ANCHORS**: Map entry points (routes/endpoints/CLI commands) to failing code, cap at ≤5 anchors, note which user actions trigger the bug\n\n**PART C: Data Flow & Changes**\n1. **DATA FLOW MAPPING**: Trace data through bug area, identify transformations, persistence points, corruption opportunities - but CAP scope to moduleRoot and 2-hop neighborhood\n2. **RECENT CHANGES ANALYSIS**: Git history for identified components (last 10 commits), identify when bug appeared, related PRs/issues, config/dependency changes\n3. **HISTORICAL PATTERN SEARCH**: Use findSimilarBugs() for similar error patterns, previous fixes, related test failures\n\n**Output**: Create BreadthAnalysis.md with:\n- Pattern Catalog (validated patterns + exemplars)\n- Pattern Deviations (how failing code differs from expected patterns)\n- Bounded Call Graph (≤15 nodes, HOT paths highlighted)\n- Flow Anchors Table (entry point → failing symbol)\n- Suspicious Components (top 10, ranked 1-10)\n- Data Flow Map (scoped to moduleRoot + 2 hops)\n- Recent Changes Timeline\n- Historical Similar Bugs\n\n**Self-Critique**: List 1-2 areas where you have low confidence or missing information.",
+                    "agentRole": "You are performing systematic analysis phase 2 of 5. Your focus is understanding both what IS happening (error propagation) and what SHOULD happen (pattern discovery) to identify deviations.",
                     "guidance": [
-                        "This is analysis phase 2 of 4 total phases",
-                        "Phase 2 = Deep Dive - Analyze suspicious components 3 levels deep",
-                        "Build on findings from Phase 1 Breadth Scan",
-                        "Create ComponentAnalysis.md with structured findings",
-                        "Use recursiveAnalysis() for systematic exploration",
-                        "LEVEL 1 - DIRECT IMPLEMENTATION: Read COMPLETE file including private methods, understand state management and data structures, analyze error handling patterns, check initialization and cleanup logic, document all public/private APIs, identify assumptions or invariants, note TODO/FIXME comments",
-                        "LEVEL 2 - DIRECT DEPENDENCIES: Follow all imports and their usage, understand dependency contracts and interfaces, check version compatibility and breaking changes, analyze coupling points and data exchange, look for shared mutable state, identify circular dependencies, document how failures could propagate",
-                        "LEVEL 3 - INTEGRATION POINTS: How component fits in larger system architecture, side effects and external calls (DB, API, file system), concurrency and threading concerns, resource management (memory, connections, handles), caching and state synchronization, event handling and callbacks, configuration and environment dependencies",
-                        "FOR EACH COMPONENT DOCUMENT: Likelihood score (1-10) of being root cause, specific suspicious code sections with line numbers, potential failure modes and their symptoms, dependencies that could be sources of issues, red flags (complex logic, error handling gaps, race conditions)",
+                        "This is analysis phase 2 of 5 total phases",
+                        "Phase 1b = Breadth + Patterns - Learn expected behavior AND map error propagation",
+                        "Create BreadthAnalysis.md with structured findings",
+                        "CRITICAL: Discover patterns FIRST from working code, THEN compare failing code to patterns",
+                        "Pattern deviations often reveal the bug (e.g., missing validation, different error handling)",
+                        "Apply CAPS to prevent analysis paralysis: ≤10 components, ≤15 call graph nodes, ≤5 flow anchors, ≤2 hops",
+                        "HOT PATH RANKING: Score paths by (error in path=3, entry point=2, test coverage=1); tag HOT if score≥3",
+                        "BOUNDED CALL GRAPH: Use codebase_search to find callers/callees, stop at 2 hops, cap nodes, dedupe",
+                        "PATTERN DISCOVERY: Require ≥2 occurrences to qualify as pattern; singletons are 'candidate conventions' only",
+                        "SELF-CRITIQUE: Explicitly note 1-2 areas of uncertainty or missing information",
                         "Update INVESTIGATION_CONTEXT.md after completion",
-                        "Go deep - read entire files, not just the obvious parts",
-                        "Look for subtle issues like race conditions, edge cases, and assumptions"
+                        "Use the function definitions for standardized operations"
                     ],
                     "runCondition": {"var": "analysisPhase", "equals": 2},
                     "requireConfirmation": false
                 },
                 {
-                    "id": "analysis-dependencies",
-                    "title": "Analysis 3/4: Dependencies & Flow",
-                    "prompt": "**DEPENDENCY & FLOW ANALYSIS - Trace Connections**\n\nGoal: Understand how components interact and data flows between them.\n\nPerform: Static dependency graph analysis, Runtime flow analysis, Data transformation pipeline tracing, and Integration analysis.\n\n**Output**: FlowAnalysis.md with sequence diagrams showing execution flow, data flow maps with transformation points, complete dependency graph, list of all integration points and failure modes, and timeline showing order of operations.",
-                    "agentRole": "You are performing systematic analysis phase 3 of 4. Your focus is tracing how components connect and data flows between them.",
+                    "id": "analysis-deep-dive",
+                    "title": "Analysis 3/5: Component Deep Dive with Hot-Path Focus",
+                    "prompt": "**COMPONENT DEEP DIVE - Prioritized Investigation**\n\nGoal: Deep understanding of top 5 suspicious components from breadth scan, prioritizing HOT paths and pattern deviations.\n\n**PRIORITIZATION (from Phase 1):**\n1. Focus on components on HOT paths (score ≥3)\n2. Prioritize components with pattern deviations\n3. Rank by likelihood score from Phase 1\n4. Cap analysis to top 5 components\n\n**FOR EACH COMPONENT (recursive 3-level analysis):**\n\n**LEVEL 1 - DIRECT IMPLEMENTATION** (prioritize HOT paths and deviation areas):\n- Read complete file (or HOT path sections if file >500 lines)\n- Compare error handling against pattern catalog from Phase 1\n- Identify pattern deviations with file:line locations\n- Check state management, initialization, cleanup\n- Document invariants and assumptions\n- Note TODO/FIXME/HACK/BUG comments\n- Red flags: complex logic, missing validation, race conditions\n\n**LEVEL 2 - DIRECT DEPENDENCIES** (cap at ≤10 deps per component):\n- Follow imports on HOT paths first\n- Check dependency contracts and interfaces\n- Analyze coupling and data exchange\n- Look for shared mutable state\n- Identify circular dependencies\n- Document failure propagation paths\n\n**LEVEL 3 - INTEGRATION POINTS** (cap at ≤8 integration points):\n- External calls (DB, API, file system) - cap at ≤5\n- Concurrency/threading concerns\n- Resource management issues\n- Caching and state sync\n- Event handling and callbacks\n- Configuration dependencies\n\n**FOR EACH COMPONENT, PRODUCE:**\n- **Likelihood Score** (1-10): Weight HOT paths +3, pattern deviations +2, recent changes +1\n- **Suspicious Sections**: Specific file:line with rationale (≤5 per component)\n- **Failure Modes**: How this component could cause the observed bug (≤3 scenarios)\n- **Pattern Violations**: How it deviates from expected patterns (from Phase 1)\n- **Critical Dependencies**: Top 3 dependencies that could be sources\n\n**Output**: Create ComponentAnalysis.md with:\n- Component Rankings (1-5, sorted by likelihood score)\n- Per-Component Analysis (following structure above)\n- Pattern Violation Summary\n- Critical Path Map (which components are on HOT paths)\n- **Self-Critique**: 1-2 components you're uncertain about and why\n\n**CAPS TO PREVENT ANALYSIS PARALYSIS:**\n- Top 5 components only\n- ≤10 dependencies per component\n- ≤8 integration points per component\n- ≤5 suspicious sections per component\n- ≤3 failure modes per component",
+                    "agentRole": "You are performing systematic analysis phase 3 of 5. Your focus is deep-diving into the most suspicious components, prioritizing HOT paths and pattern deviations.",
                     "guidance": [
-                        "This is analysis phase 3 of 4 total phases",
-                        "Phase 3 = Dependencies - Trace connections and data flows",
+                        "This is analysis phase 3 of 5 total phases",
+                        "Phase 1c = Deep Dive - Focus on HOT paths and pattern violations",
+                        "Build on findings from Phase 1 (patterns, HOT paths, flow anchors)",
+                        "Create ComponentAnalysis.md with structured findings",
+                        "Use recursiveAnalysis() for systematic exploration",
+                        "PRIORITIZE HOT PATHS: Analyze code on HOT paths before other code",
+                        "PATTERN-DRIVEN: Compare actual code against pattern catalog from Phase 1",
+                        "APPLY CAPS STRICTLY: Prevents spending 2 hours reading every file",
+                        "SELF-CRITIQUE: Note where you're uncertain or making assumptions",
+                        "Update INVESTIGATION_CONTEXT.md after completion"
+                    ],
+                    "runCondition": {"var": "analysisPhase", "equals": 3},
+                    "requireConfirmation": false
+                },
+                {
+                    "id": "analysis-dependencies",
+                    "title": "Analysis 4/5: Dependencies & Flow",
+                    "prompt": "**DEPENDENCY & FLOW ANALYSIS - Trace Connections**\n\nGoal: Understand how components interact and data flows between them.\n\nPerform: Static dependency graph analysis, Runtime flow analysis, Data transformation pipeline tracing, and Integration analysis.\n\n**Output**: FlowAnalysis.md with sequence diagrams showing execution flow, data flow maps with transformation points, complete dependency graph, list of all integration points and failure modes, and timeline showing order of operations.",
+                    "agentRole": "You are performing systematic analysis phase 4 of 5. Your focus is tracing how components connect and data flows between them.",
+                    "guidance": [
+                        "This is analysis phase 4 of 5 total phases",
+                        "Phase 1d = Dependencies - Trace connections and data flows",
                         "Build on component understanding from Phase 2",
                         "Create FlowAnalysis.md with diagrams and flow charts",
                         "STATIC DEPENDENCY GRAPH: Build complete import/dependency tree, identify circular dependencies, find hidden dependencies (reflection, dynamic loading, DI), map version constraints and compatibility, document shared libraries and utilities, note tight coupling or fragile dependencies",
@@ -245,17 +265,17 @@
                         "Pay special attention to async boundaries and error propagation",
                         "Look for implicit dependencies that aren't obvious from imports"
                     ],
-                    "runCondition": {"var": "analysisPhase", "equals": 3},
+                    "runCondition": {"var": "analysisPhase", "equals": 4},
                     "requireConfirmation": false
                 },
                 {
                     "id": "analysis-test-coverage",
-                    "title": "Analysis 4/4: Test Coverage",
+                    "title": "Analysis 5/5: Test Coverage",
                     "prompt": "**TEST COVERAGE ANALYSIS - Leverage Existing Knowledge**\n\nGoal: Use existing tests as source of truth about system behavior.\n\nFor each suspicious component, use analyzeTests(component) to perform: Direct test coverage analysis, Integration test analysis, Test history investigation, Test execution with debugging, and Coverage gap analysis.\n\n**Output**: TestAnalysis.md with coverage gaps matrix, suspicious test patterns, test evidence for hypotheses, recommendations for tests to add, and complete test inventory for affected components.",
-                    "agentRole": "You are performing systematic analysis phase 4 of 4. Your focus is leveraging existing tests to understand expected behavior and find coverage gaps.",
+                    "agentRole": "You are performing systematic analysis phase 5 of 5. Your focus is leveraging existing tests to understand expected behavior and find coverage gaps.",
                     "guidance": [
-                        "This is analysis phase 4 of 4 total phases",
-                        "Phase 4 = Tests - Analyze test coverage and quality",
+                        "This is analysis phase 5 of 5 total phases",
+                        "Phase 1e = Tests - Analyze test coverage and quality",
                         "Build on all previous analysis phases",
                         "Create TestAnalysis.md with coverage gap matrix",
                         "DIRECT TEST COVERAGE: Find all tests using grep/test discovery, analyze what's tested (happy/edge/error cases), identify what's NOT tested, check test quality and assertion strength, note mocking/stubbing that might hide issues, review test names and docs",
@@ -268,7 +288,7 @@
                         "Tests often reveal the 'expected' behavior - compare with actual behavior",
                         "Missing tests often indicate areas where bugs hide"
                     ],
-                    "runCondition": {"var": "analysisPhase", "equals": 4},
+                    "runCondition": {"var": "analysisPhase", "equals": 5},
                     "requireConfirmation": false
                 }
             ],
