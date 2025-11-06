@@ -171,37 +171,40 @@ export class DefaultWorkflowService implements WorkflowService {
           };
         } else {
           // Handle multi-step body
+          // Check if this is the first iteration
+          const isFirst = loopContext.isFirstIteration();
+          
+          // Check if loop is empty to avoid phase overview
+          if (isFirst && loopContext.isEmpty(context)) {
+            // Skip this loop entirely
+            const skipContext = ContextOptimizer.createEnhancedContext(context, completed);
+            delete skipContext._currentLoop; // Remove loop context
+            const nextStep = await this.getNextStep(workflow.id, completed, skipContext);
+            return nextStep;
+          }
+          
+          // CRITICAL FIX: Inject loop variables BEFORE evaluating body step runConditions
+          // This ensures iteration variables (e.g., analysisPhase) are available when checking conditions
+          const useMinimal = !isFirst && !!this.loopContextOptimizer;
+          const loopEnhancedContext = loopContext.injectVariables(context, useMinimal);
+          
           // Find the first uncompleted step in the body that meets its condition
+          // NOW using loopEnhancedContext which has iteration variables
           const uncompletedBodyStep = bodyStep.find(step => {
             // Skip if already completed
             if (completed.includes(step.id)) {
               return false;
             }
             
-            // Check runCondition if present
+            // Check runCondition if present - use loopEnhancedContext with iteration vars
             if (step.runCondition) {
-              return evaluateCondition(step.runCondition, context);
+              return evaluateCondition(step.runCondition, loopEnhancedContext);
             }
             
             return true;
           });
           
           if (uncompletedBodyStep) {
-            // Check if this is the first iteration
-            const isFirst = loopContext.isFirstIteration();
-            
-            // Check if loop is empty to avoid phase overview
-            if (isFirst && loopContext.isEmpty(context)) {
-              // Skip this loop entirely
-              const skipContext = ContextOptimizer.createEnhancedContext(context, completed);
-              delete skipContext._currentLoop; // Remove loop context
-              const nextStep = await this.getNextStep(workflow.id, completed, skipContext);
-              return nextStep;
-            }
-            
-            // Use optimizer if available for subsequent iterations
-            const useMinimal = !isFirst && !!this.loopContextOptimizer;
-            const loopEnhancedContext = loopContext.injectVariables(context, useMinimal);
             
             // Apply additional optimization if available
             const optimizedContext = useMinimal && this.loopContextOptimizer
