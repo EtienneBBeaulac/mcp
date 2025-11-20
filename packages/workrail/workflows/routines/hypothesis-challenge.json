@@ -1,0 +1,106 @@
+{
+  "id": "routine-hypothesis-challenge",
+  "name": "Hypothesis Challenge Routine",
+  "version": "1.1.0",
+  "description": "Adversarial testing of hypotheses using an Ideate -> Plan -> Execute strategy. Configurable rigor levels (1-5) allow for progressively deeper skepticism and stress testing.",
+  "clarificationPrompts": [
+    "What hypotheses or assumptions should I challenge?",
+    "What rigor level do you need? (1=Surface, 3=Deep, 5=Maximum)",
+    "What evidence supports these hypotheses?",
+    "What context should I consider? (bug description, findings, constraints)"
+  ],
+  "preconditions": [
+    "Hypotheses or assumptions are clearly stated",
+    "Rigor level (1-5) is specified",
+    "Supporting evidence is available",
+    "Agent has read access to relevant context"
+  ],
+  "metaGuidance": [
+    "**ROUTINE PURPOSE:**",
+    "This routine performs adversarial testing. It separates strategy (Ideating attack vectors) from execution (Challenging/Stress Testing).",
+    "",
+    "**PHASES:**",
+    "1. IDEATE: Brainstorm attack vectors and common flaws",
+    "2. STRATEGIZE: Define the challenge plan for the requested rigor",
+    "3. EXECUTE: Run the challenge (Surface/Deep/Max)",
+    "4. SYNTHESIZE: Deliver verdicts and alternative explanations",
+    "",
+    "**CORE PRINCIPLES:**",
+    "- ADVERSARIAL: Actively try to disprove, don't confirm",
+    "- SYSTEMATIC: Challenge assumptions, logic, and evidence",
+    "- CONSTRUCTIVE: Goal is to strengthen truth, not just destroy"
+  ],
+  "steps": [
+    {
+      "id": "step-0-ideate-vectors",
+      "title": "Step 0: Ideate Challenge Strategy",
+      "prompt": "**IDEATE ATTACK VECTORS**\n\nBefore diving into specific hypotheses, step back and look at the whole picture.\n\n**YOUR MISSION:** Brainstorm ways to break these hypotheses.\n\n**EXECUTE:**\n1. Review all hypotheses together\n2. Identify shared assumptions (do they all assume X?)\n3. Brainstorm classes of failure (Concurrency? State? Logic?)\n4. Identify weak points in the evidence provided\n\n**REFLECT:**\n- Are these hypotheses too similar?\n- Are they missing a whole category of explanation?\n- What is the most likely \"unknown unknown\"?\n\n**WORKING NOTES:**\n- Common Assumptions\n- Potential Attack Vectors (e.g., Race Conditions, Edge Cases)\n- Evidence Weaknesses",
+      "agentRole": "You are a red-team strategist planning your attack.",
+      "requireConfirmation": false,
+      "guidance": [
+        "BRAINSTORM: Look for systemic issues first",
+        "CATEGORIES: Think in categories (Logic, Data, Timing, Environment)",
+        "SKEPTICISM: Assume the hypotheses are wrong. Why?"
+      ]
+    },
+    {
+      "id": "step-1-plan-challenge",
+      "title": "Step 1: Plan Challenge Tactics",
+      "prompt": "**DEFINE CHALLENGE PLAN**\n\nNow define your specific tactics for the requested rigor level.\n\n**YOUR MISSION:** Create a concrete plan to test these hypotheses.\n\n**EXECUTE:**\n1. Map attack vectors to specific hypotheses\n2. Define **Key Questions** to answer\n3. Select **Stress Tests** or **Counter-Examples** to search for\n4. Define criteria for \"disproof\"\n\n**DELIVERABLE:**\nCreate `challenge-strategy.md`:\n- Attack Plan for each Hypothesis\n- Key Assumptions to Probe\n- Required Evidence check",
+      "agentRole": "You are a lead auditor defining the scope of the audit.",
+      "requireConfirmation": false,
+      "guidance": [
+        "TACTICS: Be specific (e.g., \"Check for null user in auth flow\")",
+        "CRITERIA: What would convince you the hypothesis is false?"
+      ]
+    },
+    {
+      "id": "step-execute-rigor-1",
+      "title": "Execution: Rigor 1 (Surface)",
+      "runCondition": {"var": "rigor", "greaterThanOrEqual": 1},
+      "prompt": "**EXECUTE RIGOR 1: SURFACE CHALLENGE**\n\nExecute your challenge plan at Rigor 1 (Surface).\n\n**MISSION:** Identify obvious flaws and simple counter-examples.\n\n**EXECUTE:**\n1. Follow `challenge-strategy.md`\n2. Check for obvious logical gaps\n3. Identify simple counter-examples\n4. Check for Occam's Razor alternatives\n\n**WORKING NOTES:**\n- Obvious Flaws\n- Simple Counter-Examples\n- Better Alternatives",
+      "agentRole": "You are a skeptical reviewer looking for quick wins.",
+      "requireConfirmation": false,
+      "guidance": [
+        "FOCUS: Obvious errors, simple logic gaps",
+        "SPEED: Don't dig deep yet, look for low-hanging fruit"
+      ]
+    },
+    {
+      "id": "step-execute-rigor-3",
+      "title": "Execution: Rigor 3 (Deep)",
+      "runCondition": {"var": "rigor", "greaterThanOrEqual": 3},
+      "prompt": "**EXECUTE RIGOR 3: DEEP CHALLENGE**\n\nExecute your challenge plan at Rigor 3 (Deep Analysis).\n\n**MISSION:** Deeply challenge with edge cases and hidden assumptions.\n\n**EXECUTE:**\n1. Follow `challenge-strategy.md`\n2. Expose hidden assumptions\n3. Generate systematic edge cases\n4. Analyze timing and environment factors\n\n**WORKING NOTES:**\n- Hidden Assumptions Exposed\n- Edge Case Analysis\n- Environmental Factors",
+      "agentRole": "You are a rigorous auditor digging for structural flaws.",
+      "requireConfirmation": false,
+      "guidance": [
+        "FOCUS: Unstated assumptions, boundary conditions",
+        "DEPTH: trace logic chains to find breaks"
+      ]
+    },
+    {
+      "id": "step-execute-rigor-5",
+      "title": "Execution: Rigor 5 (Maximum)",
+      "runCondition": {"var": "rigor", "greaterThanOrEqual": 5},
+      "prompt": "**EXECUTE RIGOR 5: MAX CHALLENGE**\n\nExecute your challenge plan at Rigor 5 (Maximum Skepticism).\n\n**MISSION:** Try to break it completely.\n\n**EXECUTE:**\n1. Follow `challenge-strategy.md`\n2. Exhaustive assumption enumeration\n3. Extreme edge cases and adversarial inputs\n4. Second-order effects and chaos scenarios\n\n**WORKING NOTES:**\n- Exhaustive Challenges\n- Extreme Scenarios\n- Disproof Attempts",
+      "agentRole": "You are a relentless adversary trying to prove it wrong.",
+      "requireConfirmation": false,
+      "guidance": [
+        "FOCUS: Breaking the system, extreme edge cases",
+        "MINDSET: Trust nothing, verify everything"
+      ]
+    },
+    {
+      "id": "step-synthesize",
+      "title": "Step 5: Synthesize Verdicts",
+      "prompt": "**SYNTHESIZE VERDICTS**\n\nSynthesize all challenges into final verdicts.\n\n**MISSION:** Deliver clear judgments on each hypothesis.\n\n**EXECUTE:**\n1. Review all Working Notes\n2. Assign Verdicts (Keep/Revise/Reject)\n3. Prioritize Alternatives\n4. Define Critical Tests\n\n**DELIVERABLE:**\nCreate `{deliverableName}`:\n- Executive Summary\n- Hypothesis Analysis & Verdicts\n- Critical Tests Needed\n- Recommendations",
+      "agentRole": "You are a judge delivering the final verdict.",
+      "requireConfirmation": false,
+      "guidance": [
+        "VERDICTS: Be decisive based on evidence",
+        "ALTERNATIVES: Propose concrete, better explanations",
+        "ACTION: What specifically needs to be tested?"
+      ]
+    }
+  ]
+}

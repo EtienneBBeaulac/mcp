@@ -1,0 +1,136 @@
+{
+  "id": "routine-context-gathering",
+  "name": "Context Gathering Routine",
+  "version": "2.1.0",
+  "description": "Systematic codebase exploration using an Ideate -> Plan -> Execute strategy. Configurable depth levels (0-4) allow for progressively deeper understanding.",
+  "clarificationPrompts": [
+    "What specific area or files should I investigate?",
+    "What depth level do you need? (0=Survey, 1=Scan, 2=Explore, 3=Analyze, 4=Dissect)",
+    "What are you trying to understand? (bug investigation, feature planning, refactoring, etc.)"
+  ],
+  "preconditions": [
+    "Target areas are broadly identified",
+    "Depth level (0-4) is specified",
+    "Mission/goal is clear",
+    "Agent has read access to codebase"
+  ],
+  "metaGuidance": [
+    "**ROUTINE PURPOSE:**",
+    "This routine performs systematic codebase investigation. It separates strategy (Ideate/Plan) from execution (Survey/Scan/Explore/etc.).",
+    "",
+    "**PHASES:**",
+    "1. IDEATE: Brainstorm relevant areas and potential connections",
+    "2. PLAN: Define specific targets and search strategy",
+    "3. EXECUTE: Run the investigation at the requested depth",
+    "4. SYNTHESIZE: Combine findings into actionable insights",
+    "",
+    "**CORE PRINCIPLES:**",
+    "- STRATEGY FIRST: Don't start reading files until you know WHY and WHERE",
+    "- SYSTEMATIC: Follow the plan, don't rabbit-hole",
+    "- HONEST: Note gaps and limitations",
+    "- CITED: Support findings with file:line references"
+  ],
+  "steps": [
+    {
+      "id": "step-0-ideate-targets",
+      "title": "Step 0: Ideate Research Targets",
+      "prompt": "**EXPLORE POTENTIAL TARGETS**\n\nBefore diving in, brainstorm what areas of the codebase might be relevant to your mission.\n\n**YOUR MISSION:** Identify all potential areas of interest and why they might matter.\n\n**EXECUTE:**\n1. Review the Mission/Goal\n2. List all potential subsystems, modules, or directories that could be involved\n3. Consider indirect connections (shared utils, config, infrastructure)\n4. Brainstorm keywords or patterns to look for\n\n**REFLECT:**\n- Am I missing any obvious areas?\n- Are there dependencies I should check?\n- Is my scope too narrow or too broad?\n\n**WORKING NOTES:**\n- Mission Summary\n- Potential Targets (List)\n- Keywords/Patterns to search\n- Why each area matters",
+      "agentRole": "You are a scout surveying the landscape. Look for signals and potential paths.",
+      "requireConfirmation": false,
+      "guidance": [
+        "BRAINSTORM: List widely before narrowing down",
+        "KEYWORDS: Think of specific terms to grep for later",
+        "CONNECTIONS: Think about how components interact"
+      ]
+    },
+    {
+      "id": "step-1-plan-strategy",
+      "title": "Step 1: Plan Research Strategy",
+      "prompt": "**DEFINE RESEARCH PLAN**\n\nNow select the specific targets and define your strategy for the requested depth.\n\n**YOUR MISSION:** Create a concrete plan for your investigation.\n\n**EXECUTE:**\n1. Select the primary targets from Step 0\n2. Define the **Search Scope** (specific directories/files)\n3. Define the **Exclusions** (what to ignore, e.g., tests, legacy)\n4. Define the **Focus** for the requested depth (e.g., \"Map structure\" for D0, \"Trace logic\" for D2)\n\n**DELIVERABLE:**\nCreate `research-plan.md` with:\n- Primary Targets\n- Search Scope\n- Key Questions to Answer\n- Depth Strategy",
+      "agentRole": "You are a research lead defining the scope and method. Be specific.",
+      "requireConfirmation": false,
+      "guidance": [
+        "SCOPE: Be specific about directories (e.g., src/auth, not just 'auth')",
+        "FOCUS: Align the strategy with the requested depth level",
+        "QUESTIONS: List the specific questions you want to answer"
+      ]
+    },
+    {
+      "id": "step-execute-depth-0",
+      "title": "Execution: Depth 0 (Survey)",
+      "runCondition": {"var": "depth", "greaterThanOrEqual": 0},
+      "prompt": "**EXECUTE DEPTH 0: SURVEY**\n\nExecute your research plan at Depth 0 (Map the territory).\n\n**MISSION:** Understand what exists in the target area without reading contents.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Use `list_dir` on target scopes\n3. Map file structure and purpose\n4. Identify architectural patterns\n\n**WORKING NOTES:**\n- File Tree & Purpose\n- Observed Patterns\n- Suspicious Areas",
+      "agentRole": "You are a systematic cartographer mapping the territory.",
+      "requireConfirmation": false,
+      "guidance": [
+        "TOOL: Use list_dir only",
+        "CONSTRAINT: Do not read file contents yet",
+        "OUTPUT: Structural map and high-level observations"
+      ]
+    },
+    {
+      "id": "step-execute-depth-1",
+      "title": "Execution: Depth 1 (Scan)",
+      "runCondition": {"var": "depth", "greaterThanOrEqual": 1},
+      "prompt": "**EXECUTE DEPTH 1: SCAN**\n\nExecute your research plan at Depth 1 (Identify components).\n\n**MISSION:** Understand components and relationships without reading implementations.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Read file headers (top 50 lines)\n3. Map imports/exports and dependencies\n4. Identify architectural layers\n\n**WORKING NOTES:**\n- Component Map\n- Dependency Graph\n- Key Interfaces",
+      "agentRole": "You are an architect mapping component relationships.",
+      "requireConfirmation": false,
+      "guidance": [
+        "TOOL: read_file --limit 50 for headers",
+        "TOOL: grep for cross-references",
+        "CONSTRAINT: Don't read full implementations"
+      ]
+    },
+    {
+      "id": "step-execute-depth-2",
+      "title": "Execution: Depth 2 (Explore)",
+      "runCondition": {"var": "depth", "greaterThanOrEqual": 2},
+      "prompt": "**EXECUTE DEPTH 2: EXPLORE**\n\nExecute your research plan at Depth 2 (Understand functionality).\n\n**MISSION:** Trace execution flows and understand behavior.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Read function signatures and docstrings\n3. Trace key execution paths\n4. Map data flow and transformations\n\n**WORKING NOTES:**\n- Execution Flow Diagrams\n- Functional Summaries\n- Data Flow Maps",
+      "agentRole": "You are a systems analyst tracing flows and data.",
+      "requireConfirmation": false,
+      "guidance": [
+        "TOOL: Read full signatures and docstrings",
+        "TRACE: Follow the call chain",
+        "DATA: Track how data transforms"
+      ]
+    },
+    {
+      "id": "step-execute-depth-3",
+      "title": "Execution: Depth 3 (Analyze)",
+      "runCondition": {"var": "depth", "greaterThanOrEqual": 3},
+      "prompt": "**EXECUTE DEPTH 3: ANALYZE**\n\nExecute your research plan at Depth 3 (Deep implementation analysis).\n\n**MISSION:** Understand exact behavior, edge cases, and potential issues.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Read full implementations\n3. Analyze conditionals and loops\n4. Check for race conditions and edge cases\n\n**WORKING NOTES:**\n- Detailed Implementation Analysis\n- Edge Case Analysis\n- Potential Issues",
+      "agentRole": "You are a code reviewer looking for logic errors and edge cases.",
+      "requireConfirmation": false,
+      "guidance": [
+        "TOOL: Read full files",
+        "EDGE CASES: Check nulls, boundaries, empty states",
+        "LOGIC: Verify all conditional branches"
+      ]
+    },
+    {
+      "id": "step-execute-depth-4",
+      "title": "Execution: Depth 4 (Dissect)",
+      "runCondition": {"var": "depth", "greaterThanOrEqual": 4},
+      "prompt": "**EXECUTE DEPTH 4: DISSECT**\n\nExecute your research plan at Depth 4 (Forensic line-by-line).\n\n**MISSION:** Find every bug, vulnerability, and subtle issue.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Analyze critical sections line-by-line\n3. Verify every assumption and state\n4. Check security and performance\n\n**WORKING NOTES:**\n- Line-by-Line Analysis\n- Security Vulnerabilities\n- Performance Bottlenecks",
+      "agentRole": "You are a forensic analyst performing exhaustive checks.",
+      "requireConfirmation": false,
+      "guidance": [
+        "LINE-BY-LINE: Analyze every single line",
+        "SECURITY: Check for injection, auth bypass, data leaks",
+        "PERFORMANCE: Check for N+1, loops, memory leaks"
+      ]
+    },
+    {
+      "id": "step-synthesize",
+      "title": "Step 5: Synthesize Findings",
+      "prompt": "**SYNTHESIZE FINDINGS**\n\nSynthesize all your findings from the execution steps.\n\n**MISSION:** Create a clear, actionable report.\n\n**EXECUTE:**\n1. Review all Working Notes\n2. Identify key patterns and insights\n3. Structure the final deliverable\n\n**DELIVERABLE:**\nCreate `{deliverableName}`:\n- Summary\n- Detailed Findings (by depth)\n- Suspicious Points\n- Gaps & Limitations\n- Recommendations",
+      "agentRole": "You are a senior consultant synthesizing insights.",
+      "requireConfirmation": false,
+      "guidance": [
+        "SYNTHESIS: Connect the dots, don't just list facts",
+        "ACTIONABLE: Give clear next steps",
+        "CITED: Support everything with file:line refs"
+      ]
+    }
+  ]
+}

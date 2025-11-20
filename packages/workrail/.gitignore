@@ -73,3 +73,7 @@ yarn.lock
 sessions/
 web/sessions/
 .workrail-cache/
+
+# Test artifacts
+.test-repos-*/
+temp/

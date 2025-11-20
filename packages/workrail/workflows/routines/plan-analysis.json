@@ -1,0 +1,102 @@
+{
+  "id": "routine-plan-analysis",
+  "name": "Plan Analysis Routine",
+  "version": "1.1.0",
+  "description": "Validates implementation plans using an Ideate -> Plan -> Execute strategy. Checks for completeness, pattern adherence, and risk. Designed for delegation to Plan Analyzer subagent.",
+  "clarificationPrompts": [
+    "What plan file should I analyze? (e.g., implementation-plan.md)",
+    "What requirements must the plan address?",
+    "What constraints must it follow? (patterns, rules, standards)",
+    "What context should I consider? (codebase patterns, user rules, background)"
+  ],
+  "preconditions": [
+    "Plan is available as a file (e.g., implementation-plan.md)",
+    "Requirements are clearly stated",
+    "Constraints are specified (patterns, rules, standards)",
+    "Agent has read access to codebase and plan file"
+  ],
+  "metaGuidance": [
+    "**ROUTINE PURPOSE:**",
+    "This routine validates plans. It separates strategy (Ideating analysis vectors) from execution (Checking completeness/patterns/risk).",
+    "",
+    "**PHASES:**",
+    "1. IDEATE: Classify the plan type and potential pitfalls",
+    "2. STRATEGIZE: Define the analysis focus and checklist",
+    "3. EXECUTE: Run the checks (Completeness, Patterns, Risk)",
+    "4. SYNTHESIZE: Deliver the final verdict and recommendations",
+    "",
+    "**CORE PRINCIPLES:**",
+    "- CONTEXT-AWARE: Adapt analysis to the plan type (UI vs Backend vs Migration)",
+    "- RISK-FOCUSED: Prioritize high-risk areas",
+    "- CONSTRUCTIVE: Suggest specific improvements"
+  ],
+  "steps": [
+    {
+      "id": "step-0-ideate-strategy",
+      "title": "Step 0: Ideate Analysis Strategy",
+      "prompt": "**IDEATE ANALYSIS STRATEGY**\n\nBefore analyzing the details, look at the plan holistically.\n\n**YOUR MISSION:** Determine what *kind* of plan this is and what usually goes wrong with it.\n\n**EXECUTE:**\n1. Read the plan summary\n2. Classify the plan (e.g., \"Database Migration\", \"UI Refactor\", \"New API Endpoint\")\n3. Brainstorm common pitfalls for this category\n4. Identify key patterns that *should* be present\n\n**REFLECT:**\n- What are the \"unknown unknowns\" for this domain?\n- What is the single biggest risk?\n- Are there specific user rules for this type of work?\n\n**WORKING NOTES:**\n- Plan Classification\n- Common Pitfalls to Check\n- Critical Patterns to Verify\n- Key Risk Areas",
+      "agentRole": "You are a seasoned architect deciding how to review a design.",
+      "requireConfirmation": false,
+      "guidance": [
+        "CLASSIFICATION: Be specific (e.g., 'Async Worker Implementation')",
+        "PITFALLS: List 3-5 common errors for this specific domain",
+        "FOCUS: Decide where to spend your limited attention"
+      ]
+    },
+    {
+      "id": "step-1-plan-analysis",
+      "title": "Step 1: Plan the Analysis",
+      "prompt": "**DEFINE ANALYSIS PLAN**\n\nNow define your specific checklist for this analysis.\n\n**YOUR MISSION:** Create a concrete plan to validate this document.\n\n**EXECUTE:**\n1. Select the specific **Checks** to run (Completeness, Patterns, Security, Performance)\n2. Define **Key Questions** to answer\n3. Identify **Reference Files** to check against (patterns, existing code)\n\n**DELIVERABLE:**\nCreate `analysis-strategy.md`:\n- Scope of Analysis\n- Key Questions\n- Pattern Reference List\n- Risk Focus Areas",
+      "agentRole": "You are a lead reviewer defining the review criteria.",
+      "requireConfirmation": false,
+      "guidance": [
+        "CUSTOMIZE: Don't just use a generic checklist. Tailor it to the plan type.",
+        "REFERENCES: List specific files to check for pattern matching"
+      ]
+    },
+    {
+      "id": "step-execute-completeness",
+      "title": "Execution: Completeness Check",
+      "prompt": "**EXECUTE COMPLETENESS CHECK**\n\nVerify all requirements are addressed.\n\n**MISSION:** Ensure no requirement is left behind.\n\n**EXECUTE:**\n1. Follow `analysis-strategy.md`\n2. Map Requirements to Plan Sections\n3. identifying gaps\n4. Check for implicit requirements (Testing, Migration, Rollback)\n\n**WORKING NOTES:**\n- Requirement Matrix\n- Gaps Identified\n- Implicit Requirements Status",
+      "agentRole": "You are a requirements analyst ensuring full coverage.",
+      "requireConfirmation": false,
+      "guidance": [
+        "MAPPING: Create explicit mapping (Req 1 -> Section 2)",
+        "IMPLICIT: Don't forget testing, monitoring, docs"
+      ]
+    },
+    {
+      "id": "step-execute-patterns",
+      "title": "Execution: Pattern Compliance",
+      "prompt": "**EXECUTE PATTERN CHECK**\n\nVerify adherence to codebase patterns.\n\n**MISSION:** Ensure consistency with existing code.\n\n**EXECUTE:**\n1. Follow `analysis-strategy.md`\n2. Check against Reference Files\n3. Identify deviations\n4. Verify user rule compliance\n\n**WORKING NOTES:**\n- Pattern Compliance Matrix\n- Deviations (Justified/Unjustified)",
+      "agentRole": "You are a pattern expert ensuring consistency.",
+      "requireConfirmation": false,
+      "guidance": [
+        "COMPARE: Explicitly compare plan code snippets to existing files",
+        "DEVIATIONS: Ask 'Why is this different?'"
+      ]
+    },
+    {
+      "id": "step-execute-risk",
+      "title": "Execution: Risk Assessment",
+      "prompt": "**EXECUTE RISK ASSESSMENT**\n\nIdentify potential failure modes.\n\n**MISSION:** Find what could go wrong.\n\n**EXECUTE:**\n1. Follow `analysis-strategy.md`\n2. Check for Technical, Execution, and Business risks\n3. Identify Single Points of Failure\n4. Assess Rollback capability\n\n**WORKING NOTES:**\n- Risk Register (with Severity)\n- Rollback Assessment",
+      "agentRole": "You are a risk analyst predicting failures.",
+      "requireConfirmation": false,
+      "guidance": [
+        "SEVERITY: High/Med/Low",
+        "ROLLBACK: Can we undo this?"
+      ]
+    },
+    {
+      "id": "step-synthesize",
+      "title": "Step 5: Synthesize Analysis",
+      "prompt": "**SYNTHESIZE ANALYSIS**\n\nSynthesize findings into a final report.\n\n**MISSION:** Deliver clear, actionable feedback.\n\n**EXECUTE:**\n1. Review all Working Notes\n2. Assess overall quality\n3. Prioritize issues\n4. Formulate recommendations\n\n**DELIVERABLE:**\nCreate `{deliverableName}`:\n- Executive Summary\n- Completeness/Pattern/Risk Analysis\n- Recommendations\n- Final Verdict (Ready/Revise/Reject)",
+      "agentRole": "You are a senior reviewer delivering the final sign-off.",
+      "requireConfirmation": false,
+      "guidance": [
+        "VERDICT: Be clear - Ready or Not?",
+        "PRIORITY: Focus on Critical/High issues first"
+      ]
+    }
+  ]
+}
