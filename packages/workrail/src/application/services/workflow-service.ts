@@ -103,16 +103,75 @@ export class DefaultWorkflowService implements WorkflowService {
     const completed = [...(completedSteps || [])];
     const enhancedContext = checkedContext as EnhancedContext;
     
-    // Build a set of step IDs that are loop bodies
+    // Build a set of step IDs that are loop bodies and map them to their parent loops
     const loopBodySteps = new Set<string>();
+    const bodyStepToLoop = new Map<string, LoopStep>();
     for (const step of workflow.steps) {
       if (isLoopStep(step)) {
         const loopStep = step as LoopStep;
         if (typeof loopStep.body === 'string') {
           loopBodySteps.add(loopStep.body);
+          bodyStepToLoop.set(loopStep.body, loopStep);
         } else if (Array.isArray(loopStep.body)) {
           // Add all step IDs from multi-step body
-          loopStep.body.forEach(bodyStep => loopBodySteps.add(bodyStep.id));
+          loopStep.body.forEach(bodyStep => {
+            loopBodySteps.add(bodyStep.id);
+            bodyStepToLoop.set(bodyStep.id, loopStep);
+          });
+        }
+      }
+    }
+    
+    // Detect if we're in a loop even if _currentLoop is not set
+    // This happens when an agent completes a loop body step but doesn't include _currentLoop in the context
+    if (!enhancedContext._currentLoop) {
+      // Check if any completed steps are loop body steps
+      const completedLoopBodySteps = completed.filter(stepId => loopBodySteps.has(stepId));
+      if (completedLoopBodySteps.length > 0) {
+        // Find the loop that these steps belong to
+        const loopStep = bodyStepToLoop.get(completedLoopBodySteps[0]);
+        if (loopStep && !completed.includes(loopStep.id)) {
+          // We're in this loop but _currentLoop wasn't set - restore it
+          enhancedContext._currentLoop = {
+            loopId: loopStep.id,
+            loopStep: loopStep
+          };
+          
+          // CRITICAL FIX: If _loopState is also missing or outdated, reconstruct it
+          // based on how many iterations have completed
+          if (!enhancedContext._loopState || !enhancedContext._loopState[loopStep.id]) {
+            // Resolve the loop body to check its structure
+            const resolvedBody = this.loopStepResolver.resolveLoopBody(workflow, loopStep.body, loopStep.id);
+            let completedIterations = 0;
+            
+            if (Array.isArray(resolvedBody)) {
+              // For multi-step bodies, check if any steps have runConditions
+              const hasConditionalSteps = resolvedBody.some(step => step.runCondition);
+              
+              if (hasConditionalSteps) {
+                // For conditional body steps, each completed step typically represents one iteration
+                // (assuming only one step runs per iteration based on conditions)
+                completedIterations = completedLoopBodySteps.length;
+              } else {
+                // For non-conditional multi-step bodies, count complete sets of all body steps
+                // This is conservative - we can't easily determine which iteration we're in
+                // so we start from 0 to be safe
+                completedIterations = 0;
+              }
+            } else {
+              // Single-step body: count completed steps as iterations
+              completedIterations = completedLoopBodySteps.length;
+            }
+            
+            if (!enhancedContext._loopState) {
+              enhancedContext._loopState = {};
+            }
+            enhancedContext._loopState[loopStep.id] = {
+              iteration: completedIterations,
+              started: Date.now(),
+              warnings: []
+            };
+          }
         }
       }
     }
@@ -129,9 +188,27 @@ export class DefaultWorkflowService implements WorkflowService {
       // Check if loop should continue
       // Check if body step(s) are completed - if so, increment iteration
       const bodyStep = this.loopStepResolver.resolveLoopBody(workflow, loopStep.body, loopStep.id);
-      const bodyIsCompleted = Array.isArray(bodyStep)
-        ? bodyStep.every(step => completed.includes(step.id))
-        : completed.includes(bodyStep.id);
+      
+      // For array bodies, we need to check only eligible steps (those matching runConditions)
+      let bodyIsCompleted: boolean;
+      if (Array.isArray(bodyStep)) {
+        // Inject loop variables to evaluate runConditions correctly
+        const loopEnhancedContext = loopContext.injectVariables(enhancedContext, false);
+        
+        // Filter to only eligible steps (those whose runConditions are met)
+        const eligibleSteps = bodyStep.filter(step => {
+          if (!step.runCondition) {
+            return true; // No condition means always eligible
+          }
+          return evaluateCondition(step.runCondition, loopEnhancedContext);
+        });
+        
+        // If there are eligible steps, check if all are completed
+        // If there are no eligible steps, consider the iteration complete
+        bodyIsCompleted = eligibleSteps.length === 0 || eligibleSteps.every(step => completed.includes(step.id));
+      } else {
+        bodyIsCompleted = completed.includes(bodyStep.id);
+      }
       
       if (bodyIsCompleted) {
         // Body completed, increment iteration and clear body steps from completed
