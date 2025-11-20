@@ -128,8 +128,8 @@ export class FileWorkflowStorage implements IWorkflowStorage {
          // Skip agentic routines if flag is disabled
          if (!this.featureFlags.isEnabled('agenticRoutines')) {
            if (file.includes('routines/') || path.basename(file).startsWith('routine-')) {
-             continue;
-           }
+          continue;
+        }
          }
 
          // Skip reading content for mapping if we assume filename convention, 
@@ -140,8 +140,8 @@ export class FileWorkflowStorage implements IWorkflowStorage {
          const stats = statSync(filePathRaw);
          if (stats.size > this.maxFileSize) continue;
 
-         const raw = await fs.readFile(filePathRaw, 'utf-8');
-         const data = JSON.parse(raw) as Workflow;
+        const raw = await fs.readFile(filePathRaw, 'utf-8');
+        const data = JSON.parse(raw) as Workflow;
          if (!data.id) continue;
 
          const files = idToFiles.get(data.id) || [];
@@ -165,7 +165,7 @@ export class FileWorkflowStorage implements IWorkflowStorage {
          const standardFile = files.find(f => !f.includes('.agentic.'));
          if (standardFile) {
             selectedFile = standardFile;
-         }
+        }
       }
 
       // Add to index
@@ -175,16 +175,16 @@ export class FileWorkflowStorage implements IWorkflowStorage {
       const data = JSON.parse(raw) as Workflow;
       
       index.set(id, {
-        id: data.id,
+          id: data.id,
         filename: selectedFile,
-        lastModified: stats.mtimeMs,
-        summary: {
+          lastModified: stats.mtimeMs,
+          summary: {
             id: data.id,
             name: data.name,
             description: data.description,
             category: 'default',
             version: data.version
-        }
+          }
       });
     }
 
@@ -321,4 +321,4 @@ export function createDefaultFileWorkflowStorage(): FileWorkflowStorage {
     cacheSize: 200,       // Larger cache
     indexCacheTTLms: 60000, // 1 minute index cache
   });
-}
+} 
