@@ -60,6 +60,14 @@ export const FEATURE_FLAG_DEFINITIONS: ReadonlyArray<FeatureFlagDefinition> = [
     since: '0.6.0',
     stable: true,
   },
+  {
+    key: 'agenticRoutines',
+    envVar: 'WORKRAIL_ENABLE_AGENTIC_ROUTINES',
+    defaultValue: false,
+    description: 'Enable Agentic Orchestration features (subagent delegation, .agentic.json overrides, routines)',
+    since: '0.7.0',
+    stable: false,
+  },
 ] as const;
 
 /**

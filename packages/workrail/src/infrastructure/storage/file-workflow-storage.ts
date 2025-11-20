@@ -7,6 +7,7 @@ import {
   InvalidWorkflowError,
   SecurityError
 } from '../../core/error-handler';
+import { IFeatureFlagProvider, createFeatureFlagProvider } from '../../config/feature-flags';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,6 +53,8 @@ interface FileWorkflowStorageOptions {
   cacheSize?: number;
   /** Index cache TTL in milliseconds. Default 30000 (30 seconds) */
   indexCacheTTLms?: number;
+  /** Feature flag provider (optional, defaults to environment-based) */
+  featureFlagProvider?: IFeatureFlagProvider;
 }
 
 /**
@@ -66,6 +69,7 @@ export class FileWorkflowStorage implements IWorkflowStorage {
   private readonly cacheLimit: number;
   private readonly indexCacheTTL: number;
   private readonly cache = new Map<string, CacheEntry>();
+  private readonly featureFlags: IFeatureFlagProvider;
   
   // Index cache to avoid expensive directory scans
   private workflowIndex: Map<string, WorkflowIndexEntry> | null = null;
@@ -77,6 +81,7 @@ export class FileWorkflowStorage implements IWorkflowStorage {
     this.cacheTTL = options.cacheTTLms ?? 5000;
     this.cacheLimit = options.cacheSize ?? 100;
     this.indexCacheTTL = options.indexCacheTTLms ?? 30000; // 30 seconds
+    this.featureFlags = options.featureFlagProvider ?? createFeatureFlagProvider();
   }
 
   /**
@@ -87,44 +92,66 @@ export class FileWorkflowStorage implements IWorkflowStorage {
     const jsonFiles = dirEntries.filter((f) => f.endsWith('.json'));
     const index = new Map<string, WorkflowIndexEntry>();
 
+    // First pass: Create map of ID -> Filename to detect overrides
+    const idToFiles = new Map<string, string[]>();
+
+    // Scan all files first to map IDs
     for (const file of jsonFiles) {
-      const filePathRaw = path.resolve(this.baseDirReal, file);
-      assertWithinBase(filePathRaw, this.baseDirReal);
-
       try {
-        const stats = statSync(filePathRaw);
-        if (stats.size > this.maxFileSize) {
-          console.warn(`[FileWorkflowStorage] Skipping oversized file: ${file}`);
-          continue;
-        }
+         // Skip reading content for mapping if we assume filename convention, 
+         // but we can't assume that yet. So we read IDs.
+         const filePathRaw = path.resolve(this.baseDirReal, file);
+         assertWithinBase(filePathRaw, this.baseDirReal);
 
-        // Read just enough to get the workflow ID and summary info
-        const raw = await fs.readFile(filePathRaw, 'utf-8');
-        const data = JSON.parse(raw) as Workflow;
-        
-        if (!data.id) {
-          console.warn(`[FileWorkflowStorage] Skipping file without id: ${file}`);
-          continue;
-        }
+         const stats = statSync(filePathRaw);
+         if (stats.size > this.maxFileSize) continue;
 
-        const entry: WorkflowIndexEntry = {
-          id: data.id,
-          filename: file,
-          lastModified: stats.mtimeMs,
-          summary: {
+         const raw = await fs.readFile(filePathRaw, 'utf-8');
+         const data = JSON.parse(raw) as Workflow;
+         if (!data.id) continue;
+
+         const files = idToFiles.get(data.id) || [];
+         files.push(file);
+         idToFiles.set(data.id, files);
+      } catch (e) { continue; }
+    }
+
+    // Second pass: Select correct file for each ID
+    for (const [id, files] of idToFiles) {
+      let selectedFile = files[0];
+
+      // Agentic Override Logic
+      if (this.featureFlags.isEnabled('agenticRoutines')) {
+         const agenticFile = files.find(f => f.includes('.agentic.'));
+         if (agenticFile) {
+           selectedFile = agenticFile;
+         }
+      } else {
+         // Ensure we DON'T pick the agentic file if flag is off
+         const standardFile = files.find(f => !f.includes('.agentic.'));
+         if (standardFile) {
+            selectedFile = standardFile;
+         }
+      }
+
+      // Add to index
+      const filePath = path.resolve(this.baseDirReal, selectedFile);
+      const stats = statSync(filePath);
+      const raw = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(raw) as Workflow;
+      
+      index.set(id, {
+        id: data.id,
+        filename: selectedFile,
+        lastModified: stats.mtimeMs,
+        summary: {
             id: data.id,
             name: data.name,
             description: data.description,
             category: 'default',
             version: data.version
-          }
-        };
-
-        index.set(data.id, entry);
-      } catch (err) {
-        console.warn(`[FileWorkflowStorage] Skipping invalid file: ${file}`, err);
-        continue;
-      }
+        }
+      });
     }
 
     return index;
@@ -260,4 +287,4 @@ export function createDefaultFileWorkflowStorage(): FileWorkflowStorage {
     cacheSize: 200,       // Larger cache
     indexCacheTTLms: 60000, // 1 minute index cache
   });
-} 
+}

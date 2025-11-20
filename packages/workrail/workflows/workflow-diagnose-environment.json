@@ -1,0 +1,24 @@
+{
+  "id": "workflow-diagnose-environment",
+  "name": "Diagnostic: Environment & Subagents",
+  "description": "A setup wizard to detect your Agentic IDE capabilities and verify Subagent tool access.",
+  "steps": [
+    {
+      "id": "check-subagent-existence",
+      "title": "Check for Subagents",
+      "prompt": "Do you have access to specialized Subagents (e.g., Researcher, Coder)?\n\n- If YES: Please spawn your 'Researcher' subagent now.\n- If NO: You are running in **Tier 1 (Solo Mode)**. No further configuration is needed. You can stop this workflow."
+    },
+    {
+      "id": "probe-tool-access",
+      "title": "Probe Tool Access",
+      "prompt": "We need to verify if your Researcher subagent can access WorkRail tools.\n\nINSTRUCTION:\nAsk your Researcher subagent to execute the tool `workflow_list`.\n\nCompare their output with your own ability to see tools.\n\n- If they SUCCEED: Your environment supports **Tier 3 (Delegation Mode)**.\n- If they FAIL (tool not found): Your environment is in **Tier 2 (Proxy Mode)**.\n\nPlease report which Tier you are in."
+    },
+    {
+      "id": "save-config",
+      "title": "Save Configuration",
+      "prompt": "Based on the previous step, I will save your configuration preference.\n\nWrite a file to `.workrail/config.json` with the following content (adjust based on your Tier):\n\nFor Tier 3 (Delegate):\n```json\n{\n  \"features\": {\n    \"subagents\": true,\n    \"delegation\": true\n  }\n}\n```\n\nFor Tier 2 (Proxy):\n```json\n{\n  \"features\": {\n    \"subagents\": true,\n    \"delegation\": false\n  }\n}\n```\n\nThis will help me optimize future workflows for your environment.",
+      "requireConfirmation": true
+    }
+  ]
+}
+
