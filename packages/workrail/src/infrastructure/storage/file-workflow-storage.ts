@@ -97,6 +97,10 @@ export class FileWorkflowStorage implements IWorkflowStorage {
         const fullPath = path.join(currentDir, entry.name);
         
         if (entry.isDirectory()) {
+          // Skip examples directory
+          if (entry.name === 'examples') {
+            continue;
+          }
           await scan(fullPath);
         } else if (entry.isFile() && entry.name.endsWith('.json')) {
           files.push(fullPath);

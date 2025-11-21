@@ -1,6 +1,5 @@
 import { createDefaultWorkflowStorage } from '../../src/infrastructure/storage';
 import { Workflow } from '../../src/types/mcp-types';
-import { describe, it, expect } from '@jest/globals';
 
 describe('FileWorkflowStorage', () => {
   const storage = createDefaultWorkflowStorage();
@@ -27,5 +26,24 @@ describe('FileWorkflowStorage', () => {
     await storage.loadAllWorkflows();
     const statsAfterSecond = storage.getCacheStats();
     expect(statsAfterSecond.hits).toBeGreaterThanOrEqual(statsAfterFirst.hits + 1);
+  });
+
+  it('should exclude example workflows from loading', async () => {
+    const workflows = await storage.loadAllWorkflows();
+    
+    // Check that no workflow IDs contain 'simple-' prefix (from examples/loops/)
+    const exampleWorkflows = workflows.filter((wf: Workflow) => 
+      wf.id.startsWith('simple-') || wf.id.includes('example')
+    );
+    
+    expect(exampleWorkflows).toHaveLength(0);
+    
+    // Specifically check for known example workflow IDs that should be excluded
+    const workflowIds = workflows.map((wf: Workflow) => wf.id);
+    expect(workflowIds).not.toContain('simple-batch-example');
+    expect(workflowIds).not.toContain('simple-polling-example');
+    expect(workflowIds).not.toContain('simple-retry-example');
+    expect(workflowIds).not.toContain('simple-search-example');
+    expect(workflowIds).not.toContain('dashboard-template-workflow');
   });
 }); 
