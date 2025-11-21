@@ -1,0 +1,73 @@
+{
+  "id": "routine-ideation",
+  "name": "Ideation Routine",
+  "version": "1.0.0",
+  "description": "Systematic idea generation routine for exploring solution spaces and generating diverse approaches to problems. Supports different perspectives (simplicity, performance, maintainability, etc.) for parallel ideation. Expected inputs: problem, constraints, context, perspective (optional), quantity, deliverable name.",
+  "steps": [
+    {
+      "id": "step-understand-problem",
+      "title": "Step 1: Understand the Problem Space",
+      "prompt": "**UNDERSTAND WHAT YOU'RE SOLVING**\n\nBefore generating ideas, deeply understand the problem space.\n\n**Analyze the Problem:**\n- What is the core problem to solve?\n- What are the constraints (technical, business, time)?\n- What context matters (existing code, requirements, patterns)?\n- What perspective should you prioritize (if any)?\n\n**Identify Solution Dimensions:**\n- What are the key decisions to make?\n- What are the main trade-off spaces?\n- What are the different approaches others have taken?\n\n**WORKING NOTES:**\n- Problem Summary\n- Key Constraints\n- Solution Dimensions\n- Trade-off Spaces",
+      "agentRole": "You are analyzing the problem space to understand what you're solving.",
+      "requireConfirmation": false,
+      "guidance": [
+        "DEPTH: Understand the problem deeply before ideating",
+        "DIMENSIONS: Identify the key decision points",
+        "TRADE-OFFS: Understand what can be traded off"
+      ]
+    },
+    {
+      "id": "step-diverge",
+      "title": "Step 2: Diverge - Generate Many Ideas",
+      "prompt": "**GENERATE DIVERSE IDEAS**\n\nNow generate many ideas exploring different solution spaces.\n\n**Divergent Thinking:**\n- Generate {quantity} ideas minimum\n- Explore different approaches, not variations of the same idea\n- Don't judge or filter yet - quantity over quality\n- Push beyond the obvious first ideas\n\n**Solution Spaces to Explore:**\n- **Architectural**: Different ways to structure the solution\n- **Algorithmic**: Different approaches to the core logic\n- **Technological**: Different tools or frameworks\n- **Temporal**: Different timing or sequencing strategies\n- **Spatial**: Different data organization or distribution\n- **Behavioral**: Different user interactions or workflows\n\n**If you have a PERSPECTIVE focus:**\n- Prioritize ideas that excel in that dimension\n- But still explore diverse approaches within that lens\n\n**WORKING NOTES:**\n- Idea 1: [Name] - [Core concept]\n- Idea 2: [Name] - [Core concept]\n- ...\n- Idea N: [Name] - [Core concept]",
+      "agentRole": "You are in divergent mode - generating many ideas without judgment.",
+      "requireConfirmation": false,
+      "guidance": [
+        "QUANTITY: Generate more ideas than requested, then refine",
+        "DIVERSITY: Explore different solution spaces, not variations",
+        "NO JUDGMENT: Don't filter yet, just generate",
+        "PERSPECTIVE: If focused, prioritize that lens"
+      ]
+    },
+    {
+      "id": "step-develop",
+      "title": "Step 3: Develop - Flesh Out Each Idea",
+      "prompt": "**DEVELOP EACH IDEA**\n\nNow take each idea and develop it into a complete proposal.\n\n**For Each Idea:**\n\n### [Idea Name]\n\n**Core Concept:**\n- 2-3 sentence explanation of the approach\n\n**How It Works:**\n- Step-by-step breakdown\n- Key components or mechanisms\n- How it addresses the problem\n\n**Pros:**\n- What makes this approach attractive\n- What problems it solves well\n- What constraints it satisfies\n\n**Cons:**\n- What are the downsides\n- What problems it doesn't solve\n- What constraints it violates\n\n**Implementation Complexity:**\n- Low / Medium / High\n- Brief justification\n\n**Example (if helpful):**\n- Code sketch, diagram, or concrete scenario\n\n**WORKING NOTES:**\nDevelop all ideas using this structure",
+      "agentRole": "You are developing each idea into a complete, evaluable proposal.",
+      "requireConfirmation": false,
+      "guidance": [
+        "COMPLETENESS: Each idea needs all sections",
+        "OBJECTIVITY: Present pros AND cons honestly",
+        "CONCRETENESS: Be specific, not vague",
+        "EXAMPLES: Code sketches help clarify ideas"
+      ]
+    },
+    {
+      "id": "step-refine",
+      "title": "Step 4: Refine - Select Best Ideas",
+      "prompt": "**REFINE YOUR IDEA SET**\n\nNow refine your ideas to the target quantity.\n\n**Selection Criteria:**\n- **Diversity**: Keep ideas that explore different solution spaces\n- **Viability**: Keep ideas that could actually work given constraints\n- **Completeness**: Keep ideas that are well-developed\n- **Perspective Fit**: If focused, keep ideas that excel in that dimension\n\n**Remove:**\n- Duplicate or very similar ideas (keep the best version)\n- Ideas that violate hard constraints\n- Ideas that are too vague or underdeveloped\n\n**Target:** {quantity} ideas (or explain why fewer)\n\n**WORKING NOTES:**\n- Final idea set\n- Why these were chosen\n- What was filtered out and why",
+      "agentRole": "You are refining your idea set to the most diverse and viable options.",
+      "requireConfirmation": false,
+      "guidance": [
+        "DIVERSITY: Prioritize different approaches over similar ones",
+        "QUALITY: Each idea should be complete and viable",
+        "QUANTITY: Hit the target number if possible",
+        "JUSTIFICATION: Explain your selection criteria"
+      ]
+    },
+    {
+      "id": "step-deliver",
+      "title": "Step 5: Deliver - Create Structured Artifact",
+      "prompt": "**CREATE THE DELIVERABLE**\n\nCreate {deliverable} with your refined ideas.\n\n**Structure:**\n\n```markdown\n# Ideation Results\n\n## Problem Summary\n[Brief restatement of the problem]\n\n## Constraints\n- [Constraint 1]\n- [Constraint 2]\n\n## Perspective\n[If focused: Simplicity / Performance / etc.]\n[If general: Balanced exploration]\n\n## Ideas Generated: {quantity}\n\n---\n\n### Idea 1: [Name]\n\n**Core Concept:**\n[2-3 sentences]\n\n**How It Works:**\n1. [Step 1]\n2. [Step 2]\n3. [Step 3]\n\n**Pros:**\n- [Pro 1]\n- [Pro 2]\n\n**Cons:**\n- [Con 1]\n- [Con 2]\n\n**Implementation Complexity:** [Low/Medium/High]\n[Justification]\n\n**Example:**\n```[language]\n[Code sketch or diagram]\n```\n\n---\n\n[Repeat for each idea]\n\n---\n\n## Summary\n\n**Recommended Next Steps:**\n- [How main agent should evaluate these ideas]\n- [What additional info might help decide]\n- [Potential combinations or hybrids]\n```\n\n**OUTPUT:** Create {deliverable} with this structure\n\n**Before Finishing:** Does each idea have all required sections? Are they diverse? Are they concrete and actionable?",
+      "agentRole": "You are creating the final structured deliverable for the main agent.",
+      "requireConfirmation": false,
+      "guidance": [
+        "STRUCTURE: Follow the template exactly",
+        "COMPLETENESS: Every idea has all sections",
+        "OBJECTIVITY: Present options, don't pick a winner",
+        "NEXT STEPS: Help main agent know how to proceed"
+      ]
+    }
+  ]
+}
+
