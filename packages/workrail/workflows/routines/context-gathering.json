@@ -17,13 +17,11 @@
   "metaGuidance": [
     "**ROUTINE PURPOSE:**",
     "This routine performs systematic codebase investigation. It separates strategy (Ideate/Plan) from execution (Survey/Scan/Explore/etc.).",
-    "",
     "**PHASES:**",
     "1. IDEATE: Brainstorm relevant areas and potential connections",
     "2. PLAN: Define specific targets and search strategy",
     "3. EXECUTE: Run the investigation at the requested depth",
     "4. SYNTHESIZE: Combine findings into actionable insights",
-    "",
     "**CORE PRINCIPLES:**",
     "- STRATEGY FIRST: Don't start reading files until you know WHY and WHERE",
     "- SYSTEMATIC: Follow the plan, don't rabbit-hole",
@@ -58,7 +56,10 @@
     {
       "id": "step-execute-depth-0",
       "title": "Execution: Depth 0 (Survey)",
-      "runCondition": {"var": "depth", "greaterThanOrEqual": 0},
+      "runCondition": {
+        "var": "depth",
+        "gte": 0
+      },
       "prompt": "**EXECUTE DEPTH 0: SURVEY**\n\nExecute your research plan at Depth 0 (Map the territory).\n\n**MISSION:** Understand what exists in the target area without reading contents.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Use `list_dir` on target scopes\n3. Map file structure and purpose\n4. Identify architectural patterns\n\n**WORKING NOTES:**\n- File Tree & Purpose\n- Observed Patterns\n- Suspicious Areas",
       "agentRole": "You are a systematic cartographer mapping the territory.",
       "requireConfirmation": false,
@@ -71,7 +72,10 @@
     {
       "id": "step-execute-depth-1",
       "title": "Execution: Depth 1 (Scan)",
-      "runCondition": {"var": "depth", "greaterThanOrEqual": 1},
+      "runCondition": {
+        "var": "depth",
+        "gte": 1
+      },
       "prompt": "**EXECUTE DEPTH 1: SCAN**\n\nExecute your research plan at Depth 1 (Identify components).\n\n**MISSION:** Understand components and relationships without reading implementations.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Read file headers (top 50 lines)\n3. Map imports/exports and dependencies\n4. Identify architectural layers\n\n**WORKING NOTES:**\n- Component Map\n- Dependency Graph\n- Key Interfaces",
       "agentRole": "You are an architect mapping component relationships.",
       "requireConfirmation": false,
@@ -84,7 +88,10 @@
     {
       "id": "step-execute-depth-2",
       "title": "Execution: Depth 2 (Explore)",
-      "runCondition": {"var": "depth", "greaterThanOrEqual": 2},
+      "runCondition": {
+        "var": "depth",
+        "gte": 2
+      },
       "prompt": "**EXECUTE DEPTH 2: EXPLORE**\n\nExecute your research plan at Depth 2 (Understand functionality).\n\n**MISSION:** Trace execution flows and understand behavior.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Read function signatures and docstrings\n3. Trace key execution paths\n4. Map data flow and transformations\n\n**WORKING NOTES:**\n- Execution Flow Diagrams\n- Functional Summaries\n- Data Flow Maps",
       "agentRole": "You are a systems analyst tracing flows and data.",
       "requireConfirmation": false,
@@ -97,7 +104,10 @@
     {
       "id": "step-execute-depth-3",
       "title": "Execution: Depth 3 (Analyze)",
-      "runCondition": {"var": "depth", "greaterThanOrEqual": 3},
+      "runCondition": {
+        "var": "depth",
+        "gte": 3
+      },
       "prompt": "**EXECUTE DEPTH 3: ANALYZE**\n\nExecute your research plan at Depth 3 (Deep implementation analysis).\n\n**MISSION:** Understand exact behavior, edge cases, and potential issues.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Read full implementations\n3. Analyze conditionals and loops\n4. Check for race conditions and edge cases\n\n**WORKING NOTES:**\n- Detailed Implementation Analysis\n- Edge Case Analysis\n- Potential Issues",
       "agentRole": "You are a code reviewer looking for logic errors and edge cases.",
       "requireConfirmation": false,
@@ -110,7 +120,10 @@
     {
       "id": "step-execute-depth-4",
       "title": "Execution: Depth 4 (Dissect)",
-      "runCondition": {"var": "depth", "greaterThanOrEqual": 4},
+      "runCondition": {
+        "var": "depth",
+        "gte": 4
+      },
       "prompt": "**EXECUTE DEPTH 4: DISSECT**\n\nExecute your research plan at Depth 4 (Forensic line-by-line).\n\n**MISSION:** Find every bug, vulnerability, and subtle issue.\n\n**EXECUTE:**\n1. Follow `research-plan.md`\n2. Analyze critical sections line-by-line\n3. Verify every assumption and state\n4. Check security and performance\n\n**WORKING NOTES:**\n- Line-by-Line Analysis\n- Security Vulnerabilities\n- Performance Bottlenecks",
       "agentRole": "You are a forensic analyst performing exhaustive checks.",
       "requireConfirmation": false,

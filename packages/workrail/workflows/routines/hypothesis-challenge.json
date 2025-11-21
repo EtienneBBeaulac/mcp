@@ -18,13 +18,11 @@
   "metaGuidance": [
     "**ROUTINE PURPOSE:**",
     "This routine performs adversarial testing. It separates strategy (Ideating attack vectors) from execution (Challenging/Stress Testing).",
-    "",
     "**PHASES:**",
     "1. IDEATE: Brainstorm attack vectors and common flaws",
     "2. STRATEGIZE: Define the challenge plan for the requested rigor",
     "3. EXECUTE: Run the challenge (Surface/Deep/Max)",
     "4. SYNTHESIZE: Deliver verdicts and alternative explanations",
-    "",
     "**CORE PRINCIPLES:**",
     "- ADVERSARIAL: Actively try to disprove, don't confirm",
     "- SYSTEMATIC: Challenge assumptions, logic, and evidence",
@@ -57,7 +55,10 @@
     {
       "id": "step-execute-rigor-1",
       "title": "Execution: Rigor 1 (Surface)",
-      "runCondition": {"var": "rigor", "greaterThanOrEqual": 1},
+      "runCondition": {
+        "var": "rigor",
+        "gte": 1
+      },
       "prompt": "**EXECUTE RIGOR 1: SURFACE CHALLENGE**\n\nExecute your challenge plan at Rigor 1 (Surface).\n\n**MISSION:** Identify obvious flaws and simple counter-examples.\n\n**EXECUTE:**\n1. Follow `challenge-strategy.md`\n2. Check for obvious logical gaps\n3. Identify simple counter-examples\n4. Check for Occam's Razor alternatives\n\n**WORKING NOTES:**\n- Obvious Flaws\n- Simple Counter-Examples\n- Better Alternatives",
       "agentRole": "You are a skeptical reviewer looking for quick wins.",
       "requireConfirmation": false,
@@ -69,7 +70,10 @@
     {
       "id": "step-execute-rigor-3",
       "title": "Execution: Rigor 3 (Deep)",
-      "runCondition": {"var": "rigor", "greaterThanOrEqual": 3},
+      "runCondition": {
+        "var": "rigor",
+        "gte": 3
+      },
       "prompt": "**EXECUTE RIGOR 3: DEEP CHALLENGE**\n\nExecute your challenge plan at Rigor 3 (Deep Analysis).\n\n**MISSION:** Deeply challenge with edge cases and hidden assumptions.\n\n**EXECUTE:**\n1. Follow `challenge-strategy.md`\n2. Expose hidden assumptions\n3. Generate systematic edge cases\n4. Analyze timing and environment factors\n\n**WORKING NOTES:**\n- Hidden Assumptions Exposed\n- Edge Case Analysis\n- Environmental Factors",
       "agentRole": "You are a rigorous auditor digging for structural flaws.",
       "requireConfirmation": false,
@@ -81,7 +85,10 @@
     {
       "id": "step-execute-rigor-5",
       "title": "Execution: Rigor 5 (Maximum)",
-      "runCondition": {"var": "rigor", "greaterThanOrEqual": 5},
+      "runCondition": {
+        "var": "rigor",
+        "gte": 5
+      },
       "prompt": "**EXECUTE RIGOR 5: MAX CHALLENGE**\n\nExecute your challenge plan at Rigor 5 (Maximum Skepticism).\n\n**MISSION:** Try to break it completely.\n\n**EXECUTE:**\n1. Follow `challenge-strategy.md`\n2. Exhaustive assumption enumeration\n3. Extreme edge cases and adversarial inputs\n4. Second-order effects and chaos scenarios\n\n**WORKING NOTES:**\n- Exhaustive Challenges\n- Extreme Scenarios\n- Disproof Attempts",
       "agentRole": "You are a relentless adversary trying to prove it wrong.",
       "requireConfirmation": false,

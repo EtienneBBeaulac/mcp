@@ -18,13 +18,11 @@
   "metaGuidance": [
     "**ROUTINE PURPOSE:**",
     "This routine validates plans. It separates strategy (Ideating analysis vectors) from execution (Checking completeness/patterns/risk).",
-    "",
     "**PHASES:**",
     "1. IDEATE: Classify the plan type and potential pitfalls",
     "2. STRATEGIZE: Define the analysis focus and checklist",
     "3. EXECUTE: Run the checks (Completeness, Patterns, Risk)",
     "4. SYNTHESIZE: Deliver the final verdict and recommendations",
-    "",
     "**CORE PRINCIPLES:**",
     "- CONTEXT-AWARE: Adapt analysis to the plan type (UI vs Backend vs Migration)",
     "- RISK-FOCUSED: Prioritize high-risk areas",

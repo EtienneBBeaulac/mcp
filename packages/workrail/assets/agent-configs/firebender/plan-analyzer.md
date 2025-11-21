@@ -7,7 +7,6 @@ tools:
   - codebase_search
   - workflow_list
   - workflow_get
-model: claude-sonnet-4
 ---
 
 # Plan Analyzer Agent

@@ -8,7 +8,6 @@ tools:
   - workflow_list
   - workflow_get
   - workflow_next
-model: claude-sonnet-4
 ---
 
 # Execution Simulator Agent

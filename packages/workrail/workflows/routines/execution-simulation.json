@@ -17,13 +17,11 @@
   "metaGuidance": [
     "**ROUTINE PURPOSE:**",
     "This routine simulates code execution mentally. It deliberately separates deciding WHAT to simulate from the actual simulation.",
-    "",
     "**PHASES:**",
     "1. IDEATE: Brainstorm possible execution paths and scenarios",
     "2. PLAN: Select the best scenario and define inputs/state",
     "3. EXECUTE: Perform the step-by-step mental trace",
     "4. ANALYZE: Identify divergence and root cause",
-    "",
     "**CORE PRINCIPLES:**",
     "- THINK BEFORE TRACING: Don't start tracing until you have a plan",
     "- DEFINE INPUTS FIRST: Know exactly what values you're passing in",
