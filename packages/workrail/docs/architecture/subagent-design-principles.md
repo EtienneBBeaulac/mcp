@@ -106,6 +106,143 @@ Not: "Hey, someone gather context for me" (auto-invoke)
 
 **Rationale:** Predictability, debuggability, user understanding.
 
+### 7. **Auditor Model: Review, Don't Execute**
+
+**Key Discovery:** Subagents work better as **auditors** than **executors**.
+
+**❌ Executor Model (Problematic):**
+```
+Main Agent: "Go gather context about authentication"
+Subagent: *reads files, builds understanding*
+Problem: Main agent doesn't have the context, needs to re-read
+```
+
+**✅ Auditor Model (Effective):**
+```
+Main Agent: *reads files, builds understanding*
+Main Agent: "I read these files and learned X. Audit my work."
+Subagent: "You missed Y, assumption Z is risky, go deeper on W"
+Main Agent: *investigates gaps*
+Result: Main agent has full context + quality control
+```
+
+**Why Auditors Work Better:**
+- **No dilution**: Main agent has full, uncompressed context
+- **No duplication**: Main agent doesn't need to re-read what subagent read
+- **Fresh perspective**: Auditor catches gaps and blind spots
+- **Quality control**: Ensures sufficient understanding before proceeding
+- **Cognitive diversity**: Different perspective on the same work
+
+**When to Use Auditors:**
+- Context gathering (audit for completeness and depth)
+- Hypothesis formation (challenge assumptions)
+- Plan creation (validate completeness and soundness)
+- Final validation (adversarial review before committing)
+
+**When Executors Still Make Sense:**
+- Simulation (running "what-if" scenarios in parallel)
+- Independent parallel work (different execution paths)
+- Specialized tasks main agent can't do well
+
+### 8. **Parallel Delegation for Critical Work**
+
+**Pattern:** Spawn multiple subagents **simultaneously** for critical phases to get diverse perspectives and ensure nothing is missed.
+
+**Explicit Parallelism:**
+```
+⚠️ **CRITICAL: Spawn ALL subagents SIMULTANEOUSLY, not sequentially.**
+
+Delegate to THREE subagents AT THE SAME TIME:
+1. [Subagent 1 with specific focus]
+2. [Subagent 2 with different focus]
+3. [Subagent 3 with different focus]
+```
+
+**Use Cases:**
+
+**1. Multi-Perspective Auditing (Diverse Focuses)**
+```
+Main agent gathers context
+↓
+Parallel Audit (2-3 subagents):
+├─ Context Researcher (FOCUS: Completeness)
+├─ Context Researcher (FOCUS: Depth)
+└─ [Optional 3rd perspective]
+
+Main agent synthesizes all perspectives
+```
+
+**2. Redundant Critical Work (Different Rigor)**
+```
+Main agent forms hypotheses
+↓
+Parallel Challenge (2 subagents):
+├─ Hypothesis Challenger (rigor=3: Thorough)
+└─ Hypothesis Challenger (rigor=5: Maximum)
+
+Main agent strengthens hypotheses based on challenges
+```
+
+**3. Multi-Modal Validation (Different Cognitive Modes)**
+```
+Main agent proposes fix
+↓
+Parallel Validation (3 subagents):
+├─ Hypothesis Challenger (adversarial review)
+├─ Execution Simulator (simulate the fix)
+└─ Plan Analyzer (validate the plan)
+
+Main agent proceeds only if ALL THREE validate
+```
+
+**Synthesis Guidance:**
+
+When main agent receives multiple parallel deliverables:
+- **Common concerns**: If 2+ subagents flag the same issue → High priority
+- **Unique insights**: Each subagent may catch different gaps → Investigate all
+- **Conflicting advice**: If they disagree → Investigate to understand why
+- **Quality gate**: For critical phases, require ALL subagents to validate
+
+**Cost/Speed Tradeoff:**
+- Parallel = faster wall time but higher token cost
+- Use for critical phases where quality matters most
+- Use for phases where diverse perspectives add value
+
+### 9. **Focused Audits for Parallel Work**
+
+When spawning multiple auditors in parallel, give each a **specific focus** to maximize diversity and minimize overlap.
+
+**Pattern:**
+```
+Subagent 1: FOCUS = Completeness
+- Priority: Did they miss any critical areas?
+- Still checks other dimensions, but emphasizes coverage
+
+Subagent 2: FOCUS = Depth
+- Priority: Did they go deep enough?
+- Still checks other dimensions, but emphasizes understanding quality
+```
+
+**Benefits:**
+- Each auditor provides unique, non-overlapping perspective
+- Main agent gets comprehensive feedback across all dimensions
+- Parallel work is more valuable than sequential
+
+**Subagent Config Support:**
+
+Subagents should be aware they may work in parallel:
+```markdown
+## Parallel Audits
+
+In some workflows, multiple auditors may review the same work
+simultaneously with different focuses. This is intentional:
+
+- You are independent (don't worry about other auditors)
+- Stick to your focus (if assigned)
+- Be thorough (main agent synthesizes all perspectives)
+- Don't duplicate (trust others to cover their dimensions)
+```
+
 ---
 
 ## Subagent Invocation Pattern
@@ -176,40 +313,65 @@ Essential subagents for most workflows. These 5 cover the primary cognitive func
 
 #### **1. Context Researcher**
 
-**Cognitive Function:** Deep reading, systematic exploration, execution tracing
+**Cognitive Function:** Context auditing, completeness checking, depth validation
+
+**Primary Role:** **AUDITOR** - Reviews the main agent's context gathering work
 
 **When to Use:**
-- "I need to understand how this code works"
-- "Map the structure of this system"
-- "Trace execution from X to Y"
+- "I gathered context - audit my work for completeness"
+- "Did I miss any critical files or areas?"
+- "Did I go deep enough, or stay too surface-level?"
 
-**Depth Levels:** 0-4 (Survey → Dissect)
+**Depth Levels:** 0-4 (Survey → Dissect) - used when main agent executes the routine
 
-**Routine:** `routine-context-gathering`
+**Routine:** `routine-context-gathering` (in audit mode)
 
 **Input Parameters:**
-- `depth`: 0-4 or level name
-- `target`: Files/directories to investigate
-- `mission`: What you're trying to understand
-- `context`: Background info (bug description, previous findings)
-- `deliverable`: What structured output to create
+- `mission`: What audit to perform (completeness, depth, general)
+- `focus`: Optional specific dimension to prioritize (completeness or depth)
+- `context`: The main agent's context gathering work to audit
+- `deliverable`: What structured audit output to create
 
 **Output Artifacts:**
-- `ComponentMap.md` (depth 0-1)
-- `ExecutionFlow.md` (depth 2-3)
-- `DetailedAnalysis.md` (depth 4)
+- `context-audit.md` - Audit findings with gaps and recommendations
 
-**Example Delegation:**
+**Example Delegation (Auditor Mode):**
 ```
-"Execute context-gathering at depth=2 (Explore):
- Mission: Understand how user authentication works
- Target: src/auth/*
- Context: Investigating a token validation bug
- Deliverable: ExecutionFlow.md showing login → token validation"
+"Execute context-gathering routine in audit mode:
+ Mission: Audit my context gathering for COMPLETENESS
+ 
+ My Context Gathering:
+ [Paste the main agent's investigation.md]
+ 
+ Focus: Completeness
+ - Did I miss any critical files or areas?
+ - Are there important components I didn't investigate?
+ - What else should I have looked at?
+ 
+ Deliverable: Audit findings with specific gaps and recommendations"
 ```
+
+**Example Delegation (Parallel Focused Audits):**
+```
+Spawn 2 Context Researchers SIMULTANEOUSLY:
+
+Researcher 1 (Completeness Focus):
+- Priority: Coverage and breadth
+- Did they miss entire components or subsystems?
+
+Researcher 2 (Depth Focus):
+- Priority: Understanding quality
+- Did they only read signatures, not implementations?
+```
+
+**Executor Mode (Less Common):**
+
+The Context Researcher CAN execute context gathering directly, but this is less effective than the auditor model. Use only when:
+- Main agent doesn't have time/capacity to gather context
+- Need independent parallel investigation of different areas
 
 **Subagent Description (for auto-invocation):**
-> "Gathers and analyzes codebase context using systematic exploration at configurable depths. Specializes in mapping file structures, tracing execution flows, and identifying relevant code sections. Use when you need to understand code before making decisions."
+> "Audits context gathering for completeness, depth, and blind spots. Reviews what the main agent learned and identifies gaps, assumptions, and areas needing deeper investigation. Use when you need a second opinion on your understanding."
 
 **Recommended Tool Restrictions:**
 ```yaml
@@ -221,12 +383,12 @@ tools:
   - workflow_list
   - workflow_get
   - workflow_next
-  # NO WRITE OPERATIONS: No edit_file, run_terminal_cmd, delete_file
+  # NO WRITE OPERATIONS: Auditors are read-only
 ```
 
 **Recommended Model:**
-- Depth 0-1: Haiku (fast scanning)
-- Depth 2-4: Sonnet (reasoning required)
+- General audit: Haiku (fast review)
+- Focused audit: Sonnet (deeper analysis required)
 
 ---
 
@@ -735,6 +897,154 @@ If a subagent realizes the specified depth/rigor is insufficient:
 
 ---
 
+## Real-World Example: Bug Investigation Workflow Variants
+
+WorkRail provides three variants of the bug investigation workflow to demonstrate different delegation strategies. These variants allow A/B/C testing to find the optimal balance of quality, speed, and cost.
+
+### **Variant 1: Lite (No Context Auditor)**
+
+**Philosophy:** Fast and focused - only use adversarial auditors
+
+**Delegation Strategy:**
+- Phase 0: Main agent gathers context (no auditor)
+- Phase 2B: Hypothesis Challenger (sequential)
+- Phase 5: Hypothesis Challenger (sequential)
+
+**Characteristics:**
+- ⚡⚡⚡ Fastest execution
+- 💰 Lowest cost
+- ⭐⭐ Good quality (main agent does most work)
+- Files: `BUG_LITE_*.md`
+
+**When to Use:**
+- Simple bugs with clear symptoms
+- Time-sensitive investigations
+- When cost is a concern
+
+---
+
+### **Variant 2: Full (Sequential Auditors)**
+
+**Philosophy:** Balanced - use auditors for quality control
+
+**Delegation Strategy:**
+- Phase 0: Main agent gathers context → Context Researcher audits (sequential)
+- Phase 2B: Hypothesis Challenger (sequential)
+- Phase 5: Hypothesis Challenger (sequential)
+
+**Characteristics:**
+- ⚡⚡ Fast execution
+- 💰💰 Moderate cost
+- ⭐⭐⭐ Very good quality (auditor catches gaps)
+- Files: `BUG_FULL_*.md`
+
+**When to Use:**
+- Standard bug investigations
+- When you want quality control without high cost
+- When you're unsure if you gathered enough context
+
+---
+
+### **Variant 3: Ultra (Parallel Multi-Perspective)**
+
+**Philosophy:** Maximum rigor - parallel auditors for critical phases
+
+**Delegation Strategy:**
+
+**Phase 0: Parallel Context Audit**
+```
+Main agent: Context Gathering Routine
+↓
+2 Parallel Auditors (SIMULTANEOUSLY):
+├─ Context Researcher (FOCUS: Completeness)
+└─ Context Researcher (FOCUS: Depth)
+↓
+Main agent synthesizes both perspectives
+```
+
+**Phase 2B: Parallel Hypothesis Challenge**
+```
+Main agent: Forms hypotheses
+↓
+2 Parallel Challengers (SIMULTANEOUSLY):
+├─ Hypothesis Challenger (rigor=3: Thorough)
+└─ Hypothesis Challenger (rigor=5: Maximum)
+↓
+Main agent strengthens hypotheses
+```
+
+**Phase 5: Parallel Multi-Modal Validation**
+```
+Main agent: Proposes fix
+↓
+3 Parallel Validators (SIMULTANEOUSLY):
+├─ Hypothesis Challenger (rigor=5: Adversarial)
+├─ Execution Simulator (simulate the fix)
+└─ Plan Analyzer (validate the plan)
+↓
+Main agent proceeds ONLY if ALL THREE validate
+```
+
+**Characteristics:**
+- ⚡ Slower (more work, but parallel)
+- 💰💰💰 Highest cost
+- ⭐⭐⭐⭐⭐ Maximum quality (multi-perspective validation)
+- Files: `BUG_ULTRA_*.md`
+
+**When to Use:**
+- Critical bugs in production systems
+- Complex bugs with unclear root cause
+- When quality matters more than speed/cost
+- When you need high confidence before implementing fix
+
+---
+
+### **Key Learnings from Variants**
+
+**1. Auditor Model is Effective**
+
+All three variants use the auditor model for Phase 0:
+- Main agent executes Context Gathering Routine first
+- Auditors review the work (if used)
+- Main agent has full context + quality control
+
+**2. Parallel Delegation for Critical Phases**
+
+Ultra variant demonstrates parallel delegation value:
+- **Phase 0**: Completeness + Depth auditors catch different gaps
+- **Phase 2B**: Different rigor levels provide diverse challenge
+- **Phase 5**: Three cognitive modes (adversarial, simulation, planning) ensure comprehensive validation
+
+**3. Focused Audits Maximize Diversity**
+
+When spawning parallel auditors, give each a specific focus:
+- Context Researcher #1: FOCUS = Completeness
+- Context Researcher #2: FOCUS = Depth
+
+This ensures non-overlapping perspectives and maximizes value.
+
+**4. Quality Gates for Critical Decisions**
+
+Ultra variant uses "Triple Validation Gate" in Phase 5:
+- ALL THREE validators must approve before proceeding
+- If 2+ raise concerns → Return to Phase 2 (re-form hypotheses)
+- High confidence threshold for implementation
+
+**5. File Naming for Parallel Testing**
+
+Each variant writes to different files:
+- Lite: `BUG_LITE_*.md`
+- Full: `BUG_FULL_*.md`
+- Ultra: `BUG_ULTRA_*.md`
+
+This allows running all three variants on the same bug simultaneously for comparison.
+
+---
+
+**Note:** Main agent still does ~50% of the work. Subagents handle specific cognitive tasks, not entire phases.
+
+---
+
 ## Future Considerations
 
 ### **Model Selection & Cost Optimization**
@@ -782,12 +1092,19 @@ Main Agent: "Received execution-flow.md. Analyzing findings..."
 
 WorkRail workflows should be designed for the baseline, but IDEs may optionally enhance with progress indicators, file-by-file updates, or streaming artifact generation.
 
-### **Phase 3: Advanced Features**
+### **Implemented Features**
 
-- **Parallel Delegation**: Invoke multiple subagents simultaneously
-- **Subagent Composition**: Chain subagent outputs (Researcher → Challenger)
+✅ **Parallel Delegation**: Invoke multiple subagents simultaneously (see Ultra workflow)
+✅ **Focused Audits**: Give each parallel auditor a specific focus for diversity
+✅ **Auditor Model**: Subagents review main agent's work rather than executing it
+✅ **Quality Gates**: Multi-perspective validation before critical decisions
+
+### **Future Features**
+
+- **Subagent Composition**: Chain subagent outputs (Researcher → Challenger → Analyzer)
 - **Custom Subagents**: Allow users to define project-specific subagents
-- **Performance Tuning**: Haiku vs Sonnet based on task complexity
+- **Automatic Model Selection**: Haiku vs Sonnet based on depth/rigor/complexity
+- **Dynamic Depth Adjustment**: Subagents can request higher depth if needed
 
 ### **Open Questions**
 
