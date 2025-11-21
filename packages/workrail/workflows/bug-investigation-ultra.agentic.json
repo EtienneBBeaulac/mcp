@@ -2,7 +2,7 @@
   "id": "bug-investigation-ultra",
   "name": "Bug Investigation (Ultra - Parallel Multi-Perspective)",
   "version": "3.0.0-ultra",
-  "description": "Maximum rigor bug investigation with parallel multi-perspective auditing. Spawns multiple subagents simultaneously at critical phases for diverse perspectives and redundant validation. Highest quality, highest cost.",
+  "description": "Maximum rigor bug investigation with parallel multi-perspective auditing. Spawns multiple subagents simultaneously at critical phases for diverse perspectives and redundant validation. Highest quality, highest cost. This workflow is for INVESTIGATION ONLY - do not implement fixes.",
   "clarificationPrompts": [
     "What type of system is this? (web app, backend service, CLI tool, etc.)",
     "How reproducible is this bug? (always, sometimes, rarely)",
@@ -155,6 +155,7 @@
       "agentRole": "You are validating your conclusion with maximum rigor, leveraging adversarial challenge to ensure you haven't missed anything.",
       "requireConfirmation": false,
       "guidance": [
+        "CONSTRAINT: Validate your conclusion, but do NOT implement the fix",
         "DELEGATION: Use hypothesis-challenger subagent at maximum rigor",
         "THRESHOLD: Need 9+/10 confidence to proceed",
         "ALTERNATIVES: Ensure you've ruled out major competing explanations",
@@ -176,6 +177,19 @@
         "PROOF: Include evidence, not just assertions",
         "REPRODUCTION: Provide clear steps to reproduce",
         "OUTPUT: Create BUG_ULTRA_diagnostic.md"
+      ]
+    },
+    {
+      "id": "phase-6-handoff",
+      "title": "Phase 6: Investigation Complete - Handoff",
+      "prompt": "**INVESTIGATION COMPLETE - DO NOT IMPLEMENT THE FIX**\n\n\u26a0\ufe0f **CRITICAL BOUNDARY: This workflow is for INVESTIGATION ONLY.**\n\nYour job was to:\n- \u2705 Understand the bug\n- \u2705 Trace execution flow\n- \u2705 Form and test hypotheses\n- \u2705 Identify the root cause\n- \u2705 Validate your conclusion\n\nYour job is NOT to:\n- \u274c Write the fix\n- \u274c Modify any code\n- \u274c Create a PR\n- \u274c Implement the solution\n\n**HANDOFF DELIVERABLE:**\n\nCreate a final handoff document that someone else can use to implement the fix:\n\n**File: BUG_[VERSION]_handoff.md**\n\n```markdown\n# Bug Investigation Handoff\n\n## Executive Summary\n- **Bug**: [One sentence description]\n- **Root Cause**: [What's actually wrong]\n- **Confidence**: [High/Medium/Low based on validation]\n\n## Investigation Files\n- Investigation context: BUG_[VERSION]_investigation.md\n- Execution flow: BUG_[VERSION]_execution_flow.md\n- Hypotheses: BUG_[VERSION]_hypotheses.md\n- Validation: BUG_[VERSION]_validation.md\n\n## Root Cause Analysis\n[Detailed explanation of what's wrong and why]\n\n## Recommended Fix\n[High-level description of what needs to change]\n\n**Files to modify:**\n- [file:line] - [what needs to change]\n- [file:line] - [what needs to change]\n\n**Why this fixes it:**\n[Explain how the fix addresses the root cause]\n\n## Edge Cases & Risks\n[Things to watch out for when implementing]\n\n## Testing Recommendations\n[How to verify the fix works]\n\n## Next Steps\n1. Review this investigation\n2. Implement the recommended fix\n3. Test thoroughly\n4. Submit for code review\n```\n\n**OUTPUT**: BUG_[VERSION]_handoff.md with complete investigation summary\n\n**Before Finishing**: Have you clearly documented the root cause and recommended fix so someone else can implement it?",
+      "agentRole": "You are completing your investigation and handing off to an implementation team. Document everything clearly.",
+      "requireConfirmation": false,
+      "guidance": [
+        "BOUNDARY: Do NOT implement the fix yourself",
+        "HANDOFF: Create clear documentation for implementation team",
+        "COMPLETENESS: Include all investigation artifacts",
+        "CLARITY: Someone else should be able to implement from your handoff"
       ]
     }
   ]
