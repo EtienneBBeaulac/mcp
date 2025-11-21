@@ -895,57 +895,60 @@ If a subagent realizes the specified depth/rigor is insufficient:
 
 ---
 
-## Real-World Example: Bug Investigation Workflow Variants
+## Real-World Example: Adaptive Bug Investigation Workflow
 
-WorkRail provides three variants of the bug investigation workflow to demonstrate different delegation strategies. These variants allow A/B/C testing to find the optimal balance of quality, speed, and cost.
+WorkRail's bug investigation workflow automatically adapts its delegation strategy based on complexity assessed after Phase 0. This eliminates the need for users to choose between variants upfront.
 
-### **Variant 1: Lite (No Context Auditor)**
+### **How Adaptive Delegation Works**
 
-**Philosophy:** Fast and focused - only use adversarial auditors
+After Phase 0 (investigation), the workflow assesses complexity and chooses one of three modes:
+
+### **Mode 1: QUICK (Minimal Delegation)**
+
+**Chosen When:**
+- 1-2 components AND < 5 step call chain
+- 1-2 suspicious points AND few gaps
+- Confidence 8+/10 AND non-critical bug
 
 **Delegation Strategy:**
-- Phase 0: Main agent gathers context (no auditor)
-- Phase 2B: Hypothesis Challenger (sequential)
-- Phase 5: Hypothesis Challenger (sequential)
+- Phase 0: Main agent only (no audit)
+- Phase 1: Self-generated hypotheses (no delegation)
+- Phase 4: Self-validation (no delegation)
 
 **Characteristics:**
 - ⚡⚡⚡ Fastest execution
 - 💰 Lowest cost
-- ⭐⭐ Good quality (main agent does most work)
-- Files: `BUG_LITE_*.md`
+- ⭐⭐ Good quality (main agent does all work)
 
-**When to Use:**
-- Simple bugs with clear symptoms
-- Time-sensitive investigations
-- When cost is a concern
+**Use Case:** Simple bugs with clear symptoms, non-critical
 
 ---
 
-### **Variant 2: Full (Sequential Auditors)**
+### **Mode 2: STANDARD (Sequential Delegation)**
 
-**Philosophy:** Balanced - use auditors for quality control
+**Chosen When:**
+- Neither QUICK nor THOROUGH criteria met (middle ground)
 
 **Delegation Strategy:**
-- Phase 0: Main agent gathers context → Context Researcher audits (sequential)
-- Phase 2B: Hypothesis Challenger (sequential)
-- Phase 5: Hypothesis Challenger (sequential)
+- Phase 0: Main agent only (no audit)
+- Phase 1: Sequential hypothesis challenge (1 challenger)
+- Phase 4: Sequential validation (1 challenger)
 
 **Characteristics:**
 - ⚡⚡ Fast execution
 - 💰💰 Moderate cost
-- ⭐⭐⭐ Very good quality (auditor catches gaps)
-- Files: `BUG_FULL_*.md`
+- ⭐⭐⭐ Very good quality (adversarial review)
 
-**When to Use:**
-- Standard bug investigations
-- When you want quality control without high cost
-- When you're unsure if you gathered enough context
+**Use Case:** Typical bugs, balanced approach
 
 ---
 
-### **Variant 3: Ultra (Parallel Multi-Perspective)**
+### **Mode 3: THOROUGH (Parallel Multi-Perspective)**
 
-**Philosophy:** Maximum rigor - parallel auditors for critical phases
+**Chosen When (ANY true):**
+- 5+ components OR 10+ step call chain OR 5+ suspicious points
+- Confidence < 7/10 OR many gaps
+- Production + critical bug OR multiple possible causes
 
 **Delegation Strategy:**
 
@@ -995,31 +998,52 @@ Main agent proceeds ONLY if ALL THREE validate
 - ⚡ Slower (more work, but parallel)
 - 💰💰💰 Highest cost
 - ⭐⭐⭐⭐⭐ Maximum quality (multi-perspective validation)
-- Files: `BUG_ULTRA_*.md`
 
-**When to Use:**
-- Critical bugs in production systems
-- Complex bugs with unclear root cause
-- When quality matters more than speed/cost
-- When you need high confidence before implementing fix
+**Use Case:** Critical bugs in production, complex bugs, low confidence
 
 ---
 
-### **Key Learnings from Variants**
+### **Adaptive Decision Process**
 
-**1. Auditor Model is Effective**
+**Phase 0C: Assess & Choose Mode**
 
-All three variants use the auditor model for Phase 0:
-- Main agent executes Context Gathering Routine first
-- Auditors review the work (if used)
-- Main agent has full context + quality control
+After completing investigation, the workflow evaluates:
+
+1. **Complexity Indicators:**
+   - Components involved, call chain depth
+   - Suspicious points, gaps/uncertainties
+   - Confidence level (1-10)
+
+2. **Risk Factors:**
+   - Production system?
+   - Critical bug?
+   - Multiple possible causes?
+
+3. **Mode Selection:**
+   - Uses decision criteria to choose QUICK/STANDARD/THOROUGH
+   - Documents decision and rationale
+   - Adapts remaining phases accordingly
+
+**Benefits:**
+- **No user burden**: Workflow decides based on evidence
+- **Adaptive**: Right rigor for the situation
+- **Efficient**: Don't over-engineer simple bugs
+- **Thorough when needed**: Complex bugs get full treatment
+
+---
+
+### **Key Learnings**
+
+**1. Adaptive Delegation is Effective**
+
+Rather than forcing users to choose upfront, let the workflow assess complexity after gathering context and choose the appropriate level of rigor.
 
 **2. Parallel Delegation for Critical Phases**
 
-Ultra variant demonstrates parallel delegation value:
+THOROUGH mode demonstrates parallel delegation value:
 - **Phase 0**: Completeness + Depth auditors catch different gaps
-- **Phase 1B**: Ideation (3 perspectives) + Challenge (2 rigor levels) for comprehensive hypothesis formation
-- **Phase 4A**: Three cognitive modes (adversarial, simulation, planning) ensure comprehensive validation
+- **Phase 1B**: Ideation (3 perspectives) + Challenge (2 rigor levels)
+- **Phase 4A**: Three cognitive modes (adversarial, simulation, planning)
 
 **3. Focused Audits Maximize Diversity**
 
@@ -1027,23 +1051,13 @@ When spawning parallel auditors, give each a specific focus:
 - Context Researcher #1: FOCUS = Completeness
 - Context Researcher #2: FOCUS = Depth
 
-This ensures non-overlapping perspectives and maximizes value.
+This ensures non-overlapping perspectives.
 
 **4. Quality Gates for Critical Decisions**
 
-Ultra variant uses "Triple Validation Gate" in Phase 4A:
+THOROUGH mode uses "Triple Validation Gate" in Phase 4A:
 - ALL THREE validators must approve before proceeding
 - If 2+ raise concerns → Return to Phase 1 (re-form hypotheses)
-- High confidence threshold for implementation
-
-**5. File Naming for Parallel Testing**
-
-Each variant writes to different files:
-- Lite: `BUG_LITE_*.md`
-- Full: `BUG_FULL_*.md`
-- Ultra: `BUG_ULTRA_*.md`
-
-This allows running all three variants on the same bug simultaneously for comparison.
 
 ---
 
