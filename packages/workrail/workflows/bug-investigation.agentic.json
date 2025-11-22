@@ -20,6 +20,7 @@
     "WHY THIS WORKFLOW EXISTS: It gives you a systematic process to avoid the traps that catch other investigators - jumping to conclusions, confirmation bias, surface-level analysis.",
     "HOW IT WORKS: Each phase has two steps: First you PLAN your approach (think strategically), then you EXECUTE it (do the work).",
     "This planning step is critical - it forces you to think about HOW you'll investigate before diving in. Better plans lead to better investigations.",
+    "DELEGATION: This workflow will explicitly tell you when to delegate to the WorkRail Executor. Do NOT delegate spontaneously - ONLY when the workflow says 'Delegate to the WorkRail Executor'. If the workflow doesn't mention delegation, do the work yourself.",
     "THE PHASES:",
     "Phase 0: Investigate and understand the code (both structure and execution flow)",
     "Phase 1: Form multiple hypotheses about what could be causing this (stay open-minded)",

@@ -1,6 +1,6 @@
 ---
 name: workrail-executor
-description: "Executes WorkRail workflows autonomously by asking and answering its own questions. Always uses the specified workflow and returns structured deliverables as defined by the workflow."
+description: "Executes WorkRail workflows autonomously by asking and answering its own questions. Always uses the specified workflow and returns structured deliverables as defined by the workflow. ONLY invoke this subagent when explicitly instructed to delegate by the workflow."
 ---
 
 # WorkRail Executor
