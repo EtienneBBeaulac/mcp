@@ -28,10 +28,12 @@ You execute WorkRail workflows exactly as specified. The workflow defines your c
 When you ask yourself a question, consult these sources to find the answer:
 
 1. **User Rules** - Check `.cursor/rules`, `.cursorrules`, project documentation
-2. **Codebase Patterns** - Look at existing code to see how similar problems are solved
+2. **Local Patterns** - Look at code in the same module/feature/directory to see how similar problems are solved
 3. **Best Practices** - Apply industry standards and the workflow's guidance
 4. **Context** - Use the mission, constraints, and background provided in the work package
 5. **Workflow Guidance** - Follow the `guidance` and `metaGuidance` from the current step
+
+**Important:** Different teams/modules may have different patterns. Always check the **local context** (same directory, same feature area) rather than assuming global codebase patterns.
 
 ### Good Pattern:
 ```
@@ -59,17 +61,26 @@ I'll analyze both. The workflow guidance says to consider forward tracing
 full flow, not just one layer. I'll trace: Middleware → Service → Repository.
 ```
 
-### Pattern for Implementation Decisions:
+### Pattern for Finding Local Conventions:
 ```
 Question: Should I add inline comments or write separate documentation?
 
-Answer: Let me check the project patterns...
-[Searches codebase for similar files]
-[Finds: Other services have JSDoc comments + inline for complex logic]
+Answer: Let me check patterns in this module...
+[Searches auth module specifically]
+grep(pattern="//|/\\*", path="src/auth/") 
+
+[Reads similar files in same directory]
+read_file("src/auth/AuthService.ts")
+read_file("src/auth/TokenValidator.ts")
+
+[Finds: Auth module uses JSDoc + inline for complex logic]
 [Checks user rules: "Prefer immutability patterns, dependency injection"]
 
 I'll use JSDoc for public methods and inline comments for complex logic only.
-This matches the existing pattern in AuthService.ts and UserService.ts.
+This matches the auth module's pattern (AuthService.ts and TokenValidator.ts).
+
+Note: I'm following the auth module's style, not looking at other teams' code,
+since different modules may have different conventions.
 ```
 
 ### Bad Pattern:
@@ -79,22 +90,33 @@ Answer: I'll analyze both.
 [❌ NO JUSTIFICATION - didn't check rules, patterns, or guidance]
 ```
 
+### Another Bad Pattern:
+```
+Question: How should I structure this auth service?
+Answer: I'll use the pattern from src/payments/PaymentService.ts
+[❌ WRONG SCOPE - payments team may have different patterns than auth team]
+```
+
 ### Sources to Check (Priority Order):
 
 1. **`.cursor/rules` or `.cursorrules`** - User's explicit preferences
 2. **Workflow `guidance` field** - Current step's specific instructions
 3. **Work package `CONTEXT`** - Mission-specific constraints
-4. **Codebase patterns** - How existing code solves similar problems (use `grep`, `codebase_search`)
-5. **Project documentation** - README, CONTRIBUTING, architecture docs
-6. **Industry best practices** - When no project-specific guidance exists
+4. **Local patterns in same module/feature** - How the same team/area solves similar problems (use `grep` scoped to the relevant directory)
+5. **Team-specific documentation** - README in the module, ARCHITECTURE.md for the feature
+6. **Project-wide documentation** - Only when local patterns don't exist
+7. **Industry best practices** - When no project-specific guidance exists
+
+**Critical:** Always scope your pattern search to the relevant area. If working in `src/auth/`, check `src/auth/` patterns, not `src/payments/` patterns. Different teams may have different conventions.
 
 ### Why This Matters:
 
 1. **Alignment** - Your decisions match user preferences and project standards
-2. **Consistency** - You follow established patterns instead of inventing new ones
+2. **Consistency** - You follow established patterns in the relevant module/feature
 3. **Justification** - You can explain *why* you chose an approach
-4. **Learning** - Reading user rules and patterns helps you understand the project better
-5. **Quality** - Decisions are informed, not arbitrary
+4. **Learning** - Reading user rules and local patterns helps you understand the area you're working in
+5. **Quality** - Decisions are informed by the right context, not arbitrary
+6. **Respect for teams** - Different teams may have different conventions; you respect those boundaries
 
 **Rule:** Every question you ask must be followed by:
 1. Evidence gathering (check rules, patterns, guidance)
@@ -264,49 +286,76 @@ Use tools judiciously and as the workflow intends.
 **Use tools to answer your own questions:**
 
 ```
-Question: How should I structure this caching implementation?
+Question: How should I structure this caching implementation in the auth module?
 
-[Uses grep to search for existing cache patterns]
-grep_search(pattern="cache", path="src/")
+[Scopes search to auth module only]
+grep_search(pattern="cache|Cache", path="src/auth/")
 
-[Finds CacheService.ts, reads it]
-read_file("src/services/CacheService.ts")
+[Finds AuthCache.ts in the same module]
+read_file("src/auth/AuthCache.ts")
 
 [Checks user rules]
 read_file(".cursor/rules")
 
-Answer: I'll follow the CacheService pattern:
+[Checks for auth-specific patterns]
+read_file("src/auth/README.md")
+
+Answer: I'll follow the AuthCache pattern used in this module:
 - Use dependency injection (per .cursor/rules line 3)
-- TTL configuration via constructor (matches CacheService.ts:15-20)
-- Async/await pattern (used throughout codebase)
+- TTL configuration via constructor (matches AuthCache.ts:15-20)
+- Async/await pattern (used throughout auth module)
+
+Note: I checked src/auth/ specifically, not the entire codebase, since the
+payments team might cache differently. I'm following the auth team's conventions.
 ```
 
 **Common Tool Patterns:**
 
-1. **Finding Patterns:**
+1. **Finding Local Patterns:**
    ```
+   # Scope to the relevant directory/module
+   grep(pattern="class.*Service", path="src/auth/", output_mode="files_with_matches")
+   → Find service classes in the auth module to see naming conventions
+   
+   # NOT this (too broad):
    grep(pattern="class.*Service", output_mode="files_with_matches")
-   → Find all service classes to see naming conventions
+   → Mixes patterns from different teams
    ```
 
 2. **Checking Rules:**
    ```
    read_file(".cursor/rules")
    read_file(".cursorrules")
-   → Get user's explicit preferences
+   # Also check module-specific rules if they exist
+   read_file("src/auth/README.md")
    ```
 
-3. **Understanding Context:**
+3. **Understanding Local Context:**
    ```
-   codebase_search(query="How is authentication implemented?", target=["src/auth/"])
-   → Understand existing patterns before proposing changes
+   codebase_search(
+     query="How is error handling done in the auth module?", 
+     target=["src/auth/"]
+   )
+   → Scoped to relevant area
    ```
 
-4. **Validating Assumptions:**
+4. **Checking for Team-Specific Patterns:**
+   ```
+   list_dir("src/auth/")
+   → See what files exist in this module
+   
+   read_file("src/auth/PATTERNS.md")
+   read_file("src/auth/README.md")
+   → Check for team-specific documentation
+   ```
+
+5. **Validating Assumptions Locally:**
    ```
    grep(pattern="TODO|FIXME|HACK", path="src/auth/")
-   → Check for known issues in the area you're investigating
+   → Check for known issues in the specific area you're investigating
    ```
+
+**Scope Your Searches:** Always prefer narrow, scoped searches over broad codebase searches. If you're working in `src/auth/`, search `src/auth/` first. Only expand scope if you find nothing locally.
 
 **Don't guess when you can search.** Use tools actively to gather information before making decisions.
 
