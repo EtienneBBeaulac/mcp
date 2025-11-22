@@ -1,31 +1,26 @@
 # WorkRail Subagent Configurations
 
-This directory contains reference configurations for specialized subagents designed to work with WorkRail workflows in agentic IDEs.
+This directory contains reference configurations for a universal workflow executor designed to work with WorkRail workflows in agentic IDEs.
 
 ## Quick Start
 
 ### For Firebender Users
 
-1. Copy the subagent `.md` files you want to use to your Firebender agents directory:
+1. Copy the universal WorkRail executor to your Firebender agents directory:
    ```bash
-   cp firebender/*.md ~/.firebender/agents/
+   cp firebender/workrail-executor.md ~/.firebender/agents/
    ```
 
-2. Register them in your `firebender.json`:
+2. Register it in your `firebender.json`:
    ```json
    {
      "subagents": [
-       "~/.firebender/agents/context-researcher.md",
-       "~/.firebender/agents/hypothesis-challenger.md",
-       "~/.firebender/agents/plan-analyzer.md",
-       "~/.firebender/agents/execution-simulator.md",
-       "~/.firebender/agents/ideator.md",
-       "~/.firebender/agents/builder.md"
+       "~/.firebender/agents/workrail-executor.md"
      ]
    }
    ```
 
-3. **Important:** These configs use **tool inheritance** (no `tools` field), so subagents will have access to all tools including WorkRail by default. If you need to restrict tools, add a `tools` array to the YAML frontmatter.
+3. **Important:** The executor uses **tool inheritance** (no `tools` field), so it will have access to all tools including WorkRail by default.
 
 ### For Other IDEs
 
@@ -33,13 +28,45 @@ Check `docs/integrations/` for IDE-specific setup guides.
 
 ---
 
-## Available Subagents
+## Universal Executor Architecture
 
-### **Core 6 (Tier 1) - Recommended for Phase 1**
+### **One Subagent, Many Roles**
 
-These 6 subagents cover the primary cognitive functions needed across debugging, planning, and implementation workflows.
+Instead of multiple specialized subagents (context-researcher, hypothesis-challenger, etc.), WorkRail uses a **single universal executor** that executes any WorkRail workflow.
 
-#### **1. Context Researcher** (`context-researcher.md`)
+**Key Insight:** The workflows already define the cognitive function - we don't need to duplicate that in subagent configs.
+
+### **How It Works**
+
+```
+Main Agent
+  ↓ delegates with workflow name
+Universal WorkRail Executor
+  ↓ loads and executes
+Context Gathering Routine (workflow defines the role)
+  ↓ returns
+Structured deliverable
+```
+
+The executor's role changes based on which workflow it's executing:
+- **Context Gathering Routine** → Acts as systematic researcher
+- **Hypothesis Challenge Routine** → Acts as adversarial critic
+- **Ideation Routine** → Acts as divergent thinker
+- **Plan Analysis Routine** → Acts as completeness validator
+- **Execution Simulation Routine** → Acts as mental tracer
+- **Feature Implementation Routine** → Acts as precise builder
+
+### **Benefits**
+
+1. **Single Source of Truth** - Workflows define behavior, not subagent configs
+2. **No Duplication** - Don't repeat role/behavior in two places
+3. **Easier to Extend** - Add new routines without creating new subagents
+4. **Simpler Installation** - Users install 1 file, not 6+
+5. **WorkRail Controls Everything** - The MCP owns the behavior completely
+
+---
+
+## Available Workflows (Routines)
 **Cognitive Function:** Deep reading, systematic exploration, execution tracing
 
 **Use When:**
@@ -131,48 +158,141 @@ These 6 subagents cover the primary cognitive functions needed across debugging,
 
 ---
 
-## How Subagents Work
+## Available Workflows (Routines)
+
+The WorkRail Executor can execute any of these workflows. Each workflow defines a specific cognitive function.
+
+### **1. Context Gathering Routine**
+**Workflow Name:** `Context Gathering Routine` or `routine-context-gathering`
+
+**Cognitive Function:** Systematic researcher exploring codebases
+
+**Parameters:**
+- `depth` (0-4): Survey, Scan, Explore, Analyze, Dissect  
+- `mode`: `gather` (explore new code) or `audit` (review existing investigation)
+
+**When to Use:**
+- "I need to understand how X works"
+- "Map the structure of this system"
+- "Audit my context gathering for completeness"
+
+---
+
+### **2. Hypothesis Challenge Routine**
+**Workflow Name:** `Hypothesis Challenge Routine` or `routine-hypothesis-challenge`
+
+**Cognitive Function:** Adversarial reasoner finding holes and edge cases
+
+**Parameters:**
+- `rigor` (1, 3, 5): Surface, Thorough, Maximum skepticism
+
+**When to Use:**
+- "Challenge my assumptions"
+- "Find holes in this hypothesis"
+- "What could go wrong with this approach?"
+
+---
+
+### **3. Ideation Routine**
+**Workflow Name:** `Ideation Routine` or `routine-ideation`
+
+**Cognitive Function:** Divergent thinker generating diverse ideas
+
+**Parameters:**
+- `perspective`: simplicity, performance, maintainability, security, innovation, pragmatic
+- `quantity`: Number of ideas to generate (typically 5-10)
+
+**When to Use:**
+- "Generate multiple approaches to solve this"
+- "What are different ways to implement X?"
+- "Brainstorm alternative architectures"
+
+**Parallel Pattern:** Spawn multiple executors with different perspectives to explore diverse solution spaces.
+
+---
+
+### **4. Plan Analysis Routine**
+**Workflow Name:** `Plan Analysis Routine` or `routine-plan-analysis`
+
+**Cognitive Function:** Completeness validator checking pattern adherence
+
+**When to Use:**
+- "Review this implementation plan"
+- "Does this plan follow our patterns?"
+- "What's missing from this approach?"
+
+---
+
+### **5. Execution Simulation Routine**
+**Workflow Name:** `Execution Simulation Routine` or `routine-execution-simulation`
+
+**Cognitive Function:** Mental tracer simulating code execution
+
+**Parameters:**
+- `mode`: trace, predict, validate
+
+**When to Use:**
+- "Trace what happens when I call this with X"
+- "What's the state after these steps?"
+- "Simulate this execution path"
+
+---
+
+### **6. Feature Implementation Routine**
+**Workflow Name:** `Feature Implementation Routine` or `routine-feature-implementation`
+
+**Cognitive Function:** Precise implementer following plans and patterns
+
+**When to Use:**
+- "Implement this feature according to the plan"
+- "I have a detailed spec, need it coded"
+- "Reduce my context load during implementation"
+
+---
+
+## How the Executor Works
+
+## How the Executor Works
 
 ### **Stateless Execution**
-Each subagent invocation is independent with no memory between calls. The main agent must provide all necessary context upfront in a complete "work package."
+Each invocation is independent with no memory between calls. The main agent must provide all necessary context upfront in a complete "work package."
 
-### **Autonomous Routines**
-Subagents execute complete routines from start to finish. They don't ask follow-up questions or iterate—they work autonomously and return structured deliverables.
+### **Autonomous Operation**
+The executor works through the entire workflow from start to finish. It doesn't ask follow-up questions or iterate—it completes the routine autonomously and returns a structured deliverable.
 
 ### **Structured Deliverables**
-Every subagent returns a named artifact (e.g., `execution-flow.md`, `hypothesis-challenges.md`) with a consistent structure: Summary, Detailed Findings, Gaps, Recommendations.
+Every execution returns a named artifact (e.g., `context-map.md`, `hypothesis-challenges.md`) with a consistent structure: Summary, Detailed Findings, Gaps, Recommendations.
+
+### **Dynamic Role**
+The executor's cognitive function changes based on the workflow it's executing. It doesn't have a fixed identity—the workflow defines who it becomes for that task.
 
 ---
 
 ## Delegation Pattern
 
-### **Complete Context Package**
+### **Complete Work Package**
 
-When delegating to a subagent, provide everything upfront:
+When delegating to the WorkRail Executor, provide everything upfront:
 
 ```
-task(subagent_type="context-researcher", prompt="
-  Execute context-gathering at depth=2:
+task(subagent_type="workrail-executor", prompt="
+  Execute the 'Context Gathering Routine' workflow at depth=2.
   
-  **Mission:**
-  Understand how user authentication works
-  
-  **Target:**
-  - src/auth/middleware/auth.ts
-  - src/auth/services/auth-service.ts
-  
-  **Context:**
-  - Bug: Valid tokens rejected in production
-  - Previous Finding: AuthService identified as likely location
-  - Constraint: Focus on validateToken flow
-  
-  **Deliverable:**
-  Create execution-flow.md with:
-  1. Call chain (entry → validation)
-  2. Data flow
-  3. Suspicious points
+  Work Package:
+  MISSION: Understand how user authentication works
+  TARGET: src/auth/middleware/auth.ts, src/auth/services/auth-service.ts
+  CONTEXT:
+    - Bug: Valid tokens rejected in production
+    - Previous Finding: AuthService identified as likely location
+    - Constraint: Focus on validateToken flow
+  DELIVERABLE: context-map.md with component structure and execution flow
 ")
 ```
+
+The executor will:
+1. Load the specified workflow
+2. Execute all steps autonomously
+3. Return the deliverable
 
 ---
 
@@ -180,45 +300,52 @@ task(subagent_type="context-researcher", prompt="
 
 ### **Adjusting Tool Access**
 
-If you need to restrict tools (instead of inheriting all), add a `tools` array to the YAML frontmatter:
+If you need to restrict tools (instead of inheriting all), add a `tools` array to the YAML frontmatter in `workrail-executor.md`:
 
 ```yaml
 ---
-name: context-researcher
+name: workrail-executor
 tools:
   - read_file
   - grep_search
   - codebase_search
-  # No write operations
+  - workflow_list
+  - workflow_get
+  - workflow_next
+  # Restricts to read-only + workflow tools
 ---
 ```
 
 ### **Adjusting Model**
 
-To use Haiku instead of Sonnet for cost savings:
+To use a specific model instead of inheriting from the main agent:
 
 ```yaml
 ---
-name: context-researcher
+name: workrail-executor
+model: claude-sonnet-4
+---
+```
+
+Or for cost savings on simple tasks:
+
+```yaml
+---
+name: workrail-executor  
 model: claude-haiku-4
 ---
 ```
 
-### **Custom Subagents**
-
-To create your own subagent:
-1. Copy an existing `.md` file as a template
-2. Modify the YAML frontmatter (name, description, tools, model)
-3. Update the system prompt to define the cognitive function
-4. Register it in your IDE's config
+**Note:** Different workflows have different complexity requirements. Sonnet is recommended for most routines.
 
 ---
 
-## Workflows Using Subagents
+## Workflows Using the Executor
 
-Subagent-aware workflows are identified by the `.agentic.json` file extension:
-- `bug-investigation.agentic.json` - Uses Context Researcher and Hypothesis Challenger
-- More coming in Phase 2+
+Agentic workflows (`.agentic.json`) guide the main agent through strategic delegation points. These workflows include prompts that tell the main agent when and how to delegate to the WorkRail Executor.
+
+**Current Agentic Workflows:**
+- `bug-investigation.agentic.json` - Adaptive bug investigation with context gathering, hypothesis challenge, ideation, and validation
 
 **To enable agentic workflows:**
 ```bash
@@ -229,17 +356,23 @@ export WORKRAIL_ENABLE_AGENTIC_ROUTINES=true
 
 ## Best Practices
 
-### **1. Start with Core 6**
-Don't create more subagents until you've validated these six work well for your use case.
+### **1. Use the Universal Executor**
+Don't create multiple specialized subagent configs. The universal executor can handle all workflows - the workflow defines the role.
 
-### **2. Use Explicit Delegation**
-Always use `task(subagent_type=...)` rather than relying on auto-invocation. It's more predictable.
+### **2. Provide Complete Work Packages**
+Give the executor everything it needs upfront:
+- **Workflow**: Which routine to execute (by name)
+- **Parameters**: Workflow-specific (depth, rigor, perspective, etc.)
+- **Mission**: What to accomplish
+- **Target**: What to analyze
+- **Context**: Background, constraints, prior work
+- **Deliverable**: What artifact to create
 
-### **3. Package Complete Context**
-Give subagents everything they need upfront. They can't ask follow-up questions.
+### **3. Let Workflows Guide Delegation**
+Use agentic workflows (`.agentic.json`) that include delegation instructions. They provide the optimal delegation patterns.
 
 ### **4. Validate Deliverables**
-Check subagent output against quality gates:
+Review executor output against the quality gates defined in the workflow. The executor documents gaps and assumptions - check these carefully.
 - ✅ All required sections present?
 - ✅ File:line citations included?
 - ✅ Gaps explicitly noted?

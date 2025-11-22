@@ -59,41 +59,31 @@ If you MUST whitelist tools, you must explicitly add the WorkRail suite:
 
 ## Step-by-Step Setup
 
-### 1. Install WorkRail Subagent Configs
+### 1. Install WorkRail Subagent Config
 
-Copy the subagent markdown files to your Firebender agents directory:
+Copy the universal WorkRail executor to your Firebender agents directory:
 
 ```bash
-# Copy all Core 6 subagents
-cp packages/workrail/assets/agent-configs/firebender/*.md ~/.firebender/agents/
+# Copy the universal executor
+cp packages/workrail/assets/agent-configs/firebender/workrail-executor.md ~/.firebender/agents/
 
-# Or copy individually
-cp packages/workrail/assets/agent-configs/firebender/context-researcher.md ~/.firebender/agents/
-cp packages/workrail/assets/agent-configs/firebender/hypothesis-challenger.md ~/.firebender/agents/
-cp packages/workrail/assets/agent-configs/firebender/plan-analyzer.md ~/.firebender/agents/
-cp packages/workrail/assets/agent-configs/firebender/execution-simulator.md ~/.firebender/agents/
-cp packages/workrail/assets/agent-configs/firebender/ideator.md ~/.firebender/agents/
-cp packages/workrail/assets/agent-configs/firebender/builder.md ~/.firebender/agents/
+# Legacy: Individual subagent configs (deprecated in favor of universal executor)
+# cp packages/workrail/assets/agent-configs/firebender/*.md ~/.firebender/agents/
 ```
 
-### 2. Register Subagents in Firebender
+### 2. Register Subagent in Firebender
 
 Edit your `~/.firebender/firebender.json` (or project-specific `firebender.json`):
 
 ```json
 {
   "subagents": [
-    "~/.firebender/agents/context-researcher.md",
-    "~/.firebender/agents/hypothesis-challenger.md",
-    "~/.firebender/agents/plan-analyzer.md",
-    "~/.firebender/agents/execution-simulator.md",
-    "~/.firebender/agents/ideator.md",
-    "~/.firebender/agents/builder.md"
+    "~/.firebender/agents/workrail-executor.md"
   ]
 }
 ```
 
-**Important:** The subagent configs use tool inheritance (no `tools` field), so they'll automatically have access to all tools including WorkRail.
+**Important:** The subagent config uses **tool inheritance** (no `tools` field), so it will automatically have access to all tools including WorkRail.
 
 ### 3. Enable Agentic Workflows in WorkRail
 
@@ -120,8 +110,8 @@ Run the diagnostic workflow to test your configuration:
 ```
 
 This will:
-- Check if subagents are available
-- Probe if subagents have WorkRail tool access
+- Check if the WorkRail executor is available
+- Probe if the executor has WorkRail tool access
 - Report your tier (Solo, Proxy, or Delegate)
 
 ### 5. Test with a Simple Delegation
@@ -129,17 +119,18 @@ This will:
 Try delegating a simple task to verify everything works:
 
 ```
-"Delegate to the Context Researcher:
+"Delegate to the WorkRail Executor:
 
-Execute routine-context-gathering at depth=1
+Execute the 'Context Gathering Routine' workflow at depth=1.
 
-Mission: Map the structure of the src/auth directory
-Target: src/auth/
-Context: I need to understand how authentication works
-Deliverable: context-map.md"
+Work Package:
+MISSION: Map the structure of the src/auth directory
+TARGET: src/auth/
+CONTEXT: I need to understand how authentication works
+DELIVERABLE: context-map.md"
 ```
 
-If the Context Researcher can execute the routine and return a structured deliverable, you're in **Tier 3 (Delegation Mode)** ✅
+If the WorkRail Executor can execute the routine and return a structured deliverable, you're in **Tier 3 (Delegation Mode)** ✅
 
 ---
 
@@ -147,75 +138,122 @@ If the Context Researcher can execute the routine and return a structured delive
 
 ### **Pattern 1: Explicit Delegation**
 
-Use the `task` tool to explicitly delegate to a subagent:
+Use the `task` tool to explicitly delegate to the WorkRail executor:
 
 ```
-task(subagent_type="context-researcher", prompt="
-  Execute routine-context-gathering at depth=2
+task(subagent_type="workrail-executor", prompt="
+  Execute the 'Context Gathering Routine' workflow at depth=2.
   
-  Mission: Understand how user profiles are cached
-  Target: src/services/user-service.ts, src/cache/
-  Context: Investigating slow profile loads
-  Deliverable: cache-analysis.md
+  Work Package:
+  MISSION: Understand how user authentication works in this codebase
+  TARGET: src/auth/
+  CONTEXT: 
+    - Bug: Valid tokens rejected in production
+    - Previous Finding: AuthService identified as likely location
+  DELIVERABLE: context-map.md with component structure and execution flow
 ")
 ```
 
-### **Pattern 2: Workflow-Driven Delegation**
+The WorkRail Executor will:
+1. Load the `Context Gathering Routine` workflow
+2. Execute it autonomously at depth=2
+3. Return `context-map.md` with findings
 
-Use `.agentic.json` workflows that include delegation instructions:
+### **Pattern 2: Main Agent Instruction**
+
+You can also instruct the main agent to delegate for you:
+
+```
+"Please delegate context gathering to the WorkRail Executor.
+
+Execute the 'Context Gathering Routine' at depth=2 (Explore level).
+
+Mission: Understand the authentication system
+Target: src/auth/
+Context: Investigating token validation bug
+Deliverable: context-map.md"
+```
+
+The main agent will format the delegation and call the WorkRail Executor.
+
+### **Pattern 3: Workflow-Driven Delegation**
+
+Agentic workflows (`.agentic.json`) include delegation instructions in their prompts:
 
 ```
 "Start the bug-investigation workflow"
 ```
 
-The workflow will guide you through strategic delegation points (e.g., "Delegate context gathering to Context Researcher").
-
-### **Pattern 3: Multi-Step Delegation**
-
-Chain multiple subagent calls for complex tasks:
+The workflow will guide the main agent through strategic delegation points, with prompts like:
 
 ```
-1. Delegate to Context Researcher (gather context)
-2. Review their deliverable
-3. Delegate to Hypothesis Challenger (challenge findings)
-4. Review their critique
-5. Delegate to Plan Analyzer (validate approach)
+"Execute the 'Context Gathering Routine' workflow at depth=2.
+
+Work Package:
+MISSION: [extracted from context]
+TARGET: [identified files/areas]
+..."
 ```
+
+The main agent reads these instructions and delegates to the WorkRail Executor accordingly.
+
+### **Pattern 4: Parallel Delegation**
+
+For THOROUGH mode workflows, delegate to multiple executors simultaneously:
+
+```
+# Spawn 3 WorkRail Executors in parallel:
+
+Executor 1: Execute 'Ideation Routine' with perspective=logic-errors
+Executor 2: Execute 'Ideation Routine' with perspective=data-state
+Executor 3: Execute 'Ideation Routine' with perspective=integration
+
+# Then synthesize all deliverables
+```
+
+Each executor works independently, exploring different solution spaces.
 
 ---
 
 ## Troubleshooting
 
-### **"Subagent can't find workflow_list"**
+### **"WorkRail Executor can't find workflow_list"**
 
 **Cause:** Subagent has a `tools` whitelist that excludes WorkRail tools.
 
 **Fix:** Either:
-- Remove the `tools` field entirely (use inheritance)
+- Remove the `tools` field entirely from the YAML frontmatter (use inheritance)
 - Or add WorkRail tools to the whitelist: `workflow_list`, `workflow_get`, `workflow_next`
 
-### **"Subagent returns incomplete results"**
+The provided `workrail-executor.md` uses inheritance (no `tools` field), so this shouldn't happen unless you modified it.
+
+### **"WorkRail Executor returns incomplete results"**
 
 **Cause:** Insufficient context in delegation prompt.
 
 **Fix:** Provide a complete work package:
-- Mission (what to accomplish)
-- Target (what to analyze)
-- Context (background, constraints, prior work)
-- Deliverable (what to return)
+- **Workflow**: Which routine to execute (by name)
+- **Parameters**: Workflow-specific params (depth, rigor, perspective, etc.)
+- **Mission**: What to accomplish
+- **Target**: What to analyze (files, directories, code areas)
+- **Context**: Background, constraints, prior work
+- **Deliverable**: What artifact to create and what format
 
-### **"How do I know which subagent to use?"**
+### **"How do I know which workflow to use?"**
 
 **Guide:**
-- **Context Researcher**: "I need to understand how X works"
-- **Hypothesis Challenger**: "Challenge my assumptions about Y"
-- **Plan Analyzer**: "Review this implementation plan"
-- **Execution Simulator**: "Trace what happens when I call X with Y"
-- **Builder**: "Implement this feature according to the plan"
+- **Context Gathering Routine**: "I need to understand how X works"
+- **Hypothesis Challenge Routine**: "Challenge my assumptions about Y"
+- **Plan Analysis Routine**: "Review this implementation plan"
+- **Execution Simulation Routine**: "Trace what happens when I call X with Y"
+- **Ideation Routine**: "Generate multiple approaches to solve X"
+- **Feature Implementation Routine**: "Implement this feature according to the plan"
+
+The WorkRail Executor can execute any of these - the workflow defines its behavior.
 
 ### **"Can I use auto-invocation instead of explicit delegation?"**
 
-**Answer:** Yes, Firebender can auto-invoke subagents based on task matching (using the `description` field). However, **explicit delegation is recommended** for predictability and control.
+**Answer:** Yes, Firebender can auto-invoke subagents based on task matching (using the `description` field in the YAML frontmatter). However, **explicit delegation is recommended** for predictability and control, especially for workflows with parameters (depth, rigor, etc.).
 
 ---
 
