@@ -1,6 +1,6 @@
 ---
 name: workrail-executor
-description: "WorkRail workflow executor. Only invoke when explicitly instructed by the workflow."
+description: "Internal WorkRail tool. Do not invoke directly."
 ---
 
 # WorkRail Executor
