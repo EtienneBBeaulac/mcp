@@ -35,9 +35,7 @@ export const DI = {
     LoopRecovery: Symbol('Services.LoopRecovery'),
     /** Step resolution strategy */
     StepResolution: Symbol('Services.StepResolution'),
-    /** Context optimization */
-    ContextOptimizer: Symbol('Services.ContextOptimizer'),
-    /** Loop context optimization */
+    /** Loop context optimization (progressive disclosure) */
     LoopContextOptimizer: Symbol('Services.LoopContextOptimizer'),
     /** Main workflow service (high-level orchestrator) */
     Workflow: Symbol('Services.Workflow'),
