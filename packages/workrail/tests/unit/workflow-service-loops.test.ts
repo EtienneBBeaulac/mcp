@@ -1,12 +1,40 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { createWorkflowService } from '../../src/application/services/workflow-service';
+import 'reflect-metadata';
+import { describe, vi, it, expect, beforeEach, jest } from 'vitest';
+import { DefaultWorkflowService } from '../../src/application/services/workflow-service';
 import { IWorkflowStorage } from '../../src/types/storage';
 import { Workflow } from '../../src/types/mcp-types';
 import { LoopStep } from '../../src/types/workflow-types';
+import { ValidationEngine } from '../../src/application/services/validation-engine';
+import { EnhancedLoopValidator } from '../../src/application/services/enhanced-loop-validator';
+import { IterativeStepResolutionStrategy } from '../../src/application/services/step-resolution/iterative-step-resolution-strategy';
+import { DefaultWorkflowLoader } from '../../src/application/services/workflow-loader';
+import { DefaultLoopRecoveryService } from '../../src/application/services/loop-recovery-service';
+import { LoopStackManager } from '../../src/application/services/loop-stack-manager';
+import { DefaultStepSelector } from '../../src/application/services/step-selector';
+import { LoopStepResolver } from '../../src/application/services/loop-step-resolver';
+
+// Helper function to create a workflow service with a mock storage
+function createTestWorkflowService(mockStorage: IWorkflowStorage): DefaultWorkflowService {
+  const loopValidator = new EnhancedLoopValidator();
+  const validator = new ValidationEngine(loopValidator);
+  const resolver = new LoopStepResolver();
+  const stackManager = new LoopStackManager(resolver);
+  const recoveryService = new DefaultLoopRecoveryService(stackManager);
+  const stepSelector = new DefaultStepSelector();
+  const workflowLoader = new DefaultWorkflowLoader(mockStorage, validator);
+  const strategy = new IterativeStepResolutionStrategy(
+    workflowLoader,
+    recoveryService,
+    stackManager,
+    stepSelector
+  );
+  
+  return new DefaultWorkflowService(mockStorage, validator, strategy);
+}
 
 describe('WorkflowService - Loop Recognition', () => {
   let mockStorage: jest.Mocked<IWorkflowStorage>;
-  let service: ReturnType<typeof createWorkflowService>;
+  let service: DefaultWorkflowService;
 
   const mockWorkflowWithLoop: Workflow = {
     id: 'test-workflow-loop',
@@ -45,38 +73,51 @@ describe('WorkflowService - Loop Recognition', () => {
   };
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    
     mockStorage = {
-      listWorkflowSummaries: jest.fn(),
-      getWorkflowById: jest.fn(),
-      saveWorkflow: jest.fn(),
-      deleteWorkflow: jest.fn(),
-      listWorkflowsByPattern: jest.fn(),
-      getStorageInfo: jest.fn()
+      listWorkflowSummaries: vi.fn(),
+      getWorkflowById: vi.fn(),
+      saveWorkflow: vi.fn(),
+      deleteWorkflow: vi.fn(),
+      listWorkflowsByPattern: vi.fn(),
+      getStorageInfo: vi.fn(),
+      loadAllWorkflows: vi.fn()
     } as unknown as jest.Mocked<IWorkflowStorage>;
 
-    service = createWorkflowService(mockStorage);
+    // Set default mock implementation
+    mockStorage.getWorkflowById.mockImplementation(async (id: string) => {
+      if (id === mockWorkflowWithLoop.id) return mockWorkflowWithLoop;
+      return null;
+    });
+    mockStorage.loadAllWorkflows.mockResolvedValue([mockWorkflowWithLoop]);
+    
+    service = createTestWorkflowService(mockStorage);
   });
 
   describe('Loop Step Recognition', () => {
-    it('should recognize a loop step as next step', async () => {
+    it('should enter loop and return first body step', async () => {
+      // New behavior: loops are automatically entered, returning the body step
       mockStorage.getWorkflowById.mockResolvedValue(mockWorkflowWithLoop);
+      
+      const context = { itemsToProcess: ['item1', 'item2'] };
+      const result = await service.getNextStep('test-workflow-loop', ['step1'], context);
 
-      const result = await service.getNextStep('test-workflow-loop', ['step1'], {});
-
+      // Loop is automatically entered, returning the body step
       expect(result.step).toBeDefined();
-      expect(result.step?.id).toBe('loop-step');
-      expect((result.step as any).type).toBe('loop');
+      expect(result.step?.id).toBe('process-item');
       expect(result.isComplete).toBe(false);
     });
 
-    it('should include loop information in guidance', async () => {
+    it('should include loop context in guidance when in loop', async () => {
       mockStorage.getWorkflowById.mockResolvedValue(mockWorkflowWithLoop);
+      
+      const context = { itemsToProcess: ['item1', 'item2'] };
+      const result = await service.getNextStep('test-workflow-loop', ['step1'], context);
 
-      const result = await service.getNextStep('test-workflow-loop', ['step1'], {});
-
-      expect(result.guidance.prompt).toContain('## Loop Information');
-      expect(result.guidance.prompt).toContain('Type: forEach');
-      expect(result.guidance.prompt).toContain('Max Iterations: 10');
+      // New format: Loop Context with iteration info
+      expect(result.guidance.prompt).toContain('## Loop Context');
+      expect(result.guidance.prompt).toContain('Iteration: 1');
     });
 
     it('should skip completed loop steps', async () => {
@@ -89,7 +130,7 @@ describe('WorkflowService - Loop Recognition', () => {
       expect(result.isComplete).toBe(false);
     });
 
-    it('should initialize loop context for new loop steps', async () => {
+    it('should initialize loop context and inject variables', async () => {
       mockStorage.getWorkflowById.mockResolvedValue(mockWorkflowWithLoop);
 
       const context = {
@@ -99,10 +140,10 @@ describe('WorkflowService - Loop Recognition', () => {
       const result = await service.getNextStep('test-workflow-loop', ['step1'], context);
 
       expect(result.step).toBeDefined();
-      expect(result.step?.id).toBe('loop-step');
-      
-      // The loop context should be initialized internally
-      // Full verification will be added in Phase 2
+      // Loop is entered, body step returned
+      expect(result.step?.id).toBe('process-item');
+      // Loop context should have forEach variables injected
+      expect(result.context?._loopStack).toBeDefined();
     });
 
     it('should handle workflows without loops normally', async () => {
@@ -123,10 +164,10 @@ describe('WorkflowService - Loop Recognition', () => {
 
       expect(result.step).toBeDefined();
       expect(result.step?.id).toBe('step2');
-      expect(result.guidance.prompt).not.toContain('## Loop Information');
+      expect(result.guidance.prompt).not.toContain('## Loop Context');
     });
 
-    it('should handle loop steps with conditions', async () => {
+    it('should handle loop steps with runCondition', async () => {
       const workflowWithConditionalLoop: Workflow = {
         id: 'conditional-loop-workflow',
         name: 'Conditional Loop Workflow',
@@ -150,21 +191,27 @@ describe('WorkflowService - Loop Recognition', () => {
             id: 'loop-body',
             title: 'Loop Body',
             prompt: 'Execute loop body'
+          },
+          {
+            id: 'after-loop',
+            title: 'After Loop',
+            prompt: 'After the loop'
           }
         ]
       };
 
       mockStorage.getWorkflowById.mockResolvedValue(workflowWithConditionalLoop);
 
-      // Test when condition is false
+      // Test when runCondition is false - skip loop, move to next step
       let result = await service.getNextStep('conditional-loop-workflow', [], { loopEnabled: false });
-      expect(result.step).toBeNull();
-      expect(result.isComplete).toBe(true);
+      expect(result.step?.id).toBe('after-loop');
 
-      // Test when condition is true
-      result = await service.getNextStep('conditional-loop-workflow', [], { loopEnabled: true });
-      expect(result.step).toBeDefined();
-      expect(result.step?.id).toBe('loop-step');
+      // Test when runCondition is true and loop condition is true - enter loop
+      result = await service.getNextStep('conditional-loop-workflow', [], { 
+        loopEnabled: true, 
+        continueLoop: true 
+      });
+      expect(result.step?.id).toBe('loop-body');
     });
   });
 }); 

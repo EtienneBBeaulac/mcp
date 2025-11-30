@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createValidateWorkflowJson } from '../../src/application/use-cases/validate-workflow-json';
 
 // Test the workflow validation functionality that powers the MCP tool

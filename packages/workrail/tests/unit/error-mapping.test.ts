@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { ErrorHandler } from '../../src/core/error-handler';
 import { WorkflowNotFoundError, ValidationError } from '../../src/core/error-handler';
 import { MCPErrorCodes } from '../../src/types/mcp-types';

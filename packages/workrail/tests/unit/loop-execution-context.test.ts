@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, vi, it, expect, beforeEach, jest } from 'vitest';
 import { LoopExecutionContext } from '../../src/application/services/loop-execution-context';
 import { LoopConfig } from '../../src/types/workflow-types';
 import { ConditionContext } from '../../src/utils/condition-evaluator';
@@ -7,7 +7,7 @@ describe('LoopExecutionContext', () => {
   let mockDateNow: jest.SpiedFunction<typeof Date.now>;
   
   beforeEach(() => {
-    mockDateNow = jest.spyOn(Date, 'now');
+    mockDateNow = vi.spyOn(Date, 'now');
     mockDateNow.mockReturnValue(1000000);
   });
 

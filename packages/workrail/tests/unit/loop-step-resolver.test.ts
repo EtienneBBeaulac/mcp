@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from 'vitest';
 import { LoopStepResolver } from '../../src/application/services/loop-step-resolver';
 import { Workflow, WorkflowStep } from '../../src/types/mcp-types';
 import { LoopStep } from '../../src/types/workflow-types';

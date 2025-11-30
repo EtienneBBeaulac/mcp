@@ -1,12 +1,21 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import 'reflect-metadata';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { container } from 'tsyringe';
 import { ValidationEngine } from '../../src/application/services/validation-engine';
+import { EnhancedLoopValidator } from '../../src/application/services/enhanced-loop-validator';
 import { Workflow, LoopStep } from '../../src/types/workflow-types';
 
 describe('Loop Validation', () => {
   let engine: ValidationEngine;
 
   beforeEach(() => {
-    engine = new ValidationEngine();
+    container.clearInstances();
+    const enhancedLoopValidator = container.resolve(EnhancedLoopValidator);
+    engine = new ValidationEngine(enhancedLoopValidator);
+  });
+
+  afterEach(() => {
+    container.clearInstances();
   });
 
   describe('validateLoopStep', () => {

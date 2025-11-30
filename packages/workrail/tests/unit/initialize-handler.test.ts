@@ -1,7 +1,7 @@
 import { initializeHandler } from '../../src/tools/mcp_initialize';
 import { MCPInitializeRequest, MCPErrorCodes } from '../../src/types/mcp-types';
 import { MCPError } from '../../src/core/error-handler';
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 
 describe('initializeHandler', () => {
   describe('successful initialization', () => {

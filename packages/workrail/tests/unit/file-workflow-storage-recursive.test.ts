@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import { FileWorkflowStorage } from '../../src/infrastructure/storage/file-workflow-storage';
 import { IFeatureFlagProvider } from '../../src/config/feature-flags';
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 describe('FileWorkflowStorage (Recursive & Flags)', () => {
   let tempDir: string;

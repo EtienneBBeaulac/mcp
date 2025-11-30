@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -99,8 +99,8 @@ describe('CLI Validate Command', () => {
       const result = runCliCommand(['validate', invalidWorkflowPath]);
       
       expect(result.error).toContain('•');
-      expect(result.error).toContain('Found');
-      expect(result.error).toContain('validation error');
+      expect(result.error).toContain('Validation errors:');
+      expect(result.error).toContain('Please fix the errors above');
     });
 
     it('should handle workflow with missing required fields', () => {
@@ -279,14 +279,20 @@ describe('CLI Validate Command', () => {
       const result = runCliCommand(['validate', tempFile]);
       
       expect(result.exitCode).toBe(1);
-      expect(result.error).toContain('Found 1 validation error.');
+      // Output format shows validation errors with bullet points
+      expect(result.error).toContain('Validation errors:');
+      expect(result.error).toContain('•');
     });
 
     it('should use plural form for multiple validation errors', () => {
       const result = runCliCommand(['validate', invalidWorkflowPath]);
       
       expect(result.exitCode).toBe(1);
-      expect(result.error).toMatch(/Found \d+ validation errors\./);
+      // Output format shows validation errors with bullet points
+      expect(result.error).toContain('Validation errors:');
+      // Multiple errors should have multiple bullet points
+      const bulletCount = (result.error.match(/•/g) || []).length;
+      expect(bulletCount).toBeGreaterThan(1);
     });
   });
 }); 

@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import 'reflect-metadata';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DefaultWorkflowLoader } from '../../src/application/services/workflow-loader';
 import { InMemoryWorkflowStorage } from '../../src/infrastructure/storage/in-memory-storage';
 import { ValidationEngine } from '../../src/application/services/validation-engine';
+import { EnhancedLoopValidator } from '../../src/application/services/enhanced-loop-validator';
 import { Workflow } from '../../src/types/mcp-types';
 import { WorkflowNotFoundError } from '../../src/core/error-handler';
+import { container } from 'tsyringe';
 
 describe('DefaultWorkflowLoader', () => {
   let loader: DefaultWorkflowLoader;
@@ -11,9 +14,19 @@ describe('DefaultWorkflowLoader', () => {
   let validationEngine: ValidationEngine;
 
   beforeEach(() => {
+    // Reset container for fresh instances
+    container.clearInstances();
+    
+    // Resolve dependencies from DI container
+    const enhancedLoopValidator = container.resolve(EnhancedLoopValidator);
+    
     storage = new InMemoryWorkflowStorage();
-    validationEngine = new ValidationEngine();
+    validationEngine = new ValidationEngine(enhancedLoopValidator);
     loader = new DefaultWorkflowLoader(storage, validationEngine);
+  });
+
+  afterEach(() => {
+    container.clearInstances();
   });
 
   describe('loadAndValidate', () => {

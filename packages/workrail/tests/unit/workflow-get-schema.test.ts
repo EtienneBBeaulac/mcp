@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the WorkflowOrchestrationServer since we need to access the private class
 class TestWorkflowServer {
@@ -144,17 +144,31 @@ describe('Workflow Get Schema Tool', () => {
       expect(responseData.schema.properties.steps.minItems).toBe(1);
       expect(responseData.schema.properties.steps.items).toBeDefined();
       
-      // Check step item structure
+      // Schema uses oneOf with $ref to support both standard and loop steps
       const stepSchema = responseData.schema.properties.steps.items;
-      expect(stepSchema.type).toBe('object');
-      expect(stepSchema.properties).toBeDefined();
-      expect(stepSchema.required).toBeDefined();
+      expect(stepSchema.oneOf).toBeDefined();
+      expect(Array.isArray(stepSchema.oneOf)).toBe(true);
+      expect(stepSchema.oneOf.length).toBeGreaterThan(0);
       
-      // Check for required step properties
-      expect(stepSchema.properties.id).toBeDefined();
-      expect(stepSchema.properties.title).toBeDefined();
-      expect(stepSchema.properties.prompt).toBeDefined();
-      expect(stepSchema.properties.agentRole).toBeDefined();
+      // Check that standard step is referenced
+      const standardStepRef = stepSchema.oneOf.find(
+        (ref: any) => ref.$ref === '#/$defs/standardStep'
+      );
+      expect(standardStepRef).toBeDefined();
+      
+      // Check that loop step is referenced
+      const loopStepRef = stepSchema.oneOf.find(
+        (ref: any) => ref.$ref === '#/$defs/loopStep'
+      );
+      expect(loopStepRef).toBeDefined();
+      
+      // Verify the $defs contain the actual step definitions
+      expect(responseData.schema.$defs).toBeDefined();
+      expect(responseData.schema.$defs.standardStep).toBeDefined();
+      expect(responseData.schema.$defs.standardStep.type).toBe('object');
+      expect(responseData.schema.$defs.standardStep.properties.id).toBeDefined();
+      expect(responseData.schema.$defs.standardStep.properties.title).toBeDefined();
+      expect(responseData.schema.$defs.standardStep.properties.prompt).toBeDefined();
     });
 
     it('should be formatted as valid JSON', async () => {

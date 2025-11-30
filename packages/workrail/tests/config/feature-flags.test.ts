@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   EnvironmentFeatureFlagProvider,
+  CustomEnvFeatureFlagProvider,
   StaticFeatureFlagProvider,
   createFeatureFlagProvider,
   FEATURE_FLAG_DEFINITIONS,
@@ -36,15 +37,16 @@ describe('FeatureFlags - SOLID Principles', () => {
         WORKRAIL_ENABLE_EXPERIMENTAL_WORKFLOWS: 'false',
       };
       
-      const provider = new EnvironmentFeatureFlagProvider(mockEnv);
+      // Use CustomEnvFeatureFlagProvider for custom environments (testing)
+      const provider = new CustomEnvFeatureFlagProvider(mockEnv);
       
       expect(provider.isEnabled('sessionTools')).toBe(true);
       expect(provider.isEnabled('experimentalWorkflows')).toBe(false);
     });
 
     it('allows multiple implementations (environment vs static)', () => {
-      // Implementation 1: Environment-based (production)
-      const envProvider = new EnvironmentFeatureFlagProvider({ 
+      // Implementation 1: Environment-based with custom env (testing)
+      const envProvider = new CustomEnvFeatureFlagProvider({ 
         WORKRAIL_ENABLE_SESSION_TOOLS: 'true' 
       });
       
@@ -94,7 +96,7 @@ describe('FeatureFlags - SOLID Principles', () => {
 
   describe('Immutability', () => {
     it('returns same values after initialization (immutable)', () => {
-      const provider = new EnvironmentFeatureFlagProvider({
+      const provider = new CustomEnvFeatureFlagProvider({
         WORKRAIL_ENABLE_SESSION_TOOLS: 'true',
       });
       
@@ -108,7 +110,7 @@ describe('FeatureFlags - SOLID Principles', () => {
     });
 
     it('getAll() returns copy (not internal reference)', () => {
-      const provider = new EnvironmentFeatureFlagProvider({
+      const provider = new CustomEnvFeatureFlagProvider({
         WORKRAIL_ENABLE_SESSION_TOOLS: 'true',
       });
       
@@ -130,7 +132,7 @@ describe('FeatureFlags - Functionality', () => {
       const truthyVariants = ['true', 'TRUE', '1', 'yes', 'YES', 'on', 'ON'];
       
       for (const value of truthyVariants) {
-        const provider = new EnvironmentFeatureFlagProvider({
+        const provider = new CustomEnvFeatureFlagProvider({
           WORKRAIL_ENABLE_SESSION_TOOLS: value,
         });
         
@@ -142,7 +144,7 @@ describe('FeatureFlags - Functionality', () => {
       const falsyVariants = ['false', 'FALSE', '0', 'no', 'NO', 'off', 'OFF'];
       
       for (const value of falsyVariants) {
-        const provider = new EnvironmentFeatureFlagProvider({
+        const provider = new CustomEnvFeatureFlagProvider({
           WORKRAIL_ENABLE_SESSION_TOOLS: value,
         });
         
@@ -151,7 +153,7 @@ describe('FeatureFlags - Functionality', () => {
     });
 
     it('uses default for undefined environment variable', () => {
-      const provider = new EnvironmentFeatureFlagProvider({});
+      const provider = new CustomEnvFeatureFlagProvider({});
       
       // sessionTools defaults to false (experimental)
       expect(provider.isEnabled('sessionTools')).toBe(false);
@@ -162,7 +164,7 @@ describe('FeatureFlags - Functionality', () => {
 
     it('uses default for invalid boolean values (with warning)', () => {
       // Should fall back to default without crashing
-      const provider = new EnvironmentFeatureFlagProvider({
+      const provider = new CustomEnvFeatureFlagProvider({
         WORKRAIL_ENABLE_SESSION_TOOLS: 'maybe',
       });
       
@@ -232,7 +234,7 @@ describe('FeatureFlags - Functionality', () => {
 
   describe('Summary Output', () => {
     it('provides human-readable summary', () => {
-      const provider = new EnvironmentFeatureFlagProvider({
+      const provider = new CustomEnvFeatureFlagProvider({
         WORKRAIL_ENABLE_SESSION_TOOLS: 'true',
       });
       
@@ -250,13 +252,13 @@ describe('FeatureFlags - Real-World Scenarios', () => {
   describe('Trunk-Based Development', () => {
     it('supports merging features with flags OFF by default', () => {
       // Scenario: Feature merged to main, but not ready for production
-      const provider = new EnvironmentFeatureFlagProvider({});
+      const provider = new CustomEnvFeatureFlagProvider({});
       
       // Flag is OFF by default (safe to merge)
       expect(provider.isEnabled('sessionTools')).toBe(false);
       
       // Can be enabled in specific environments for testing
-      const testProvider = new EnvironmentFeatureFlagProvider({
+      const testProvider = new CustomEnvFeatureFlagProvider({
         WORKRAIL_ENABLE_SESSION_TOOLS: 'true',
       });
       expect(testProvider.isEnabled('sessionTools')).toBe(true);
@@ -264,13 +266,13 @@ describe('FeatureFlags - Real-World Scenarios', () => {
 
     it('supports gradual rollout by changing defaults', () => {
       // Phase 1: Feature merged, flag OFF by default
-      const phase1 = new EnvironmentFeatureFlagProvider({});
+      const phase1 = new CustomEnvFeatureFlagProvider({});
       expect(phase1.isEnabled('sessionTools')).toBe(false);
       
       // Phase 2: Feature stabilized, flag ON by default
       // (would require changing defaultValue in FEATURE_FLAG_DEFINITIONS)
       // Users can still explicitly disable if needed
-      const phase2 = new EnvironmentFeatureFlagProvider({
+      const phase2 = new CustomEnvFeatureFlagProvider({
         WORKRAIL_ENABLE_SESSION_TOOLS: 'false', // Explicit override
       });
       expect(phase2.isEnabled('sessionTools')).toBe(false);

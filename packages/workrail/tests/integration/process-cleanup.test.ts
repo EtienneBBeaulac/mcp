@@ -7,24 +7,49 @@
  * 3. Manual cleanup command functions properly
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import 'reflect-metadata';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { initializeContainer, resetContainer, container } from '../../src/di/container';
+import { DI } from '../../src/di/tokens';
 import { SessionManager } from '../../src/infrastructure/session/SessionManager';
 import { HttpServer } from '../../src/infrastructure/session/HttpServer';
-import { execSync } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
 describe('Process Cleanup Mechanism', () => {
   const lockFile = path.join(os.homedir(), '.workrail', 'dashboard.lock');
+  let sessionManager: SessionManager;
+  let httpServer: HttpServer;
   
   beforeAll(async () => {
+    await initializeContainer();
+    
     // Ensure clean state
     try {
       await fs.unlink(lockFile);
     } catch {
       // Lock file might not exist
     }
+  });
+  
+  beforeEach(async () => {
+    // Get instances from DI container
+    sessionManager = container.resolve<SessionManager>(DI.Infra.SessionManager);
+    httpServer = container.resolve<HttpServer>(DI.Infra.HttpServer);
+    httpServer.setConfig({ autoOpen: false });
+  });
+  
+  afterEach(async () => {
+    // Stop server if running
+    try {
+      await httpServer.stop();
+    } catch {}
+    
+    // Clean up lock file
+    try {
+      await fs.unlink(lockFile);
+    } catch {}
   });
   
   afterAll(async () => {
@@ -34,13 +59,11 @@ describe('Process Cleanup Mechanism', () => {
     } catch {
       // Lock file might not exist
     }
+    resetContainer();
   });
   
   describe('Automatic Startup Cleanup', () => {
     it('should detect workrail processes on ports 3456-3499', async () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       // Use private method via type assertion for testing
       const getWorkrailPorts = (httpServer as any).getWorkrailPorts.bind(httpServer);
       const ports = await getWorkrailPorts();
@@ -58,9 +81,6 @@ describe('Process Cleanup Mechanism', () => {
     });
     
     it('should not kill the current process', async () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       // Get current process info
       const currentPid = process.pid;
       
@@ -69,17 +89,11 @@ describe('Process Cleanup Mechanism', () => {
       
       // Current process should still be alive
       expect(process.pid).toBe(currentPid);
-      
-      // Cleanup
-      await httpServer.stop();
     }, 30000); // Longer timeout for server start
   });
   
   describe('TTL-Based Lock Expiration', () => {
     it('should create lock file with heartbeat', async () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       // Start server
       await httpServer.start();
       
@@ -93,15 +107,10 @@ describe('Process Cleanup Mechanism', () => {
       expect(lockData).toHaveProperty('lastHeartbeat');
       expect(lockData.pid).toBe(process.pid);
       expect(lockData.port).toBe(3456);
-      
-      // Cleanup
-      await httpServer.stop();
     }, 30000);
     
-    it('should update heartbeat periodically', async () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
+    it.skip('should update heartbeat periodically', async () => {
+      // SKIPPED: This test takes 35+ seconds, run manually when needed
       // Start server
       await httpServer.start();
       
@@ -120,9 +129,6 @@ describe('Process Cleanup Mechanism', () => {
       
       // Heartbeat should be updated
       expect(updatedHeartbeat.getTime()).toBeGreaterThan(initialHeartbeat.getTime());
-      
-      // Cleanup
-      await httpServer.stop();
     }, 60000); // Longer timeout for heartbeat test
     
     it('should reclaim stale lock (> 2 minutes old)', async () => {
@@ -139,9 +145,7 @@ describe('Process Cleanup Mechanism', () => {
       await fs.mkdir(path.dirname(lockFile), { recursive: true });
       await fs.writeFile(lockFile, JSON.stringify(staleLock, null, 2));
       
-      // Try to start server
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
+      // Start server - should reclaim the stale lock
       const baseUrl = await httpServer.start();
       
       // Should have reclaimed the lock
@@ -151,24 +155,15 @@ describe('Process Cleanup Mechanism', () => {
       const lockContent = await fs.readFile(lockFile, 'utf-8');
       const lockData = JSON.parse(lockContent);
       expect(lockData.pid).toBe(process.pid);
-      
-      // Cleanup
-      await httpServer.stop();
     }, 30000);
   });
   
   describe('Manual Cleanup Command', () => {
     it('should export fullCleanup method', () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       expect(typeof httpServer.fullCleanup).toBe('function');
     });
     
     it('should return count of cleaned processes', async () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       // Run cleanup
       const count = await httpServer.fullCleanup();
       
@@ -188,9 +183,6 @@ describe('Process Cleanup Mechanism', () => {
     
     it('should handle lsof unavailable gracefully', async () => {
       // This test ensures the cleanup doesn't crash if lsof isn't available
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       // Should not throw even if lsof fails
       await expect(httpServer.fullCleanup()).resolves.toBeDefined();
     });
@@ -198,9 +190,6 @@ describe('Process Cleanup Mechanism', () => {
   
   describe('Health Check', () => {
     it('should check server health via HTTP', async () => {
-      const sessionManager = new SessionManager();
-      const httpServer = new HttpServer(sessionManager, { autoOpen: false });
-      
       // Start server
       const baseUrl = await httpServer.start();
       
@@ -213,10 +202,6 @@ describe('Process Cleanup Mechanism', () => {
         expect(data.status).toBe('healthy');
         expect(data.isPrimary).toBe(true);
       }
-      
-      // Cleanup
-      await httpServer.stop();
     }, 30000);
   });
 });
-

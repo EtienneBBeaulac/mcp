@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 
 describe('Workflow Get Schema Integration', () => {
   describe('workflow_get_schema tool through MCP server', () => {
@@ -77,17 +77,21 @@ describe('Workflow Get Schema Integration', () => {
       expect(schema.properties.steps.minItems).toBe(1);
       expect(schema.properties.steps.items).toBeDefined();
       
-      // Verify step item structure
+      // Schema uses oneOf with $ref to support both standard and loop steps
       const stepSchema = schema.properties.steps.items;
-      expect(stepSchema.type).toBe('object');
-      expect(stepSchema.properties.id).toBeDefined();
-      expect(stepSchema.properties.title).toBeDefined();
-      expect(stepSchema.properties.prompt).toBeDefined();
-      expect(stepSchema.properties.agentRole).toBeDefined();
-      expect(stepSchema.required).toContain('id');
-      expect(stepSchema.required).toContain('title');
-      expect(stepSchema.required).toContain('prompt');
-      // Note: agentRole is not required in the schema
+      expect(stepSchema.oneOf).toBeDefined();
+      expect(Array.isArray(stepSchema.oneOf)).toBe(true);
+      
+      // Verify step definitions exist in $defs
+      expect(schema.$defs).toBeDefined();
+      expect(schema.$defs.standardStep).toBeDefined();
+      expect(schema.$defs.standardStep.type).toBe('object');
+      expect(schema.$defs.standardStep.properties.id).toBeDefined();
+      expect(schema.$defs.standardStep.properties.title).toBeDefined();
+      expect(schema.$defs.standardStep.properties.prompt).toBeDefined();
+      expect(schema.$defs.standardStep.required).toContain('id');
+      expect(schema.$defs.standardStep.required).toContain('title');
+      expect(schema.$defs.standardStep.required).toContain('prompt');
     });
 
     it('should provide schema compatible with enhanced error messages', async () => {

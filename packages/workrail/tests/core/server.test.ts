@@ -3,7 +3,7 @@
  */
 import { createWorkflowLookupServer } from '../../src/infrastructure/rpc/server';
 import { WorkflowService } from '../../src/application/services/workflow-service';
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, vi, it, expect, jest } from 'vitest';
 
 describe('WorkflowLookupServer', () => {
   it('should create a server instance', () => {
@@ -30,7 +30,7 @@ describe('WorkflowLookupServer', () => {
     
     // Mock console.log to avoid output during tests
     const originalLog = console.log;
-    console.log = jest.fn();
+    console.log = vi.fn();
     
     try {
       await server.start();

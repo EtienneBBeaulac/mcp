@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { calculateObjectSize, checkContextSize, CONTEXT_SIZE_LIMITS } from '../../src/utils/context-size';
 
 describe('Context Size Utilities', () => {

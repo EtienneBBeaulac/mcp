@@ -1,10 +1,9 @@
 // @ts-nocheck
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'path';
 import { RpcClient } from '../helpers/rpc-client';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-
-jest.setTimeout(30000);
 
 describe('Comprehensive API Endpoint Tests', () => {
   const SERVER_PATH = path.resolve(__dirname, '../../src/index.ts');
@@ -12,13 +11,13 @@ describe('Comprehensive API Endpoint Tests', () => {
   
   beforeAll(async () => {
     client = new RpcClient(SERVER_PATH);
-  }, 30000);
+  }, { timeout: 30000 });
 
   afterAll(async () => {
     if (client) {
       await client.close();
     }
-  }, 10000);
+  }, { timeout: 10000 });
 
   describe('workflow_list endpoint', () => {
     it('should return available workflows', async () => {

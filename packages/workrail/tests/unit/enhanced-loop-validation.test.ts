@@ -1,5 +1,8 @@
-import { describe, it, expect } from '@jest/globals';
+import 'reflect-metadata';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { container } from 'tsyringe';
 import { ValidationEngine } from '../../src/application/services/validation-engine';
+import { EnhancedLoopValidator } from '../../src/application/services/enhanced-loop-validator';
 import { Workflow, WorkflowStep } from '../../src/types/mcp-types';
 import { LoopStep } from '../../src/types/workflow-types';
 
@@ -7,7 +10,13 @@ describe('Enhanced Loop Validation', () => {
   let validationEngine: ValidationEngine;
 
   beforeEach(() => {
-    validationEngine = new ValidationEngine();
+    container.clearInstances();
+    const enhancedLoopValidator = container.resolve(EnhancedLoopValidator);
+    validationEngine = new ValidationEngine(enhancedLoopValidator);
+  });
+
+  afterEach(() => {
+    container.clearInstances();
   });
 
   describe('Complex Conditional Logic Detection', () => {

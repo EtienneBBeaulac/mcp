@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createGetWorkflow, WorkflowGetMode } from '../../src/application/use-cases/get-workflow';
 import { WorkflowService } from '../../src/application/services/workflow-service';
 import { Workflow } from '../../src/types/mcp-types';

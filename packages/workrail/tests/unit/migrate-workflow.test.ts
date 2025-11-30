@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, vi, it, expect, beforeEach, afterEach, jest } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { LoopStep } from '../../src/types/workflow-types';
 
 // Mock chalk
-jest.mock('chalk', () => ({
+vi.mock('chalk', () => ({
   default: {
     blue: (str: string) => str,
     green: (str: string) => str,

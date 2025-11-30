@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, vi, it, expect, beforeEach, jest } from 'vitest';
 import { RemoteWorkflowStorage, CommunityWorkflowStorage } from '../../src/infrastructure/storage/remote-workflow-storage';
 import { Workflow, WorkflowSummary } from '../../src/types/mcp-types';
 import { SecurityError, StorageError, InvalidWorkflowError } from '../../src/core/error-handler';
 import { InMemoryWorkflowStorage } from '../../src/infrastructure/storage/in-memory-storage';
 
 // Mock fetch globally
-const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+const mockFetch = vi.fn() as jest.MockedFunction<typeof fetch>;
 global.fetch = mockFetch;
 
 describe('Remote Workflow Storage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
   });
 

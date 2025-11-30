@@ -150,29 +150,37 @@ export interface IFeatureFlagProvider {
 }
 
 /**
+ * Builds flags from an environment source
+ */
+function buildFlags(envSource: Record<string, string | undefined>): FeatureFlags {
+  const flags: Partial<Record<FeatureFlagKey, boolean>> = {};
+  
+  for (const definition of FEATURE_FLAG_DEFINITIONS) {
+    const envValue = envSource[definition.envVar];
+    flags[definition.key as FeatureFlagKey] = parseBoolean(envValue, definition.defaultValue);
+  }
+  
+  return flags as FeatureFlags;
+}
+
+/**
  * Environment-based Feature Flag Provider
  * 
  * Reads flags from environment variables at initialization.
  * Immutable after construction (follows functional programming principles).
+ * 
+ * Note: For testing with custom environment, use createFeatureFlagProviderWithEnv()
  */
 @singleton()
 export class EnvironmentFeatureFlagProvider implements IFeatureFlagProvider {
   private readonly flags: FeatureFlags;
   
   /**
-   * Constructor reads from process.env by default.
-   * No parameters needed - TSyringe will construct with zero args.
+   * Constructor reads from process.env.
+   * TSyringe will construct with zero args.
    */
   constructor() {
-    // Build immutable flag object from process.env
-    const flags: Partial<Record<FeatureFlagKey, boolean>> = {};
-    
-    for (const definition of FEATURE_FLAG_DEFINITIONS) {
-      const envValue = process.env[definition.envVar];
-      flags[definition.key as FeatureFlagKey] = parseBoolean(envValue, definition.defaultValue);
-    }
-    
-    this.flags = flags as FeatureFlags;
+    this.flags = buildFlags(process.env);
     
     // Log enabled experimental features (helps with debugging)
     const enabledExperimental = FEATURE_FLAG_DEFINITIONS
@@ -186,12 +194,56 @@ export class EnvironmentFeatureFlagProvider implements IFeatureFlagProvider {
     }
   }
   
+  /**
+   * Create an instance with a custom environment (for testing)
+   */
+  static withEnv(env: Record<string, string | undefined>): IFeatureFlagProvider {
+    return new CustomEnvFeatureFlagProvider(env);
+  }
+  
   isEnabled(key: FeatureFlagKey): boolean {
     return this.flags[key] ?? false;
   }
   
   getAll(): FeatureFlags {
     // Return shallow copy to maintain immutability
+    return { ...this.flags };
+  }
+  
+  getSummary(): string {
+    const lines = ['Feature Flags:'];
+    
+    for (const definition of FEATURE_FLAG_DEFINITIONS) {
+      const enabled = this.flags[definition.key as FeatureFlagKey];
+      const status = enabled ? '✓ ENABLED' : '✗ DISABLED';
+      const stability = definition.stable ? '[STABLE]' : '[EXPERIMENTAL]';
+      
+      lines.push(`  ${status} ${stability} ${definition.key}`);
+      lines.push(`    ${definition.description}`);
+      lines.push(`    env: ${definition.envVar}`);
+    }
+    
+    return lines.join('\n');
+  }
+}
+
+/**
+ * Custom environment-based Feature Flag Provider (for testing)
+ * 
+ * Allows tests to provide a custom environment instead of using process.env.
+ */
+export class CustomEnvFeatureFlagProvider implements IFeatureFlagProvider {
+  private readonly flags: FeatureFlags;
+  
+  constructor(env: Record<string, string | undefined>) {
+    this.flags = buildFlags(env);
+  }
+  
+  isEnabled(key: FeatureFlagKey): boolean {
+    return this.flags[key] ?? false;
+  }
+  
+  getAll(): FeatureFlags {
     return { ...this.flags };
   }
   
@@ -253,8 +305,9 @@ export class StaticFeatureFlagProvider implements IFeatureFlagProvider {
 export function createFeatureFlagProvider(
   env?: Record<string, string | undefined>
 ): IFeatureFlagProvider {
-  // For backward compatibility, create instance that ignores env parameter
-  // The @singleton() version always uses process.env
   console.warn('[DEPRECATION] createFeatureFlagProvider() is deprecated. Use DI container instead.');
+  if (env) {
+    return new CustomEnvFeatureFlagProvider(env);
+  }
   return new EnvironmentFeatureFlagProvider();
 }

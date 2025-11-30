@@ -1,16 +1,44 @@
+import 'reflect-metadata';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createWorkflowService } from '../../src/application/services/workflow-service';
+import { DefaultWorkflowService } from '../../src/application/services/workflow-service';
 import { InMemoryWorkflowStorage } from '../../src/infrastructure/storage/in-memory-storage';
 import { Workflow, WorkflowStep } from '../../src/types/mcp-types';
 import { LoopStep } from '../../src/types/workflow-types';
+import { ValidationEngine } from '../../src/application/services/validation-engine';
+import { EnhancedLoopValidator } from '../../src/application/services/enhanced-loop-validator';
+import { IterativeStepResolutionStrategy } from '../../src/application/services/step-resolution/iterative-step-resolution-strategy';
+import { DefaultWorkflowLoader } from '../../src/application/services/workflow-loader';
+import { DefaultLoopRecoveryService } from '../../src/application/services/loop-recovery-service';
+import { LoopStackManager } from '../../src/application/services/loop-stack-manager';
+import { DefaultStepSelector } from '../../src/application/services/step-selector';
+import { LoopStepResolver } from '../../src/application/services/loop-step-resolver';
+
+// Helper function to create a workflow service with custom storage
+function createTestWorkflowService(storage: InMemoryWorkflowStorage): DefaultWorkflowService {
+  const loopValidator = new EnhancedLoopValidator();
+  const validator = new ValidationEngine(loopValidator);
+  const resolver = new LoopStepResolver();
+  const stackManager = new LoopStackManager(resolver);
+  const recoveryService = new DefaultLoopRecoveryService(stackManager);
+  const stepSelector = new DefaultStepSelector();
+  const workflowLoader = new DefaultWorkflowLoader(storage, validator);
+  const strategy = new IterativeStepResolutionStrategy(
+    workflowLoader,
+    recoveryService,
+    stackManager,
+    stepSelector
+  );
+  
+  return new DefaultWorkflowService(storage, validator, strategy);
+}
 
 describe('Loop Execution Integration Tests', () => {
-  let service: ReturnType<typeof createWorkflowService>;
+  let service: DefaultWorkflowService;
   let storage: InMemoryWorkflowStorage;
 
   beforeEach(() => {
     storage = new InMemoryWorkflowStorage();
-    service = createWorkflowService(storage);
+    service = createTestWorkflowService(storage);
   });
 
   describe('End-to-End Loop Scenarios', () => {

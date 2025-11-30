@@ -1,5 +1,8 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import 'reflect-metadata';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { container } from 'tsyringe';
 import { ValidationEngine, ValidationRule, ValidationComposition } from '../../src/application/services/validation-engine';
+import { EnhancedLoopValidator } from '../../src/application/services/enhanced-loop-validator';
 import { ValidationError } from '../../src/core/error-handler';
 import { ConditionContext } from '../../src/utils/condition-evaluator';
 
@@ -7,7 +10,13 @@ describe('ValidationEngine', () => {
   let engine: ValidationEngine;
 
   beforeEach(() => {
-    engine = new ValidationEngine();
+    container.clearInstances();
+    const enhancedLoopValidator = container.resolve(EnhancedLoopValidator);
+    engine = new ValidationEngine(enhancedLoopValidator);
+  });
+
+  afterEach(() => {
+    container.clearInstances();
   });
 
   describe('basic validation', () => {

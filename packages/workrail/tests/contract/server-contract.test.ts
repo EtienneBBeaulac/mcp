@@ -1,9 +1,8 @@
 // @ts-nocheck
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'path';
 import { RpcClient } from '../helpers/rpc-client';
 import { responseValidator } from '../../src/validation/response-validator';
-
-jest.setTimeout(10000);
 
 describe('MCP Server JSON-RPC contract', () => {
   const SERVER_PATH = path.resolve(__dirname, '../../src/index.ts');
